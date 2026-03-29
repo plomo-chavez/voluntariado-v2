@@ -1,4 +1,5 @@
 import navItems from "@/navigation/vertical";
+import { useAuthStore } from "@/stores/authStore";
 import { getTokenUser, handleLogOut } from "@/utils/authHelper";
 import { customRequest } from "@/utils/axiosInstance";
 import { setupLayouts } from "virtual:generated-layouts";
@@ -56,13 +57,32 @@ async function verificarToken(to: any) {
   }
 }
 
+/**
+ * Determina si una ruta requiere autenticación
+ * Busca en: index.ts (estático) + authStore.navItems (dinámico)
+ */
 function thisHasRequiresAuth(name: string): any {
-  const item = findNavItemByName(navItems, name);
-  return item
-    ? getRequiresAuth(item) == null
-      ? true
-      : getRequiresAuth(item)
-    : true;
+  // Primero buscar en index.ts (rutas públicas y base)
+  let item = findNavItemByName(navItems, name);
+  if (item) {
+    return getRequiresAuth(item) == null ? true : getRequiresAuth(item);
+  }
+
+  // Luego buscar en authStore.navItems (menú dinámico)
+  try {
+    const authStore = useAuthStore();
+    if (authStore.navItems && Array.isArray(authStore.navItems)) {
+      item = findNavItemByName(authStore.navItems, name);
+      if (item) {
+        return getRequiresAuth(item) == null ? true : getRequiresAuth(item);
+      }
+    }
+  } catch {
+    // authStore no disponible aún, continuar con fallback
+  }
+
+  // Por defecto, requiere autenticación
+  return true;
 }
 
 function recursiveLayouts(route: RouteRecordRaw): RouteRecordRaw {

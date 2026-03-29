@@ -1,5 +1,5 @@
 // frontend/src/stores/auth.ts
-import { getMenuItemsForUserType } from "@/navigation/vertical/menuItems";
+import { fallbackMenu, fetchMenuItems } from "@/navigation/vertical/menuItems";
 import { router } from "@/plugins/1.router";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
@@ -8,9 +8,10 @@ export const useAuthStore = defineStore("auth", () => {
   // --- STATE ---
   const user: any = ref(null);
   const token: any = ref(null);
+  const menuItems: any = ref<any[]>([]);
 
   // Rehidrata el estado desde sessionStorage al cargar la app
-  const storedUser = sessionStorage.getItem("userData"); // Asegúrate que la key sea la correcta
+  const storedUser = sessionStorage.getItem("userData");
   const storedToken = sessionStorage.getItem("token");
 
   if (storedUser && storedToken) {
@@ -23,31 +24,35 @@ export const useAuthStore = defineStore("auth", () => {
   const userType = computed(() => user.value?.tipo_id ?? 0);
 
   const navItems = computed(() => {
-    if (!isAuthenticated.value) {
-      logout;
-    }
-
-    // Filtra la estructura base del menú según el tipo de usuario
-    const items = getMenuItemsForUserType(userType.value);
-
-    // Se usa JSON.parse/stringify para crear una copia profunda y evitar mutar el import original
-    return items;
+    if (menuItems.value.length > 0) return menuItems.value;
+    return fallbackMenu;
   });
 
   // --- ACTIONS ---
+  async function fetchMenu() {
+    menuItems.value = await fetchMenuItems();
+  }
+
   function login(userData: any, authToken: any) {
     user.value = userData;
     token.value = authToken;
     sessionStorage.setItem("userData", JSON.stringify(userData));
     sessionStorage.setItem("token", authToken);
+    fetchMenu();
   }
 
   function logout() {
     user.value = null;
     token.value = null;
+    menuItems.value = [];
     sessionStorage.removeItem("userData");
     sessionStorage.removeItem("token");
     router.push({ name: "login" });
+  }
+
+  // Si se rehidrató sesión, cargar el menú también
+  if (storedUser && storedToken) {
+    fetchMenu();
   }
 
   return {
@@ -55,6 +60,8 @@ export const useAuthStore = defineStore("auth", () => {
     token,
     isAuthenticated,
     navItems,
+    userType,
+    fetchMenu,
     login,
     logout,
   };

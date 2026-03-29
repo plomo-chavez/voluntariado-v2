@@ -119,3 +119,100 @@ Guia de uso del proyecto y scripts principales del package raiz.
 - Si ejecutas scripts de migracion desde la raiz, se delegan al backend automaticamente.
 - Si aparece error de conexion de base de datos, revisar credenciales y host en backend/config/config.cjs.
 - Si backend levanta pero falla en modelos, revisar consistencia de export default en backend/config/config.js.
+
+---
+
+## Diagnóstico de Permisos de Usuarios
+
+### Problema: Usuario no ve menú o permisos no funcionan
+
+El sistema de permisos permite dos modos:
+1. **Permisos por tipo de usuario**: Todos los usuarios del mismo tipo heredan permisos iguales
+2. **Permisos personalizados**: Permisos específicos para un usuario individual (sobrescribe el tipo)
+
+### Diagnosticar desde el Frontend
+
+Después de hacer login, abre la consola del navegador (F12) y ejecuta:
+
+```javascript
+// Ver el status completo de permisos del usuario actual
+diagnosticarPermisos()
+
+// Listar todas las páginas disponibles
+listarPermisosDisponibles()
+
+// Limpiar permisos personalizados (si está bloqueado)
+limpiarPermisosPersonalizados(userId)
+```
+
+**Ejemplo de salida:**
+```
+DIAGNÓSTICO DE PERMISOS
+========================
+userId: 1
+tipoId: 1
+tienePermisosPersonalizados: false
+permisosPorTipo: [1, 2, 3, 4, 5]  ← Usa permisos del tipo
+permisosPersonalizados: []         ← No tiene personalizados
+descripción: "Permisos heredados del tipo de usuario"
+```
+
+### Diagnosticar desde la BD
+
+```bash
+# Conectar a MySQL
+mysql -h HOST -u USER -p DATABASE
+```
+
+```sql
+-- Ver user info
+SELECT id, nombre, correo, tipo_id FROM usuarios WHERE correo = 'admin@gmail.com';
+
+-- Ver permisos por TIPO
+SELECT page_id, estatus 
+FROM config_pages_usuario 
+WHERE tipo_usuario_id = 1 AND estatus = 1;
+
+-- Ver permisos PERSONALIZADOS de un usuario
+SELECT page_id, estatus, tipo_usuario_id 
+FROM config_pages_usuario 
+WHERE usuario_id = 1 AND estatus = 1;
+```
+
+### Endpoint de API
+
+```bash
+# Obtener status de permisos del usuario autenticado
+curl -H "Authorization: Bearer TOKEN" \
+  http://localhost:3000/api/config-pages/permisos/mi-status
+
+# Respuesta
+{
+  "result": true,
+  "data": {
+    "userId": 1,
+    "tipoId": 1,
+    "tienePermisosPersonalizados": false,
+    "permisosPersonalizados": [],
+    "permisosPorTipo": [1, 2, 3, 4, 5],
+    "descripcion": "Permisos heredados del tipo de usuario"
+  }
+}
+```
+
+### Resolver Problemas Comunes
+
+**Usuario no ve ningún menú:**
+- Ejecutar: `diagnosticarPermisos()`
+- Si `permisosPorTipo: []`: El tipo no tiene permisos asignados
+  - Ir a `/admin/config-pages` → "Permisos" → "Por tipo de usuario"
+  - Seleccionar el tipo y asignarle páginas
+
+**Usuario ve menu incorrecto o está bloqueado:**
+- Si `tienePermisosPersonalizados: true` pero no ve acceso:
+  - Ejecutar: `limpiarPermisosPersonalizados(userId)`
+  - Después asignar desde "Por tipo de usuario"
+
+**Documentación detallada:**
+- Ver archivo: [DIAGNOSTICO_PERMISOS.md](./DIAGNOSTICO_PERMISOS.md)
+

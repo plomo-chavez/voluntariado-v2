@@ -1,33 +1,38 @@
-interface NavItem {
+import { customRequest } from "@/utils/axiosInstance";
+
+export interface NavItem {
   title: string;
   to?: object;
   icon?: object;
   children?: NavItem[];
-  meta?: {
-    action?: string;
-    subject?: string;
-  };
 }
 
-export function getMenuItemsForUserType(userType: number): NavItem[] {
-  const routes: NavItem[] = [
-    {
-      title: "Inicio",
-      to: { name: "root" },
-      icon: { icon: "tabler-smart-home" },
-    },
-  ];
+/** Menú mínimo cuando la API no responde o el usuario no está autenticado */
+export const fallbackMenu: NavItem[] = [
+  {
+    title: "Inicio Fallando",
+    to: { name: "root" },
+    icon: { icon: "tabler-smart-home" },
+  },
+];
 
-  if (userType <= 3) {
-    routes.push({
-      title: "Administrador",
-      icon: { icon: "tabler-settings" },
-      children: [
-        { title: "Usuarios", to: { name: "usuarios" } },
-        { title: "Logs", to: { name: "logs" } },
-      ],
+/**
+ * Consulta config_pages desde el backend y devuelve el árbol de navegación
+ * filtrado según el tipo del usuario autenticado.
+ * Si la petición falla, retorna el fallbackMenu.
+ */
+export async function fetchMenuItems(): Promise<NavItem[]> {
+  try {
+    const response: any = await customRequest({
+      url: "/api/menu",
+      method: "GET",
     });
+    if (response.data?.result && Array.isArray(response.data.data)) {
+      console.log("Menú cargado desde API =>", response.data.data);
+      return response.data.data as NavItem[];
+    }
+  } catch {
+    // silencio — el store usará el fallback
   }
-
-  return routes;
+  return fallbackMenu;
 }

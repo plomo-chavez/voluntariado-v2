@@ -8,16 +8,7 @@ import { verifyEncryptedJWT } from "../utils/encryptHelper.js"; // Importa tu he
 
 const getUserToken = async (userID) => {
   const userBD = await Usuarios.findByPk(userID, {
-    attributes: [
-      "id",
-      "nombre",
-      "correo",
-      "estado_id",
-      "municipio_id",
-      "delegacion_id",
-      "tipo_id",
-      "estatus",
-    ],
+    attributes: ["id", "nombre", "correo", "tipo_id", "estatus"],
   });
   return userBD?.toJSON() ?? null;
 };
