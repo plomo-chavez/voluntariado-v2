@@ -1,0 +1,102 @@
+import db from "../../models/index.js";
+import CRUDController from "../CRUDController.js";
+const { Op } = db.Sequelize;
+const { createRecord, updateRecord } = CRUDController;
+const { Usuarios, Elementos, Unidades } = db;
+
+const getFiltrosForTipoUsuario = async (req) => {
+  const userRole = req?.user ?? null;
+
+  if (!userRole) {
+    console.log(
+      "getFiltrosForTipoUsuario: El objeto 'user' no está definido en la solicitud.",
+    );
+    return {};
+  }
+
+  if (typeof userRole.tipo_id === "undefined") {
+    console.log(
+      "getFiltrosForTipoUsuario: El atributo 'tipo_id' no está definido en el usuario.",
+    );
+    return {};
+  }
+
+  switch (userRole.tipo_id) {
+    case 4: // Estatal
+      // let estado
+      return {
+        estado_id: userRole.estado_id,
+      };
+    case 5: // Local
+      return {
+        delegacion_id: userRole.delegacion_id,
+      };
+  }
+};
+// prettier-ignore
+const handleElementosAndUnidades = async (data, reporteId) => {
+  if(!reporteId){
+  }
+
+  if(data.elementos && Array.isArray(data.elementos) && data.elementos.length > 0){
+    let elementosToCreate = data.elementos;
+    const filtros = {
+      where: {
+        numeroAsociado: {
+          [Op.in]: elementosToCreate, // Solo IDs válidos
+        },
+      },
+    };
+    const elementosInBD = await Elementos.findAll(filtros);
+
+    if(elementosInBD.length > 0 ){
+      const numerosEnBD = elementosInBD.map((el) => el.numeroAsociado);
+      elementosToCreate = elementosToCreate.filter(
+        (num) => !numerosEnBD.includes(num)
+      );
+    }
+    console.log("Elementos a crear: ", elementosToCreate.legth);
+    elementosToCreate.forEach(async (item) => {
+      const payload = {
+        numeroAsociado: item,
+        estado_id: data?.estado?.id ?? null,
+        municipio_id: data?.municipio?.id ?? null,
+        delegacion_id: data?.delegacion?.id ?? null,
+      };
+      await createRecord("Elementos", payload)
+    });
+
+  }
+
+
+  if(data.unidades && Array.isArray(data.unidades) && data.unidades.length > 0){
+    let unidadesToCreate = data.unidades;
+    const filtros = {
+      where: {
+        numero: {
+          [Op.in]: unidadesToCreate, // Solo IDs válidos
+        },
+      },
+    };
+    const unidadesInBD = await Unidades.findAll(filtros);
+
+    if(unidadesInBD.length > 0 ){
+      const numerosEnBD = unidadesInBD.map((el) => el.numero);
+      unidadesToCreate = unidadesToCreate.filter(
+        (num) => !numerosEnBD.includes(num)
+      );
+    }
+
+    unidadesToCreate.forEach(async (item) => {
+      const payload = {
+        numero: item,
+        estado_id: data?.estado?.id ?? null,
+        municipio_id: data?.municipio?.id ?? null,
+        delegacion_id: data?.delegacion?.id ?? null,
+      };
+      await createRecord("Unidades", payload)
+    });
+
+  }
+};
+export default { getFiltrosForTipoUsuario, handleElementosAndUnidades };

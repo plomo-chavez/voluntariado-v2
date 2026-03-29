@@ -1,0 +1,202 @@
+<script setup lang="ts">
+import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
+import { useTokenExpiringModal } from "@/composables/useTokenExpiringModal";
+import { handleLogOut } from "@/utils/authHelper";
+import { ref } from "vue";
+
+const { showModal, hideTokenExpiringModal, showTokenExpiringModal } =
+  useTokenExpiringModal();
+
+const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+const email = ref("");
+const password = ref("");
+const isPasswordVisible = ref(false);
+const loginError = ref("");
+
+watch(showModal, (newValue) => {
+  if (newValue) {
+    email.value = "";
+    password.value = "";
+  }
+});
+
+// Cada vez que el modal se abre, toma el correo actualizado de localStorage
+
+const handleMakelogin = () => {
+  loginError.value = "";
+  if (!email.value || !password.value) {
+    loginError.value = "Debes ingresar correo y contraseña.";
+    return;
+  }
+  handleLogin();
+};
+
+const handleCerrar = () => {
+  hideTokenExpiringModal();
+  handleLogOut();
+};
+
+function detectDeviceType(): string {
+  const ua = navigator.userAgent.toLowerCase();
+  if (/(tablet|ipad)/i.test(ua)) return "tablet";
+  if (/(mobi|android|iphone|ipod)/i.test(ua)) return "movil";
+  return "desktop";
+}
+
+function getCurrentLocation(): Promise<{
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+} | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: Number.isFinite(position.coords.accuracy)
+            ? position.coords.accuracy
+            : null,
+        });
+      },
+      () => resolve(null),
+      {
+        enableHighAccuracy: false,
+        timeout: 2500,
+        maximumAge: 60000,
+      },
+    );
+  });
+}
+
+async function handleLogin() {
+  const location = await getCurrentLocation();
+
+  let response: any = await customRequest({
+    url: "/api/login",
+    method: "POST",
+    data: {
+      email: email.value,
+      password: password.value,
+      clientInfo: {
+        user_agent: navigator.userAgent,
+        device_type: detectDeviceType(),
+        location,
+      },
+    },
+  });
+  if (response.data.result) {
+    const userData = response.data.data.userData;
+    const token = response.data.data.token;
+
+    if (userData && token) {
+      localStorage.setItem("userData", JSON.stringify(userData));
+      localStorage.setItem("token", token);
+      startTokenTimer(() => {
+        showTokenExpiringModal();
+      });
+      hideTokenExpiringModal();
+    } else {
+      showErrorMessage({
+        title: "Error",
+        message: "No se recibió información de usuario o token válida.",
+      });
+    }
+  } else {
+    hideTokenExpiringModal();
+    showModal.value = false;
+    showErrorMessage({
+      title: "Credenciales incorrectas",
+      message: "Cerrar sesión por seguridad.",
+    });
+    setTimeout(() => {
+      handleLogOut();
+    }, 10);
+  }
+}
+</script>
+
+<template>
+  <VDialog v-model="showModal" persistent max-width="400">
+    <VCard>
+      <VCardTitle>Tu sesión ha finalizado</VCardTitle>
+      <VCardText>
+        <p class="text-center">
+          Tu sesión ha expirado por seguridad.<br />
+          Ingresa tu contraseña para renovar la sesión o haz clic en "Cerrar
+          sesión" para salir.
+        </p>
+
+        <VAlert
+          v-if="loginError"
+          type="error"
+          class="mb-2"
+          density="compact"
+          variant="tonal"
+          :icon="false"
+        >
+          {{ loginError }}
+        </VAlert>
+        <pre>{{ email }}</pre>
+        <pre>{{ password }}</pre>
+        <VForm @submit.prevent="handleMakelogin">
+          <VRow>
+            <!-- email -->
+            <VCol class="colItem" cols="12">
+              <VTextField
+                v-model="email"
+                autofocus
+                label="Correo electrónico"
+                type="email"
+                placeholder="johndoe@email.com"
+              />
+            </VCol>
+
+            <!-- password -->
+            <VCol class="colItem" cols="12">
+              <VTextField
+                v-model="password"
+                label="Contraseña"
+                placeholder="············"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                autocomplete="password"
+                :append-inner-icon="
+                  isPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'
+                "
+                @click:append-inner="isPasswordVisible = !isPasswordVisible"
+              />
+            </VCol>
+            <VCol
+              cols="12"
+              class="colItem d-flex justifyBetween align-center gap-2"
+            >
+              <VBtn color="secondary" @click="handleCerrar">
+                Cerrar sesión
+              </VBtn>
+              <VBtn type="submit" color="primary">Renovar sesión</VBtn>
+            </VCol>
+          </VRow>
+        </VForm>
+      </VCardText>
+    </VCard>
+  </VDialog>
+</template>
+
+<style lang="scss">
+.justifyBetween {
+  justify-content: space-between;
+}
+.text-error {
+  color: #f44336;
+  font-size: 0.95em;
+}
+.colItem {
+  padding-bottom: 8px !important;
+  padding-top: 8px !important;
+}
+</style>

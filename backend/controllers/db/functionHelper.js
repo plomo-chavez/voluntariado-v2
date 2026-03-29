@@ -1,0 +1,113 @@
+/**
+ * ==============================
+ * Helpers
+ * ==============================
+ */
+
+function normalizeNullRelations(rows) {
+  if (!Array.isArray(rows)) return rows;
+
+  return rows.map((row) => {
+    const normalized = { ...row };
+
+    for (const key of Object.keys(normalized)) {
+      const value = normalized[key];
+
+      if (
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        "id" in value &&
+        value.id === null
+      ) {
+        normalized[key] = null;
+      }
+    }
+
+    return normalized;
+  });
+}
+
+const handleIsAdmin = (req) => {
+  try {
+    const userRole = req?.user ?? null;
+
+    if (!userRole) {
+      console.log(
+        "handleIsAdmin: El objeto 'user' no está definido en la solicitud.",
+      );
+    }
+
+    if (typeof userRole.tipo_id === "undefined") {
+      console.log(
+        "handleIsAdmin: El atributo 'tipo_id' no está definido en el usuario.",
+      );
+    }
+
+    return userRole.tipo_id === 2 || userRole.tipo_id === 1;
+  } catch (error) {
+    console.log("Error en handleIsAdmin:", error.message);
+    return false;
+  }
+};
+
+async function getAllFromModel({
+  model,
+  filtros = {},
+  attributes = [],
+  include = [],
+  page = 1,
+  pageSize = 10,
+  pagination = true,
+  paranoid = false,
+}) {
+  try {
+    const isAll = pageSize === -1 || !pagination;
+    const offset = isAll ? null : (page - 1) * pageSize;
+    const limit = isAll ? null : pageSize;
+
+    let { count, rows } = await model.findAndCountAll({
+      where: filtros,
+      attributes,
+      include,
+      limit,
+      offset,
+      raw: true,
+      nest: true,
+      paranoid,
+    });
+
+    rows = normalizeNullRelations(rows);
+
+    return {
+      result: true,
+      message: "Registros obtenidos con éxito",
+      data: rows,
+      pagination: {
+        total: count,
+        page,
+        pageSize: isAll ? count : pageSize,
+        totalPages: isAll ? 1 : Math.ceil(count / pageSize),
+      },
+    };
+  } catch (error) {
+    console.error("Error al obtener registros:", error);
+    return {
+      result: false,
+      message: "Error al obtener registros: " + error.message,
+      data: [],
+      pagination: null,
+    };
+  }
+}
+
+/**
+ * ==============================
+ * EXPORT DEFAULT (CLAVE)
+ * ==============================
+ */
+
+export default {
+  handleIsAdmin,
+  getAllFromModel,
+};

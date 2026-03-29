@@ -1,0 +1,74 @@
+.cardCustom {
+  padding: 16px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  min-width: 200px !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  border: 2px solid rgb(var(--v-theme-grey-300)) !important; /* Borde azul oscuro */
+  background-color: rgb(var(--v-theme-white)) !important;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.card {
+  padding: 16px !important;
+  border-radius: 10px !important;
+  background-color: white !important;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+.cardCustom:hover {
+  background-color: rgb(
+    var(--v-theme-info2TonalLighter)
+  ) !important; /* Fondo azul oscuro */
+  filter: drop-shadow(
+    0px 1px 2px rgb(var(--v-theme-primaryDark))
+  ) !important; /* Difuminado adicional */
+  font-weight: bolder !important; /* Texto en negrita al pasar el cursor */
+  border-radius: 8px !important; /* Bordes redondeados para un diseño más moderno */
+}
+
+.cardSelected {
+  background-color: #0b237b !important; /* Fondo azul oscuro */
+  border: 2px solid #0b237b !important; /* Borde azul oscuro */
+  box-shadow: 0px 4px 15px rgba(11, 35, 123, 0.7) !important; /* Sombra azul con mayor transparencia y difuminado */
+  transition: all 0.3s ease !important; /* Transición suave para cambios de estilo */
+  filter: drop-shadow(
+    0px 6px 10px rgb(var(--v-theme-primaryDark))
+  ) !important; /* Difuminado adicional */
+  border-radius: 8px !important; /* Bordes redondeados para un diseño más moderno */
+}
+.borderCardPrimary {
+  background-color: rgb(var(--v-theme-surface)) !important;
+  border-left: 4px solid rgb(var(--v-theme-primary));
+  padding: 0.3rem 0.5rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 10px !important;
+}
+
+.borderCardDanger {
+  border-left: 4px solid rgb(var(--v-theme-error-darken-1));
+  padding: 0.3rem 0.5rem;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 10px !important;
+}
+
+.cardError {
+  background-color: rgb(var(--v-theme-pnlError)) !important;
+  border-left: 4px solid #e53935;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px !important;
+}
+
+.cardActive {
+  border: 2px solid rgb(var(--v-theme-primary));
+}
+
+.divTimeStamp {
+  font-weight: bold;
+  font-size: 13px; /* Ajusta el tamaño de la fuente */
+  color: #6b7280; /* Color gris para indicar que es un texto secundario */
+  text-align: right; /* Centra el texto */
+  font-style: italic; /* Opcional: estilo cursiva */
+  margin-top: 0.5rem; /* Espaciado superior */
+}

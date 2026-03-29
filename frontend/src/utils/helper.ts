@@ -1,0 +1,304 @@
+import { format, formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+import moment from "moment";
+import { isRef, toRaw } from "vue";
+
+// Función para formatear la fecha en un formato legible
+export function formatearFechaHumana(fecha: string): string {
+  const fechaObjeto = new Date(fecha);
+  return format(fechaObjeto, "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: es });
+}
+
+export function calcularDiferenciaTiempo(
+  fecha: string,
+  limite: any = null,
+): string {
+  const fechaObjeto = new Date(fecha);
+  const ahora = new Date();
+  const diferenciaMs = ahora.getTime() - fechaObjeto.getTime();
+  if (limite != null) {
+    if (typeof limite.valor !== "number" || limite.valor < 0) {
+      let error = "El valor del límite debe ser un número positivo";
+      console.log(error);
+      return error;
+    }
+    const unidadesValidas = ["minutos", "horas", "dias", "meses", "años"];
+    if (!unidadesValidas.includes(limite.unidad)) {
+      let error = `La unidad del límite debe ser una de las siguientes: ${unidadesValidas.join(
+        ", ",
+      )}`;
+      console.log(error);
+      return error;
+    }
+    // Convertir la diferencia según la unidad
+    let diferencia;
+    switch (limite.unidad) {
+      case "minutos":
+        diferencia = diferenciaMs / (1000 * 60); // Milisegundos a minutos
+        break;
+      case "horas":
+        diferencia = diferenciaMs / (1000 * 60 * 60); // Milisegundos a horas
+        break;
+      case "dias":
+        diferencia = diferenciaMs / (1000 * 60 * 60 * 24); // Milisegundos a días
+        break;
+      case "meses":
+        diferencia = diferenciaMs / (1000 * 60 * 60 * 24 * 30); // Aproximación: 30 días por mes
+        break;
+      case "años":
+        diferencia = diferenciaMs / (1000 * 60 * 60 * 24 * 365); // Aproximación: 365 días por año
+        break;
+      default:
+        throw new Error("Unidad de tiempo no válida");
+    }
+    // Si la diferencia excede el límite, devolver la fecha formateada
+    if (limite.valor > 0 && diferencia > limite.valor) {
+      let formato = limite?.format ?? "dd/MM/yyyy hh:mm a";
+      return format(fechaObjeto, formato, {
+        locale: es,
+      });
+    }
+  }
+
+  // Si está dentro del límite, devolver la diferencia relativa
+  return formatDistanceToNow(fechaObjeto, { addSuffix: true, locale: es });
+}
+
+// prettier-ignore
+export function isItemSelected(array: any[], item: any, key: string | null = null): boolean {
+  if (!Array.isArray(array) || array.length === 0) return false;
+  if (key === null) {
+    return array.some(element => element === item);
+  } else {
+    return array.some(element => element && element[key] === item[key]);
+  }
+}
+
+// prettier-ignore
+export function toggleItemInArray(array: any[] = [], item: any, key: string | null = null) {
+  array = Array.isArray(array) ? array : [];
+  const index = key === null
+    ? array.findIndex(element => element === item)
+    : array.findIndex(element => element && element[key] === item[key]);
+
+  if (index === -1) {
+    array.push(item); // Agrega si no existe
+  } else {
+    array.splice(index, 1); // Elimina si existe
+  }
+  return array;
+}
+
+// prettier-ignore
+export function toggleItemInArrayByKey(
+  array: any[] = [],
+  item: any,
+  fields: string | string[] | false = false, // Nuevo parámetro
+) {
+  console.log("toggleItemInArrayByKey llamado con:", { array, item, fields });
+  array = Array.isArray(array) ? array : [];
+
+  // Determinar el valor que se usará para buscar y agregar
+  let valueToToggle: any;
+  if (fields === false) {
+    valueToToggle = item; // Usar todo el objeto
+  } else if (Array.isArray(fields)) {
+    // Crear un objeto con las propiedades especificadas
+    valueToToggle = fields.reduce((acc: any, field: string) => { acc[field] = item[field] !== undefined ? item[field] : null; return acc; }, {});
+  } else if (typeof fields === "string") {
+    // Usar solo el valor de la propiedad especificada
+    valueToToggle = item[fields] !== undefined ? item[fields] : null;
+  }
+
+  let index = -1;
+
+  // buscando el item en el array
+  if (fields === false) {
+    index = array.findIndex((element) => { return JSON.stringify(element) === JSON.stringify(valueToToggle); });
+  } else if (Array.isArray(fields)) {
+    index = array.findIndex((element) => {
+      // Comparar objetos con las mismas propiedades
+      const filteredElement = fields.reduce((acc: any, field: string) => { acc[field] = element[field] !== undefined ? element[field] : null; return acc; }, {});
+      return JSON.stringify(filteredElement) === JSON.stringify(valueToToggle);
+    });
+  } else if (typeof fields === "string") {
+    index = array.findIndex((element) => {
+      // Comparar solo el valor de la propiedad especificada
+      return element === valueToToggle;
+    });
+  }
+
+  if (index !== -1) {
+    // Si el item ya existe, lo elimina
+    array.splice(index, 1);
+  } else {
+    // Si el item no existe, lo agrega
+    array.push(valueToToggle);
+  }
+
+  console.log("Resultado después de toggle:", array);
+
+  return array;
+}
+
+export function deepToRaw(obj: any): any {
+  if (isRef(obj)) {
+    return deepToRaw(obj.value);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(deepToRaw);
+  }
+  if (obj !== null && typeof obj === "object") {
+    const raw = toRaw(obj);
+    const result: { [key: string]: any } = {};
+    for (const key in raw) {
+      result[key] = deepToRaw(raw[key]);
+    }
+    return result;
+  }
+  return obj;
+}
+
+/**
+ * Valida si los elementos de un arreglo cumplen con reglas de existencia, tipo, igualdad, diferencia o no existencia de propiedades.
+ *
+ * Cada regla puede ser:
+ *  - { key: string, tipoValidacion?: "existe" | "notExiste" | "tipo" | "igual" | "diferente", valor?: any }
+ *    - tipoValidacion por defecto: "existe"
+ *    - Si tipoValidacion es "tipo", valor debe ser el tipo esperado ("string", "number", etc.)
+ *    - Si tipoValidacion es "igual" o "diferente", valor es el valor a comparar
+ *    - Si tipoValidacion es "notExiste", valida que la propiedad NO exista
+ *
+ * @param arr - El arreglo a validar.
+ * @param reglas - Array de reglas de validación.
+ * @param estricto - Si es true, todos los elementos deben cumplir; si es false, basta con que uno cumpla.
+ */
+
+// prettier-ignore
+export async function searchKeysInArray(
+  arr: any[],
+  reglas: {
+    key: string;
+    tipoValidacion?: "existe" | "notExiste" | "tipo" | "igual" | "diferente";
+    valor?: any;
+  }[],
+  estricto: boolean = true
+): Promise<boolean> {
+  if (!Array.isArray(arr)) return false;
+
+  const cumpleReglas = (item: any) =>
+    reglas.every(regla => {
+      const tipo = regla.tipoValidacion ?? "existe";
+      switch (tipo) {
+        case "existe":
+          return Object.prototype.hasOwnProperty.call(item, regla.key);
+        case "notExiste":
+          return !Object.prototype.hasOwnProperty.call(item, regla.key);
+        case "tipo":
+          return Object.prototype.hasOwnProperty.call(item, regla.key) &&
+            typeof item[regla.key] === regla.valor;
+        case "igual":
+          return Object.prototype.hasOwnProperty.call(item, regla.key) &&
+            item[regla.key] === regla.valor;
+        case "diferente":
+          return Object.prototype.hasOwnProperty.call(item, regla.key) &&
+            item[regla.key] !== regla.valor;
+        default:
+          // Autocompletado inteligente:
+          if (regla.valor === undefined) {
+            return Object.prototype.hasOwnProperty.call(item, regla.key);
+          }
+          if (typeof regla.valor === "string" || typeof regla.valor === "number" || typeof regla.valor === "boolean") {
+            return Object.prototype.hasOwnProperty.call(item, regla.key) &&
+              item[regla.key] === regla.valor;
+          }
+          return false;
+      }
+    });
+
+  return estricto ? arr.every(cumpleReglas) : arr.some(cumpleReglas);
+}
+
+export function isEqual(obj1: any, obj2: any): boolean {
+  // Compara objetos simples y anidados (shallow + deep)
+  try {
+    return JSON.stringify(obj1) === JSON.stringify(obj2);
+  } catch {
+    return false;
+  }
+}
+
+export function deepClone(obj: any): any {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+export function diffObjects(obj1: any, obj2: any): any {
+  obj1 = deepToRaw(obj1);
+  obj2 = deepToRaw(obj2);
+
+  if (Array.isArray(obj1) && Array.isArray(obj2)) {
+    // Si son arrays, compara elemento por elemento y devuelve solo los nuevos valores
+    const maxLength = Math.max(obj1.length, obj2.length);
+    const nuevos: any[] = [];
+    for (let i = 0; i < maxLength; i++) {
+      if (!isEqual(obj1[i], obj2[i])) {
+        nuevos.push(obj1[i]);
+      }
+    }
+    return nuevos;
+  } else if (
+    typeof obj1 === "object" &&
+    typeof obj2 === "object" &&
+    obj1 &&
+    obj2
+  ) {
+    const nuevos: Record<string, any> = {};
+    const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+    keys.forEach((key) => {
+      if (!isEqual(obj1[key], obj2[key])) {
+        nuevos[key] = obj1[key];
+      }
+    });
+    return nuevos;
+  } else {
+    // Si son primitivos
+    return isEqual(obj1, obj2) ? null : obj1;
+  }
+}
+/**
+ * Convierte un número a formato moneda.
+ * @param {number} amount - El monto a formatear.
+ * @param {string} locale - El idioma/localización (por defecto "es-MX").
+ * @param {string} currency - La moneda (por defecto "MXN").
+ * @returns {string} - El monto en formato moneda.
+ */
+export function formatCurrency(
+  amount: string | number,
+  locale: string = "es-MX",
+  currency: string = "MXN",
+): string {
+  const numericAmount =
+    typeof amount === "string" ? parseFloat(amount) : amount;
+
+  if (isNaN(numericAmount)) {
+    throw new Error("El valor proporcionado no es un número válido.");
+  }
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency,
+  }).format(numericAmount);
+}
+
+/**
+ * Convierte una fecha ISO a un formato legible.
+ * @param {string} date - La fecha en formato ISO.
+ * @param {string} locale - El idioma/localización (por defecto "es-MX").
+ * @returns {string} - La fecha formateada.
+ */
+export function formatDateMoment(
+  date: string,
+  format: any = "D [de] MMMM [de] YYYY",
+): string {
+  return moment(date).locale("es").format(format);
+}
