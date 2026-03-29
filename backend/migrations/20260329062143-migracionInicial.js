@@ -170,7 +170,7 @@ export default {
       let adminTypeId;
 
       if (!adminTypeRows.length) {
-        const [insertTypeResult] = await queryInterface.sequelize.query(
+        await queryInterface.sequelize.query(
           `
             INSERT INTO catTiposUsuarios (label, estatus, created_at, updated_at, deleted_at)
             VALUES (:label, :estatus, NOW(), NOW(), NULL)
@@ -181,7 +181,15 @@ export default {
           },
         );
 
-        adminTypeId = insertTypeResult.insertId;
+        const [newAdminTypeRows] = await queryInterface.sequelize.query(
+          `SELECT id FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
+          {
+            replacements: { label: "Administrador" },
+            transaction,
+          },
+        );
+
+        adminTypeId = newAdminTypeRows?.[0]?.id;
       } else {
         adminTypeId = adminTypeRows[0].id;
 
@@ -197,6 +205,12 @@ export default {
             replacements: { id: adminTypeId },
             transaction,
           },
+        );
+      }
+
+      if (!adminTypeId) {
+        throw new Error(
+          "No se pudo resolver el id del tipo de usuario 'Administrador'.",
         );
       }
 
