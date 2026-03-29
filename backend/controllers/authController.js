@@ -332,9 +332,6 @@ const login = async (req, res) => {
       correo: user.correo,
       tipo: user.tipo.label,
       tipo_id: user.tipo.id,
-      estado_id: user.estado_id,
-      municipio_id: user.municipio_id,
-      delegacion_id: user.delegacion_id,
     };
 
     const expiresIn = process.env.JWT_EXPIRES_IN || "8h";
@@ -440,9 +437,6 @@ const verificarToken = async (req, res) => {
       correo: user.correo,
       tipo: user.tipo.label,
       tipo_id: user.tipo.id,
-      estado_id: user.estado_id,
-      municipio_id: user.municipio_id,
-      delegacion_id: user.delegacion_id,
     };
 
     return res.json({

@@ -20,18 +20,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      estado_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
-      },
-      municipio_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: true,
-      },
-      delegacion_id: {
-        type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: true,
-      },
       reset_token: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -66,22 +54,6 @@ export default (sequelize, DataTypes) => {
     Usuarios.belongsTo(models.catTiposUsuarios, {
       foreignKey: "tipo_id",
       as: "tipo",
-    });
-    Usuarios.belongsTo(models.catEstados, {
-      foreignKey: "estado_id",
-      as: "estado",
-    });
-    Usuarios.belongsTo(models.catMunicipios, {
-      foreignKey: "municipio_id",
-      as: "municipio",
-    });
-    Usuarios.belongsTo(models.catDelegaciones, {
-      foreignKey: "delegacion_id",
-      as: "delegacion",
-    });
-    Usuarios.hasMany(models.Reportes, {
-      foreignKey: "userCreate_id",
-      as: "reportes",
     });
   };
 
