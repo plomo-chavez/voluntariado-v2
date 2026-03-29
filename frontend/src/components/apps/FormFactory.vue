@@ -656,7 +656,7 @@ onMounted(async () => {
       <div class="formWrapper">
         <!-- Render dynamic fields -->
         <!-- prettier-ignore -->
-        <h6 v-if="tieneRequeridos" class="mb16" style="color: #535353; font-size: 0.80rem;">
+        <h6 v-if="tieneRequeridos" class="mb16 col-12" style="color: #535353; font-size: 0.80rem;">
           Este formulario cuenta con campos obligatorios, los puedes identificar porque tienen este símbolo <span style="color:red">*</span>
         </h6>
         <div v-if="props.showMessageRequired">

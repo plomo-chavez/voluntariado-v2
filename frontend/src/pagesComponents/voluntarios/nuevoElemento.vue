@@ -56,6 +56,16 @@ const form = ref<NuevoElementoPayload>({
   area: null,
 });
 
+const curpSchema = [
+  {
+    label: "CURP",
+    classElement: " col-12 ",
+    type: "text",
+    model: "curp",
+    required: true,
+  },
+];
+
 const formSchema = [
   { label: "Nombre", type: "text", model: "nombre", required: true },
   {
@@ -104,23 +114,6 @@ const formSchema = [
     model: "area",
     catalogo: "areas",
   },
-];
-
-const curpRules = [
-  (v: string) => !!v || "La CURP es obligatoria",
-  (v: string) =>
-    /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$/i.test(v) ||
-    "Formato de CURP inválido",
-];
-
-const correoRules = [
-  (v: string) => !!v || "El correo es obligatorio",
-  (v: string) => /.+@.+\..+/.test(v) || "Correo inválido",
-];
-
-const telefonoRules = [
-  (v: string) => !!v || "El teléfono es obligatorio",
-  (v: string) => /^[0-9\s+()-]{7,20}$/.test(v) || "Teléfono inválido",
 ];
 
 const resetModal = () => {
@@ -221,24 +214,17 @@ const handleFormUpdate = (value: Record<string, any>) => {
     <VCardText class="pt-6">
       <VWindow v-model="step">
         <VWindowItem :value="1">
-          <VRow>
-            <VCol cols="12">
-              <p class="text-body-1 mb-4">
-                Primero valida la CURP antes de capturar datos del voluntario.
-              </p>
-            </VCol>
+          <p class="text-body-1 mb-4">
+            Primero valida la CURP antes de capturar datos del voluntario.
+          </p>
 
-            <VCol cols="12">
-              <AppTextField
-                v-model="form.curp"
-                label="CURP"
-                placeholder="Ej. ABCD010203HDFRRS09"
-                :rules="curpRules"
-                maxlength="18"
-                @keyup.enter="validateCurpAndContinue"
-              />
-            </VCol>
-          </VRow>
+          <ModuladorFormFactory
+            :schema="curpSchema"
+            :modelValue="form"
+            :showButtonsAction="false"
+            :formRequired="true"
+            @update:modelValue="handleFormUpdate"
+          />
         </VWindowItem>
 
         <VWindowItem :value="2">
