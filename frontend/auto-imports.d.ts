@@ -451,7 +451,6 @@ declare module 'vue' {
     readonly customRequest: UnwrapRef<typeof import('./src/utils/axiosInstance')['customRequest']>
     readonly debouncedRef: UnwrapRef<typeof import('@vueuse/core')['debouncedRef']>
     readonly debouncedWatch: UnwrapRef<typeof import('@vueuse/core')['debouncedWatch']>
-    readonly debugMenu: UnwrapRef<typeof import('./src/utils/diagnosticoPermisos.js')['debugMenu']>
     readonly decryptToken: UnwrapRef<typeof import('./src/utils/authHelper')['decryptToken']>
     readonly deepClone: UnwrapRef<typeof import('./src/utils/helper')['deepClone']>
     readonly deepToRaw: UnwrapRef<typeof import('./src/utils/helper')['deepToRaw']>
@@ -459,8 +458,6 @@ declare module 'vue' {
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly definePage: UnwrapRef<typeof import('unplugin-vue-router/runtime')['definePage']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
-    readonly diagnosticarPermisos: UnwrapRef<typeof import('./src/utils/diagnosticoPermisos.js')['diagnosticarPermisos']>
-    readonly diagnosticoPermisos: UnwrapRef<typeof import('./src/utils/diagnosticoPermisos.js')['default']>
     readonly diffObjects: UnwrapRef<typeof import('./src/utils/helper')['diffObjects']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
@@ -503,8 +500,6 @@ declare module 'vue' {
     readonly isUserLoggedIn: UnwrapRef<typeof import('./src/utils/userUtils')['isUserLoggedIn']>
     readonly kFormatter: UnwrapRef<typeof import('./src/@core/utils/formatters')['kFormatter']>
     readonly lengthValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['lengthValidator']>
-    readonly limpiarPermisosPersonalizados: UnwrapRef<typeof import('./src/utils/diagnosticoPermisos.js')['limpiarPermisosPersonalizados']>
-    readonly listarPermisosDisponibles: UnwrapRef<typeof import('./src/utils/diagnosticoPermisos.js')['listarPermisosDisponibles']>
     readonly logicAnd: UnwrapRef<typeof import('@vueuse/math')['logicAnd']>
     readonly logicNot: UnwrapRef<typeof import('@vueuse/math')['logicNot']>
     readonly logicOr: UnwrapRef<typeof import('@vueuse/math')['logicOr']>

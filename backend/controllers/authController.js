@@ -2,10 +2,12 @@ import bcrypt from "bcryptjs";
 import db from "../models/index.js";
 import encryptHelper, { verifyEncryptedJWT } from "../utils/encryptHelper.js";
 import logsController from "./logsController.js";
+import permisosHelper from "../utils/permisosHelper.js";
 
 const { Usuarios, catTiposUsuarios } = db;
 const { createTokenJWT } = encryptHelper;
 const { registrarLog } = logsController;
+const { getPermiso } = permisosHelper;
 
 const GEOIP_TIMEOUT_MS = 2500;
 
@@ -421,9 +423,19 @@ const verificarToken = async (req, res) => {
       });
     }
     const pagina = req.params.pagina || null;
-    if (user.tipo_id > 3) {
-      const paginasPermitidas = ["reportes", "elementos", "unidades", "root"];
-      if (!paginasPermitidas.includes(pagina)) {
+    if (pagina) {
+      const tienePermiso = await getPermiso({
+        pagina,
+        usuario_id: user.id,
+        tipo_id: user.tipo_id,
+        showLogs: true,
+      });
+
+      console.log(
+        `Verificando permiso para usuario_id=${user.id}, tipo_id=${user.tipo_id} en página="${pagina}": ${tienePermiso}`,
+      );
+
+      if (!tienePermiso) {
         return res.json({
           result: false,
           message: "No tienes permisos para acceder a esta página",
