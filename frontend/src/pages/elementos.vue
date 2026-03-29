@@ -5,7 +5,7 @@ import nuevoElemento from "@/pagesComponents/voluntarios/nuevoElemento.vue";
 
 const showFormEdit = ref(false); // Referencia al componente FormFactory
 const data: any = ref(null); // Referencia al componente FormFactory
-const showNuevoElementoModal = ref(false);
+const showFormNew = ref(false);
 
 // prettier-ignore
 const tableHeaders = [
@@ -26,11 +26,13 @@ const apiEndpoints = {
 
 const handleActionsEdit = (dataRow: any) => {
   data.value = { ...dataRow };
+  showFormNew.value = false;
   showFormEdit.value = true;
 };
 
 const handleActionsCreate = () => {
-  showNuevoElementoModal.value = true;
+  showFormEdit.value = false;
+  showFormNew.value = true;
 };
 
 const handleCancelar = () => {
@@ -38,8 +40,8 @@ const handleCancelar = () => {
 };
 
 const handleSubmitNuevoElemento = (payload: any) => {
-  console.log("Nuevo voluntario (visual):", payload);
-  showNuevoElementoModal.value = false;
+  console.log("Nuevo elemento (visual):", payload);
+  showFormNew.value = false;
 };
 
 const configTable = ref({ actions: ["Editar", "Eliminar"] });
@@ -48,19 +50,18 @@ const configTable = ref({ actions: ["Editar", "Eliminar"] });
 <template>
   <!-- prettier-ignore -->
   <ManagerUsuario v-if="showFormEdit" :data="data" @cancelar="handleCancelar" />
+
+  <nuevoElemento
+    v-else-if="showFormNew"
+    :isDialogVisible="showFormNew"
+    @update:isDialogVisible="showFormNew = $event"
+    @submit="handleSubmitNuevoElemento"
+  />
+
   <div v-else>
-    <h1>Voluntarios</h1>
-
-    <nuevoElemento
-      v-if="showNuevoElementoModal"
-      :isDialogVisible="showNuevoElementoModal"
-      @update:isDialogVisible="showNuevoElementoModal = $event"
-      @submit="handleSubmitNuevoElemento"
-    />
-
+    <h1>Elementos</h1>
     <CrudManager
-      v-else
-      title="Voluntarios"
+      title="Elementos"
       :emitEdit="true"
       :formModal="true"
       :softDelete="true"

@@ -28,7 +28,6 @@ export async function fetchMenuItems(): Promise<NavItem[]> {
       method: "GET",
     });
     if (response.data?.result && Array.isArray(response.data.data)) {
-      console.log("Menú recibido del backend:", response.data.data);
       return response.data.data as NavItem[];
     } else {
       return fallbackMenu;

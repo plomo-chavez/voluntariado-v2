@@ -24,8 +24,10 @@ declare module 'vue-router/auto-routes' {
     'catalogos-tipo-usuario': RouteRecordInfo<'catalogos-tipo-usuario', '/catalogos/tipo-usuario', Record<never, never>, Record<never, never>>,
     'delegaciones': RouteRecordInfo<'delegaciones', '/delegaciones', Record<never, never>, Record<never, never>>,
     'denegado': RouteRecordInfo<'denegado', '/denegado', Record<never, never>, Record<never, never>>,
+    'elementos': RouteRecordInfo<'elementos', '/elementos', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
     'logs': RouteRecordInfo<'logs', '/logs', Record<never, never>, Record<never, never>>,
     'usuarios': RouteRecordInfo<'usuarios', '/usuarios', Record<never, never>, Record<never, never>>,
+    'voluntarios': RouteRecordInfo<'voluntarios', '/voluntarios', Record<never, never>, Record<never, never>>,
   }
 }
