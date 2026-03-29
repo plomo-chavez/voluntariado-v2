@@ -349,8 +349,6 @@ const login = async (req, res) => {
 
     await persistLoginLog(sessionMeta);
 
-    console.log("Session Meta:", sessionMeta);
-
     return res.json({
       result: true,
       message: "Usuario encontrado",
@@ -361,7 +359,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error en login:", error);
+    console.log("Error en login:", error);
 
     const sessionMeta = {
       timestamp_utc: new Date().toISOString(),
@@ -428,12 +426,7 @@ const verificarToken = async (req, res) => {
         pagina,
         usuario_id: user.id,
         tipo_id: user.tipo_id,
-        showLogs: true,
       });
-
-      console.log(
-        `Verificando permiso para usuario_id=${user.id}, tipo_id=${user.tipo_id} en página="${pagina}": ${tienePermiso}`,
-      );
 
       if (!tienePermiso) {
         return res.json({
