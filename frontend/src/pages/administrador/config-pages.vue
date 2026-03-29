@@ -55,6 +55,8 @@ const selectedPageIds = ref<number[]>([]);
 const loadingPermisos = ref(false);
 const savingPermisos = ref(false);
 const ALWAYS_VISIBLE_ROUTE_NAMES = new Set(["root"]);
+const hasConfiguredUserPermissions = ref(false);
+const showUserPermissionEditor = ref(false);
 
 // ── tabla de páginas ──────────────────────────────────────────────────────────
 const headersPages = [
@@ -185,16 +187,31 @@ async function onSelectTarget(id: number) {
   selectedTarget.value = id;
   loadingPermisos.value = true;
   selectedPageIds.value = [];
+  hasConfiguredUserPermissions.value = false;
+  showUserPermissionEditor.value = false;
   try {
     const url =
       modoPermisos.value === "tipo"
         ? `/api/config-pages/permisos/tipo/${id}`
         : `/api/config-pages/permisos/usuario/${id}`;
     const res: any = await customRequest({ url, method: "GET" });
-    if (res.data?.result) selectedPageIds.value = res.data.data ?? [];
+    if (res.data?.result) {
+      if (modoPermisos.value === "usuario") {
+        const payload = res.data.data ?? {};
+        selectedPageIds.value = payload.pageIds ?? [];
+        hasConfiguredUserPermissions.value = !!payload.hasConfiguredPermissions;
+        showUserPermissionEditor.value = hasConfiguredUserPermissions.value;
+      } else {
+        selectedPageIds.value = res.data.data ?? [];
+      }
+    }
   } finally {
     loadingPermisos.value = false;
   }
+}
+
+function startUserPermissionCustomization() {
+  showUserPermissionEditor.value = true;
 }
 
 async function savePermisos() {
@@ -280,6 +297,8 @@ const persistableSelectedPageIds = computed<number[]>(() => {
 function onChangeModo() {
   selectedTarget.value = null;
   selectedPageIds.value = [];
+  hasConfiguredUserPermissions.value = false;
+  showUserPermissionEditor.value = false;
 }
 </script>
 
@@ -411,7 +430,10 @@ function onChangeModo() {
                   >
                     <span>Páginas con acceso</span>
                     <VBtn
-                      v-if="selectedTarget"
+                      v-if="
+                        selectedTarget &&
+                        (modoPermisos === 'tipo' || showUserPermissionEditor)
+                      "
                       color="primary"
                       size="small"
                       :loading="savingPermisos"
@@ -441,6 +463,30 @@ function onChangeModo() {
                     indeterminate
                     class="ma-4"
                   />
+
+                  <VCardText
+                    v-else-if="
+                      modoPermisos === 'usuario' &&
+                      selectedTarget &&
+                      !showUserPermissionEditor
+                    "
+                    class="text-medium-emphasis"
+                  >
+                    <div class="mb-3">
+                      Este usuario no tiene permisos personalizados registrados.
+                    </div>
+                    <div class="mb-4">
+                      Actualmente heredará acceso según su tipo de usuario. Si
+                      deseas definir permisos específicos, inicia una
+                      personalización.
+                    </div>
+                    <VBtn
+                      color="primary"
+                      @click="startUserPermissionCustomization"
+                    >
+                      Personalizar acceso
+                    </VBtn>
+                  </VCardText>
 
                   <VList v-else density="compact">
                     <template v-for="parent in pagesTree" :key="parent.id">

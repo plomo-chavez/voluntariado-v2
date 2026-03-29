@@ -22,105 +22,12 @@ const models = db;
 // prettier-ignore
 const getModels = async (catalogo) => {
   switch (catalogo) {
-    case "estados":
-      return {
-        modelo: models.catEstados,
-        modeloString: "catEstados",
-        tabla: "catEstados",
-        isGetAll: catalogo === "estados",
-      };
-    case "municipios":
-      return {
-        modelo: models.catMunicipios,
-        modeloString: "catMunicipios",
-        tabla: "catMunicipios",
-        isGetAll: catalogo === "municipios",
-        include: [{ model: models.catEstados, as: "estado" }],
-        attributes: ["id", "created_at", "updated_at", "deleted_at", "label"],
-      };
-    case "delegaciones":
-      return {
-        modelo: models.catDelegaciones,
-        modeloString: "catDelegaciones",
-        tabla: "catDelegaciones",
-        isGetAll: catalogo === "delegaciones",
-        include: [
-          { model: models.catMunicipios, as: "municipio" },
-          { model: models.catEstados, as: "estado" },
-        ],
-        attributes: [
-          "id",
-          "numDelegacion",
-          "created_at",
-          "updated_at",
-          "deleted_at",
-          "label",
-          "autoridades",
-          "estatus",
-        ],
-      };
     case "tipos-usuarios":
       return {
         modelo: models.catTiposUsuarios,
         modeloString: "catTiposUsuarios",
         tabla: "catTiposUsuarios",
         isGetAll: catalogo === "tipos-usuarios",
-      };
-    case "tipos-servicio":
-      return {
-        modelo: models.catTiposServicios,
-        modeloString: "catTiposServicios",
-        tabla: "catTiposServicios",
-        isGetAll: catalogo === "tipos-servicio",
-      };
-    case "areas":
-      return {
-        modelo: models.catAreas,
-        modeloString: "catAreas",
-        tabla: "catAreas",
-        isGetAll: catalogo === "areas",
-      };
-    case "agresores":
-      return {
-        modelo: models.catAgresores,
-        modeloString: "catAgresores",
-        tabla: "catAgresores",
-        isGetAll: catalogo === "agresores",
-      };
-    case "tipos-agresion":
-      return {
-        modelo: models.catTiposAgresion,
-        modeloString: "catTiposAgresion",
-        tabla: "catTiposAgresion",
-        isGetAll: catalogo === "tipos-agresion",
-      };
-    case "tipos-incidente":
-      return {
-        modelo: models.catTiposIncidente,
-        modeloString: "catTiposIncidente",
-        tabla: "catTiposIncidente",
-        isGetAll: catalogo === "tipos-incidente",
-      };
-    case "tipos-solicitante":
-      return {
-        modelo: models.catTiposSolicitante,
-        modeloString: "catTiposSolicitante",
-        tabla: "catTiposSolicitante",
-        isGetAll: catalogo === "tipos-solicitante",
-      };
-    case "sitios-incidente":
-      return {
-        modelo: models.catSitiosIncidente,
-        modeloString: "catSitiosIncidente",
-        tabla: "catSitiosIncidente",
-        isGetAll: catalogo === "sitios-incidente",
-      };
-    case "horarios":
-      return {
-        modelo: models.catHorarios,
-        modeloString: "catHorarios",
-        tabla: "catHorarios",
-        isGetAll: catalogo === "horarios",
       };
     default:
       return null;

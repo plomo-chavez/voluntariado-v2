@@ -159,61 +159,6 @@ export default {
         await ensureColumns("catTiposUsuarios", catTiposUsuariosColumns);
       }
 
-      const [adminTypeRows] = await queryInterface.sequelize.query(
-        `SELECT id, deleted_at FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
-        {
-          replacements: { label: "Administrador" },
-          transaction,
-        },
-      );
-
-      let adminTypeId;
-
-      if (!adminTypeRows.length) {
-        await queryInterface.sequelize.query(
-          `
-            INSERT INTO catTiposUsuarios (label, estatus, created_at, updated_at, deleted_at)
-            VALUES (:label, :estatus, NOW(), NOW(), NULL)
-          `,
-          {
-            replacements: { label: "Administrador", estatus: 1 },
-            transaction,
-          },
-        );
-
-        const [newAdminTypeRows] = await queryInterface.sequelize.query(
-          `SELECT id FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
-          {
-            replacements: { label: "Administrador" },
-            transaction,
-          },
-        );
-
-        adminTypeId = newAdminTypeRows?.[0]?.id;
-      } else {
-        adminTypeId = adminTypeRows[0].id;
-
-        await queryInterface.sequelize.query(
-          `
-            UPDATE catTiposUsuarios
-            SET estatus = 1,
-                deleted_at = NULL,
-                updated_at = NOW()
-            WHERE id = :id
-          `,
-          {
-            replacements: { id: adminTypeId },
-            transaction,
-          },
-        );
-      }
-
-      if (!adminTypeId) {
-        throw new Error(
-          "No se pudo resolver el id del tipo de usuario 'Administrador'.",
-        );
-      }
-
       const [developerTypeRows] = await queryInterface.sequelize.query(
         `SELECT id, deleted_at FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
         {
@@ -269,6 +214,61 @@ export default {
         );
       }
 
+      const [adminTypeRows] = await queryInterface.sequelize.query(
+        `SELECT id, deleted_at FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
+        {
+          replacements: { label: "Administrador" },
+          transaction,
+        },
+      );
+
+      let adminTypeId;
+
+      if (!adminTypeRows.length) {
+        await queryInterface.sequelize.query(
+          `
+            INSERT INTO catTiposUsuarios (label, estatus, created_at, updated_at, deleted_at)
+            VALUES (:label, :estatus, NOW(), NOW(), NULL)
+          `,
+          {
+            replacements: { label: "Administrador", estatus: 1 },
+            transaction,
+          },
+        );
+
+        const [newAdminTypeRows] = await queryInterface.sequelize.query(
+          `SELECT id FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
+          {
+            replacements: { label: "Administrador" },
+            transaction,
+          },
+        );
+
+        adminTypeId = newAdminTypeRows?.[0]?.id;
+      } else {
+        adminTypeId = adminTypeRows[0].id;
+
+        await queryInterface.sequelize.query(
+          `
+            UPDATE catTiposUsuarios
+            SET estatus = 1,
+                deleted_at = NULL,
+                updated_at = NOW()
+            WHERE id = :id
+          `,
+          {
+            replacements: { id: adminTypeId },
+            transaction,
+          },
+        );
+      }
+
+      if (!adminTypeId) {
+        throw new Error(
+          "No se pudo resolver el id del tipo de usuario 'Administrador'.",
+        );
+      }
+
       const usuariosExists = await hasTable("usuarios");
 
       if (!usuariosExists) {
@@ -277,35 +277,6 @@ export default {
         });
       } else {
         await ensureColumns("usuarios", usuariosColumns);
-      }
-
-      const [adminUserRows] = await queryInterface.sequelize.query(
-        `SELECT id FROM usuarios WHERE nombre = ? AND tipo_id = ? LIMIT 1`,
-        {
-          replacements: ["admin", adminTypeId],
-          transaction,
-        },
-      );
-
-      if (!adminUserRows.length) {
-        await queryInterface.sequelize.query(
-          `
-            INSERT INTO usuarios
-              (nombre, correo, password, tipo_id, estatus, reset_token, created_at, updated_at, deleted_at)
-            VALUES
-              (?, ?, ?, ?, ?, NULL, NOW(), NOW(), NULL)
-          `,
-          {
-            replacements: [
-              "admin",
-              "admin@gmail.com",
-              "$2b$10$tThxwTGuxBfZWM0uh32yqeyBgfkoRb7xk8Mlwjf/C.4AOyQmqJuaG",
-              adminTypeId,
-              1,
-            ],
-            transaction,
-          },
-        );
       }
 
       const [developerUserRows] = await queryInterface.sequelize.query(
@@ -348,6 +319,35 @@ export default {
           `,
           {
             replacements: ["dev", developerTypeId, developerUserRows[0].id],
+            transaction,
+          },
+        );
+      }
+
+      const [adminUserRows] = await queryInterface.sequelize.query(
+        `SELECT id FROM usuarios WHERE nombre = ? AND tipo_id = ? LIMIT 1`,
+        {
+          replacements: ["admin", adminTypeId],
+          transaction,
+        },
+      );
+
+      if (!adminUserRows.length) {
+        await queryInterface.sequelize.query(
+          `
+            INSERT INTO usuarios
+              (nombre, correo, password, tipo_id, estatus, reset_token, created_at, updated_at, deleted_at)
+            VALUES
+              (?, ?, ?, ?, ?, NULL, NOW(), NOW(), NULL)
+          `,
+          {
+            replacements: [
+              "admin",
+              "admin@gmail.com",
+              "$2b$10$tThxwTGuxBfZWM0uh32yqeyBgfkoRb7xk8Mlwjf/C.4AOyQmqJuaG",
+              adminTypeId,
+              1,
+            ],
             transaction,
           },
         );

@@ -168,7 +168,32 @@ export default {
         adminPageId = existingAdminPage.id;
       }
 
-      // ── 5. Seed: hijos de Administrador ──────────────────────────────────────
+      // ── 5. Seed: grupo Catalogos (restringido) ───────────────────────────────
+      const [existingCatalogosPage] = await queryInterface.sequelize.query(
+        "SELECT id FROM config_pages WHERE title = 'Catalogos' AND parent_id IS NULL LIMIT 1",
+        { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
+      );
+
+      if (!existingCatalogosPage) {
+        await queryInterface.bulkInsert(
+          "config_pages",
+          [
+            {
+              title: "Catalogos",
+              route_name: null,
+              icon: "tabler-list-details",
+              parent_id: null,
+              orden: 3,
+              estatus: 1,
+              created_at: new Date(),
+              updated_at: new Date(),
+            },
+          ],
+          { transaction },
+        );
+      }
+
+      // ── 6. Seed: hijos de Administrador ──────────────────────────────────────
       const children = [
         { title: "Usuarios", route_name: "usuarios", icon: null, orden: 1 },
         { title: "Logs", route_name: "logs", icon: null, orden: 2 },
@@ -203,54 +228,86 @@ export default {
         }
       }
 
-      // ── 6. Asignar restricciones a config_pages_usuario ──────────────────────
-      const tiposConAcceso = await queryInterface.sequelize.query(
-        "SELECT id FROM catTiposUsuarios WHERE label IN ('Administrador', 'Desarrollador')",
+      // ── 7. Asignar permisos iniciales por tipo ──────────────────────────────
+      // Regla:
+      // - Desarrollador: todas las páginas activas
+      // - Administrador: solo Home (route_name='root')
+      const [developerTipo] = await queryInterface.sequelize.query(
+        "SELECT id FROM catTiposUsuarios WHERE label = 'Desarrollador' LIMIT 1",
+        { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
+      );
+      const [adminTipo] = await queryInterface.sequelize.query(
+        "SELECT id FROM catTiposUsuarios WHERE label = 'Administrador' LIMIT 1",
         { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
       );
 
-      if (!tiposConAcceso.length) {
+      if (!developerTipo || !adminTipo) {
         throw new Error(
-          "No se encontraron los tipos requeridos en catTiposUsuarios. Ejecuta la migración inicial primero.",
+          "No se encontraron los tipos 'Desarrollador' y 'Administrador'. Ejecuta migración inicial primero.",
         );
       }
 
-      // Obtener todas las páginas restringidas (grupo Administrador + hijos)
-      const restrictedPages = await queryInterface.sequelize.query(
-        "SELECT id FROM config_pages WHERE (title = 'Administrador' AND parent_id IS NULL) OR parent_id = ?",
-        {
-          replacements: [adminPageId],
-          transaction,
-          type: queryInterface.sequelize.QueryTypes.SELECT,
-        },
+      const allPages = await queryInterface.sequelize.query(
+        "SELECT id, route_name FROM config_pages WHERE estatus = 1 AND deleted_at IS NULL",
+        { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
       );
 
+      const rootPage = allPages.find((p) => p.route_name === "root");
       const now = new Date();
-      for (const page of restrictedPages) {
-        for (const tipo of tiposConAcceso) {
-          const [existing] = await queryInterface.sequelize.query(
-            "SELECT id FROM config_pages_usuario WHERE page_id = ? AND tipo_usuario_id = ? LIMIT 1",
-            {
-              replacements: [page.id, tipo.id],
-              transaction,
-              type: queryInterface.sequelize.QueryTypes.SELECT,
-            },
+
+      // Desarrollador -> todas las páginas
+      for (const page of allPages) {
+        const [existing] = await queryInterface.sequelize.query(
+          "SELECT id FROM config_pages_usuario WHERE page_id = ? AND tipo_usuario_id = ? LIMIT 1",
+          {
+            replacements: [page.id, developerTipo.id],
+            transaction,
+            type: queryInterface.sequelize.QueryTypes.SELECT,
+          },
+        );
+
+        if (!existing) {
+          await queryInterface.bulkInsert(
+            "config_pages_usuario",
+            [
+              {
+                page_id: page.id,
+                tipo_usuario_id: developerTipo.id,
+                estatus: 1,
+                created_at: now,
+                updated_at: now,
+              },
+            ],
+            { transaction },
           );
-          if (!existing) {
-            await queryInterface.bulkInsert(
-              "config_pages_usuario",
-              [
-                {
-                  page_id: page.id,
-                  tipo_usuario_id: tipo.id,
-                  estatus: 1,
-                  created_at: now,
-                  updated_at: now,
-                },
-              ],
-              { transaction },
-            );
-          }
+        }
+      }
+
+      // Administrador -> solo root
+      if (rootPage) {
+        const [existingRootAdmin] = await queryInterface.sequelize.query(
+          "SELECT id FROM config_pages_usuario WHERE page_id = ? AND tipo_usuario_id = ? LIMIT 1",
+          {
+            replacements: [rootPage.id, adminTipo.id],
+            transaction,
+            type: queryInterface.sequelize.QueryTypes.SELECT,
+          },
+        );
+
+        if (!existingRootAdmin) {
+          await queryInterface.bulkInsert(
+            "config_pages_usuario",
+            [
+              {
+                page_id: rootPage.id,
+                tipo_usuario_id: adminTipo.id,
+                estatus: 1,
+                created_at: now,
+                updated_at: now,
+              },
+            ],
+            { transaction },
+          );
         }
       }
 

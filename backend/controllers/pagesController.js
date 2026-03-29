@@ -315,7 +315,21 @@ const getPermisosUsuario = async (req, res) => {
        WHERE usuario_id = :userId AND estatus = 1`,
       { replacements: { userId }, type: db.Sequelize.QueryTypes.SELECT },
     );
-    return res.json({ result: true, data: rows.map((r) => r.page_id) });
+
+    const configuredRows = await db.sequelize.query(
+      `SELECT id FROM config_pages_usuario
+       WHERE usuario_id = :userId
+       LIMIT 1`,
+      { replacements: { userId }, type: db.Sequelize.QueryTypes.SELECT },
+    );
+
+    return res.json({
+      result: true,
+      data: {
+        pageIds: rows.map((r) => r.page_id),
+        hasConfiguredPermissions: configuredRows.length > 0,
+      },
+    });
   } catch (error) {
     console.error("Error al obtener permisos por usuario:", error);
     return res.status(500).json({ result: false, message: "Error interno" });
