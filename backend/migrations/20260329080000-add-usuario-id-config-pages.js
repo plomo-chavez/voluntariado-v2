@@ -73,26 +73,25 @@ export default {
             "SELECT id FROM config_pages WHERE route_name = 'administrador-config-pages' LIMIT 1",
             { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
           );
-          const [adminTipo] = await queryInterface.sequelize.query(
-            "SELECT id FROM catTiposUsuarios WHERE label = 'Administrador' LIMIT 1",
+          const tiposConAcceso = await queryInterface.sequelize.query(
+            "SELECT id FROM catTiposUsuarios WHERE label IN ('Administrador', 'Desarrollador')",
             { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
           );
 
-          if (newPage && adminTipo) {
-            await queryInterface.bulkInsert(
-              "config_pages_usuario",
-              [
-                {
-                  page_id: newPage.id,
-                  tipo_usuario_id: adminTipo.id,
-                  usuario_id: null,
-                  estatus: 1,
-                  created_at: new Date(),
-                  updated_at: new Date(),
-                },
-              ],
-              { transaction },
-            );
+          if (newPage && tiposConAcceso.length) {
+            const now = new Date();
+            const rows = tiposConAcceso.map((tipo) => ({
+              page_id: newPage.id,
+              tipo_usuario_id: tipo.id,
+              usuario_id: null,
+              estatus: 1,
+              created_at: now,
+              updated_at: now,
+            }));
+
+            await queryInterface.bulkInsert("config_pages_usuario", rows, {
+              transaction,
+            });
           }
         }
       }

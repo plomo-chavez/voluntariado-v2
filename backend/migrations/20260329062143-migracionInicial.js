@@ -214,6 +214,61 @@ export default {
         );
       }
 
+      const [developerTypeRows] = await queryInterface.sequelize.query(
+        `SELECT id, deleted_at FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
+        {
+          replacements: { label: "Desarrollador" },
+          transaction,
+        },
+      );
+
+      let developerTypeId;
+
+      if (!developerTypeRows.length) {
+        await queryInterface.sequelize.query(
+          `
+            INSERT INTO catTiposUsuarios (label, estatus, created_at, updated_at, deleted_at)
+            VALUES (:label, :estatus, NOW(), NOW(), NULL)
+          `,
+          {
+            replacements: { label: "Desarrollador", estatus: 1 },
+            transaction,
+          },
+        );
+
+        const [newDeveloperTypeRows] = await queryInterface.sequelize.query(
+          `SELECT id FROM catTiposUsuarios WHERE label = :label LIMIT 1`,
+          {
+            replacements: { label: "Desarrollador" },
+            transaction,
+          },
+        );
+
+        developerTypeId = newDeveloperTypeRows?.[0]?.id;
+      } else {
+        developerTypeId = developerTypeRows[0].id;
+
+        await queryInterface.sequelize.query(
+          `
+            UPDATE catTiposUsuarios
+            SET estatus = 1,
+                deleted_at = NULL,
+                updated_at = NOW()
+            WHERE id = :id
+          `,
+          {
+            replacements: { id: developerTypeId },
+            transaction,
+          },
+        );
+      }
+
+      if (!developerTypeId) {
+        throw new Error(
+          "No se pudo resolver el id del tipo de usuario 'Desarrollador'.",
+        );
+      }
+
       const usuariosExists = await hasTable("usuarios");
 
       if (!usuariosExists) {
@@ -248,6 +303,51 @@ export default {
               adminTypeId,
               1,
             ],
+            transaction,
+          },
+        );
+      }
+
+      const [developerUserRows] = await queryInterface.sequelize.query(
+        `SELECT id FROM usuarios WHERE correo = ? LIMIT 1`,
+        {
+          replacements: ["dev@gmail.com"],
+          transaction,
+        },
+      );
+
+      if (!developerUserRows.length) {
+        await queryInterface.sequelize.query(
+          `
+            INSERT INTO usuarios
+              (nombre, correo, password, tipo_id, estatus, reset_token, created_at, updated_at, deleted_at)
+            VALUES
+              (?, ?, ?, ?, ?, NULL, NOW(), NOW(), NULL)
+          `,
+          {
+            replacements: [
+              "dev",
+              "dev@gmail.com",
+              "$2b$10$tb/UyQmvXAz7lQnvHx9tKeI/CDDBnUdb3xzNQBXmLIE3vcjwbZCy6",
+              developerTypeId,
+              1,
+            ],
+            transaction,
+          },
+        );
+      } else {
+        await queryInterface.sequelize.query(
+          `
+            UPDATE usuarios
+            SET nombre = ?,
+                tipo_id = ?,
+                estatus = 1,
+                deleted_at = NULL,
+                updated_at = NOW()
+            WHERE id = ?
+          `,
+          {
+            replacements: ["dev", developerTypeId, developerUserRows[0].id],
             transaction,
           },
         );

@@ -204,17 +204,16 @@ export default {
       }
 
       // ── 6. Asignar restricciones a config_pages_usuario ──────────────────────
-      const [adminTipoRow] = await queryInterface.sequelize.query(
-        "SELECT id FROM catTiposUsuarios WHERE label = 'Administrador' LIMIT 1",
+      const tiposConAcceso = await queryInterface.sequelize.query(
+        "SELECT id FROM catTiposUsuarios WHERE label IN ('Administrador', 'Desarrollador')",
         { transaction, type: queryInterface.sequelize.QueryTypes.SELECT },
       );
 
-      if (!adminTipoRow) {
+      if (!tiposConAcceso.length) {
         throw new Error(
-          "No se encontró el tipo 'Administrador' en catTiposUsuarios. Ejecuta la migración inicial primero.",
+          "No se encontraron los tipos requeridos en catTiposUsuarios. Ejecuta la migración inicial primero.",
         );
       }
-      const adminTipoId = adminTipoRow.id;
 
       // Obtener todas las páginas restringidas (grupo Administrador + hijos)
       const restrictedPages = await queryInterface.sequelize.query(
@@ -228,28 +227,30 @@ export default {
 
       const now = new Date();
       for (const page of restrictedPages) {
-        const [existing] = await queryInterface.sequelize.query(
-          "SELECT id FROM config_pages_usuario WHERE page_id = ? AND tipo_usuario_id = ? LIMIT 1",
-          {
-            replacements: [page.id, adminTipoId],
-            transaction,
-            type: queryInterface.sequelize.QueryTypes.SELECT,
-          },
-        );
-        if (!existing) {
-          await queryInterface.bulkInsert(
-            "config_pages_usuario",
-            [
-              {
-                page_id: page.id,
-                tipo_usuario_id: adminTipoId,
-                estatus: 1,
-                created_at: now,
-                updated_at: now,
-              },
-            ],
-            { transaction },
+        for (const tipo of tiposConAcceso) {
+          const [existing] = await queryInterface.sequelize.query(
+            "SELECT id FROM config_pages_usuario WHERE page_id = ? AND tipo_usuario_id = ? LIMIT 1",
+            {
+              replacements: [page.id, tipo.id],
+              transaction,
+              type: queryInterface.sequelize.QueryTypes.SELECT,
+            },
           );
+          if (!existing) {
+            await queryInterface.bulkInsert(
+              "config_pages_usuario",
+              [
+                {
+                  page_id: page.id,
+                  tipo_usuario_id: tipo.id,
+                  estatus: 1,
+                  created_at: now,
+                  updated_at: now,
+                },
+              ],
+              { transaction },
+            );
+          }
         }
       }
 
