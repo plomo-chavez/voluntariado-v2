@@ -12,20 +12,32 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       estatus: {
-        type: DataTypes.TINYINT,
+        type: DataTypes.TINYINT(1),
+        allowNull: false,
         defaultValue: 1,
       },
       created_at: {
         type: DataTypes.DATE,
+        allowNull: false,
         defaultValue: DataTypes.NOW,
       },
       updated_at: {
         type: DataTypes.DATE,
+        allowNull: false,
         defaultValue: DataTypes.NOW,
+      },
+      deleted_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     {
       tableName: "catTiposUsuarios",
+      paranoid: true,
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      deletedAt: "deleted_at",
     },
   );
 

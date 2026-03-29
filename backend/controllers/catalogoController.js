@@ -13,6 +13,137 @@ const { handleIsAdmin, getAllFromModel } = functionHelper;
 
 const models = db;
 
+const CATALOGS_MAP = {
+  "tipos-usuarios": {
+    modelo: models.catTiposUsuarios,
+    modeloString: "catTiposUsuarios",
+    primaryKey: "id",
+    nameField: "label",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  cargo: {
+    modelo: models.catCargo,
+    modeloString: "catCargo",
+    primaryKey: "id_cargo",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  coordinacion: {
+    modelo: models.catCoordinacion,
+    modeloString: "catCoordinacion",
+    primaryKey: "id_coordinacion",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  delegacion: {
+    modelo: models.catDelegacion,
+    modeloString: "catDelegacion",
+    primaryKey: "id_delegacion",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  dia: {
+    modelo: models.catDia,
+    modeloString: "catDia",
+    primaryKey: "id_dia",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  estado: {
+    modelo: models.catEstado,
+    modeloString: "catEstado",
+    primaryKey: "id_estado",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "estado-civil": {
+    modelo: models.catEstadoCivil,
+    modeloString: "catEstadoCivil",
+    primaryKey: "id_estado_civil",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "grado-estudios": {
+    modelo: models.catGradoEstudios,
+    modeloString: "catGradoEstudios",
+    primaryKey: "id_grado_estudios",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "grupo-sanguineo": {
+    modelo: models.catGrupoSanguineo,
+    modeloString: "catGrupoSanguineo",
+    primaryKey: "id_grupo_sanguineo",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  idioma: {
+    modelo: models.catIdioma,
+    modeloString: "catIdioma",
+    primaryKey: "id_idioma",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "medio-difusion": {
+    modelo: models.catMedioDifusion,
+    modeloString: "catMedioDifusion",
+    primaryKey: "id_medio",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  nacionalidad: {
+    modelo: models.catNacionalidad,
+    modeloString: "catNacionalidad",
+    primaryKey: "id_nacionalidad",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  parentesco: {
+    modelo: models.catParentesco,
+    modeloString: "catParentesco",
+    primaryKey: "id_parentesco",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "tipo-contacto": {
+    modelo: models.catTipoContacto,
+    modeloString: "catTipoContacto",
+    primaryKey: "id_tipo_contacto",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  "tipo-documento": {
+    modelo: models.catTipoDocumento,
+    modeloString: "catTipoDocumento",
+    primaryKey: "id_tipo_documento",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+  turno: {
+    modelo: models.catTurno,
+    modeloString: "catTurno",
+    primaryKey: "id_turno",
+    nameField: "nombre",
+    supportsStatus: true,
+    supportsSoftDelete: true,
+  },
+};
+
 /**
  * ==============================
  * MODELS MAP
@@ -21,17 +152,7 @@ const models = db;
 
 // prettier-ignore
 const getModels = async (catalogo) => {
-  switch (catalogo) {
-    case "tipos-usuarios":
-      return {
-        modelo: models.catTiposUsuarios,
-        modeloString: "catTiposUsuarios",
-        tabla: "catTiposUsuarios",
-        isGetAll: catalogo === "tipos-usuarios",
-      };
-    default:
-      return null;
-  }
+  return CATALOGS_MAP[catalogo] || null;
 };
 
 /**
@@ -87,19 +208,28 @@ const handleGetAll = async (req, dataModels) => {
 };
 
 const handleCreateOrUpdate = async (req, dataModels) => {
-  let data = req.body;
-  const modoCreacion = !data?.id;
+  let data = req.body || {};
+  const { primaryKey, nameField } = dataModels;
 
-  if (data.label) {
+  if (data?.[primaryKey] && !data.id) {
+    data.id = data[primaryKey];
+  }
+
+  const modoCreacion = !data?.id;
+  const valueToValidate = data?.[nameField];
+
+  if (valueToValidate) {
     const existeRecord = await validateRecord(dataModels.modeloString, {
-      label: data.label,
-      ...(!modoCreacion && { id: { [Op.ne]: data.id } }),
+      [nameField]: valueToValidate,
+      ...(!modoCreacion && {
+        [primaryKey]: { [Op.ne]: data.id },
+      }),
     });
 
     if (!existeRecord.result) {
       return {
         result: false,
-        message: `El registro con label '${data.label}' ya existe en el catálogo '${dataModels.modeloString}'.`,
+        message: `El registro con ${nameField} '${valueToValidate}' ya existe en el catálogo '${dataModels.modeloString}'.`,
       };
     }
   }
@@ -134,7 +264,7 @@ const handleDelete = async (req, res, softDelete = false) => {
     });
   }
 
-  const { id } = req.body;
+  const id = req.body?.id || req.body?.[dataModels.primaryKey];
 
   if (!id) {
     return res.json({
@@ -143,8 +273,24 @@ const handleDelete = async (req, res, softDelete = false) => {
     });
   }
 
-  if (softDelete) {
+  if (softDelete && dataModels.supportsSoftDelete) {
     return res.json(await processSoftDelete(dataModels.modelo, id));
+  }
+
+  if (!dataModels.supportsStatus) {
+    const record = await dataModels.modelo.findByPk(id);
+    if (!record) {
+      return res.json({
+        result: false,
+        message: "Registro no encontrado",
+      });
+    }
+
+    await record.destroy();
+    return res.json({
+      result: true,
+      message: "Registro eliminado con éxito",
+    });
   }
 
   return res.json(
