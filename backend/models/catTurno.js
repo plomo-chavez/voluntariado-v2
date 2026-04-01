@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const catTurno = sequelize.define(
     "catTurno",
     {
-      id_turno: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catTurno.associate = (models) => {
     catTurno.hasMany(models.volDisponibilidad, {
-      foreignKey: "id_turno",
+      foreignKey: "turno_id",
       as: "disponibilidades",
     });
   };

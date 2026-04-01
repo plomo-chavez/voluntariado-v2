@@ -3,29 +3,29 @@ import CrudManager from "@/components/apps/VistaUno.vue";
 
 // prettier-ignore
 const formSchema = [
-  { label: "Nombre", type: "text", model: "nombre", placeholder: "Ingresa el nombre" },
+  { label: "Label", type: "text", model: "label", placeholder: "Ingresa el Label" },
   { label: "Estatus", type: "switch", model: "estatus" },
 ];
 
 const tableHeaders = [
-  { title: "ID", key: "id_coordinacion" },
-  { title: "Nombre", key: "nombre" },
+  { title: "ID", key: "id" },
+  { title: "Label", key: "label" },
   { title: "Estatus", key: "estatus" },
   { title: "Creación", key: "created_at" },
 ];
 
 // prettier-ignore
 const apiEndpoints = {
-  create: "/api/catalogo/coordinacion",
-  update: "/api/catalogo/coordinacion",
-  fetch:  "/api/catalogo/coordinacion/get",
-  delete: "/api/catalogo/coordinacion/eliminar",
+  create: "/api/catalogo/areas",
+  update: "/api/catalogo/areas",
+  fetch:  "/api/catalogo/areas/get",
+  delete: "/api/catalogo/areas/eliminar",
 };
 </script>
 
 <template>
   <CrudManager
-    title="Catálogo de coordinaciones"
+    title="Catálogo de áreas"
     :formModal="true"
     :estatusDefault="true"
     :softDelete="true"

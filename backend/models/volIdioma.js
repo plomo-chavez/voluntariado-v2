@@ -11,12 +11,12 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: "CASCADE",
       },
-      id_idioma: {
+      idioma_id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
           model: "cat_idioma",
-          key: "id_idioma",
+          key: "id",
         },
       },
       nivel_escrito: {
@@ -41,7 +41,7 @@ export default (sequelize, DataTypes) => {
       onDelete: "CASCADE",
     });
     volIdioma.belongsTo(models.catIdioma, {
-      foreignKey: "id_idioma",
+      foreignKey: "idioma_id",
       as: "idioma",
     });
   };

@@ -242,6 +242,55 @@ async function savePermisos() {
 
 function togglePage(id: number, managedBySystem = false) {
   if (managedBySystem) return;
+
+  // Buscar si es padre
+  const parent = pagesTree.value.find((p) => p.id === id);
+  if (parent) {
+    // Es padre, alternar el padre y todos los hijos
+    const isParentChecked = isChecked(parent.id!);
+    if (isParentChecked) {
+      // Deseleccionar padre e hijos
+      selectedPageIds.value = selectedPageIds.value.filter(
+        (pid) =>
+          pid !== parent.id && !parent.children.some((c) => c.id === pid),
+      );
+    } else {
+      // Seleccionar padre e hijos (solo los que no estén ya seleccionados)
+      if (selectedPageIds.value.indexOf(parent.id!) === -1)
+        selectedPageIds.value.push(parent.id!);
+      parent.children.forEach((child) => {
+        if (selectedPageIds.value.indexOf(child.id!) === -1)
+          selectedPageIds.value.push(child.id!);
+      });
+    }
+    return;
+  }
+
+  // Si es hijo, alternar hijo y actualizar padre
+  const childParent = pagesTree.value.find((p) =>
+    p.children.some((c) => c.id === id),
+  );
+  if (childParent) {
+    const idx = selectedPageIds.value.indexOf(id);
+    if (idx === -1) selectedPageIds.value.push(id);
+    else selectedPageIds.value.splice(idx, 1);
+
+    // Si todos los hijos están seleccionados, seleccionar el padre
+    const allChildrenChecked = childParent.children.every((child) =>
+      selectedPageIds.value.includes(child.id!),
+    );
+    if (allChildrenChecked) {
+      if (!selectedPageIds.value.includes(childParent.id!))
+        selectedPageIds.value.push(childParent.id!);
+    } else {
+      // Si se deselecciona algún hijo, deseleccionar el padre
+      const pidx = selectedPageIds.value.indexOf(childParent.id!);
+      if (pidx !== -1) selectedPageIds.value.splice(pidx, 1);
+    }
+    return;
+  }
+
+  // Si no es padre ni hijo, alternar normal
   const idx = selectedPageIds.value.indexOf(id);
   if (idx === -1) selectedPageIds.value.push(id);
   else selectedPageIds.value.splice(idx, 1);
@@ -256,7 +305,7 @@ function isAlwaysVisiblePage(page: Page) {
 }
 
 function isSystemManagedParent(parent: { children?: Page[] }) {
-  return (parent.children?.length ?? 0) > 0;
+  return false;
 }
 
 // Árbol plano agrupado por parent para mostrar en la lista de permisos

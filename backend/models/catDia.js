@@ -2,13 +2,17 @@ export default (sequelize, DataTypes) => {
   const catDia = sequelize.define(
     "catDia",
     {
-      id_dia: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
-        type: DataTypes.STRING(20),
+      label: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      label: {
+        type: DataTypes.STRING(100),
         allowNull: true,
       },
       estatus: {
@@ -43,7 +47,7 @@ export default (sequelize, DataTypes) => {
 
   catDia.associate = (models) => {
     catDia.hasMany(models.volDisponibilidad, {
-      foreignKey: "id_dia",
+      foreignKey: "dia_id",
       as: "disponibilidades",
     });
   };

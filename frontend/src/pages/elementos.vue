@@ -18,10 +18,10 @@ const tableHeaders = [
 
 const apiEndpoints = {
   // fetch: "/api/test", // Endpoint para obtener datos
-  fetch: "/api/usuarios", // Endpoint para obtener datos
-  create: "/api/usuario", // Endpoint para crear un elemento
-  update: "/api/usuarios", // Endpoint para actualizar un elemento
-  delete: "/api/usuario/eliminar", // Endpoint para eliminar un elemento
+  fetch: "/api/elementos", // Endpoint para obtener datos
+  create: "/api/elemento", // Endpoint para crear un elemento
+  update: "/api/elemento", // Endpoint para actualizar un elemento
+  delete: "/api/elemento/eliminar", // Endpoint para eliminar un elemento
 };
 
 const handleActionsEdit = (dataRow: any) => {

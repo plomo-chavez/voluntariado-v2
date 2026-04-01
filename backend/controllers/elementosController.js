@@ -29,23 +29,18 @@ function transformElementoData(data) {
   tmp.curp = (tmp.curp || "").toUpperCase().trim();
 
   if (tmp.estado?.id) {
-    tmp.id_estado = tmp.estado.id;
+    tmp.estado_id = tmp.estado.id;
     delete tmp.estado;
   }
 
   if (tmp.delegacion?.id) {
-    tmp.id_delegacion = tmp.delegacion.id;
+    tmp.delegacion_id = tmp.delegacion.id;
     delete tmp.delegacion;
   }
 
-  // El modelo vol_info no tiene columna de area por ahora.
-  if (tmp.area) {
+  if (tmp.area?.id) {
+    tmp.area_id = tmp.area.id;
     delete tmp.area;
-  }
-
-  // Compatibilidad con updateRecord (espera data.id)
-  if (tmp.id_voluntario && !tmp.id) {
-    tmp.id = tmp.id_voluntario;
   }
 
   return tmp;
@@ -53,7 +48,7 @@ function transformElementoData(data) {
 
 async function saveElemento(data) {
   try {
-    const isCreate = !data.id && !data.id_voluntario;
+    const isCreate = !data.id && !data.id;
 
     const validation = validateElementoData(data);
     if (!validation.result) return validation;
@@ -61,8 +56,8 @@ async function saveElemento(data) {
     const existeCurp = await validateRecord("volInfo", {
       curp: data.curp,
       ...(!isCreate && {
-        id_voluntario: {
-          [Op.ne]: data.id || data.id_voluntario,
+        id: {
+          [Op.ne]: data.id || data.id,
         },
       }),
     });
@@ -77,6 +72,7 @@ async function saveElemento(data) {
 
     const payload = transformElementoData(data);
 
+    console.log("[payload] =>", payload);
     const elemento = isCreate
       ? await createRecord("volInfo", payload)
       : await updateRecord("volInfo", payload);
@@ -89,11 +85,13 @@ async function saveElemento(data) {
       data: elemento,
     };
   } catch (e) {
-    return {
+    let errorMessage = {
       result: false,
       message: "Error al guardar el elemento: " + e.message,
       data: [],
     };
+    console.log("[errorMessage] =>", errorMessage);
+    return errorMessage;
   }
 }
 
@@ -104,15 +102,19 @@ const getAll = async (req, res) => {
     const pageSize = parseInt(req.body.pageSize) || 10;
 
     const attributes = [
-      "id_voluntario",
+      "id",
       "curp",
       "nombre",
       "segundo_nombre",
       "primer_apellido",
       "segundo_apellido",
       "correo",
-      "id_estado",
-      "id_delegacion",
+      "estado_id",
+      "delegacion_id",
+      "estatus",
+      "created_at",
+      "updated_at",
+      "deleted_at",
     ];
 
     const response = await getAllFromModel({
@@ -177,7 +179,7 @@ const softDelete = async (req, res) => {
   return res.json(response);
 };
 
-const verifficar = async (req, res) => {
+const verificar = async (req, res) => {
   try {
     const curp = (req.body?.curp || "").trim().toUpperCase();
 
@@ -191,23 +193,28 @@ const verifficar = async (req, res) => {
 
     const elemento = await volInfo.findOne({
       where: { curp },
-      attributes: ["id_voluntario", "curp", "nombre", "primer_apellido"],
+      attributes: ["id", "curp", "nombre", "primer_apellido"],
       paranoid: false,
+    });
+
+    console.log("[verificar] =>", {
+      curp,
+      elemento,
+      exists: !!elemento,
     });
 
     return res.json({
       result: true,
-      exists: !!elemento,
       message: elemento
         ? "La CURP ya está registrada"
         : "La CURP está disponible",
-      data: elemento || null,
+      data: !!elemento,
     });
   } catch (error) {
     return res.json({
       result: false,
-      exists: false,
       message: "Error al verificar CURP: " + error.message,
+      data: false,
     });
   }
 };
@@ -217,5 +224,5 @@ export default {
   createOrUpdate,
   delete: remove,
   softDelete,
-  verifficar,
+  verificar,
 };

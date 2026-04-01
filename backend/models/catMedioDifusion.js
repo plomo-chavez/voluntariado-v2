@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catMedioDifusion = sequelize.define(
     "catMedioDifusion",
     {
-      id_medio: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catMedioDifusion.associate = (models) => {
     catMedioDifusion.hasMany(models.volInfoExtra, {
-      foreignKey: "id_medio",
+      foreignKey: "medio_difusion_id",
       as: "informacionExtra",
     });
   };

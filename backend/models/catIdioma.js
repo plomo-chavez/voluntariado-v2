@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catIdioma = sequelize.define(
     "catIdioma",
     {
-      id_idioma: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catIdioma.associate = (models) => {
     catIdioma.hasMany(models.volIdioma, {
-      foreignKey: "id_idioma",
+      foreignKey: "idioma_id",
       as: "voluntariosIdiomas",
     });
   };

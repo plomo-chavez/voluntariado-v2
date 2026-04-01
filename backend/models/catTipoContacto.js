@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catTipoContacto = sequelize.define(
     "catTipoContacto",
     {
-      id_tipo_contacto: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(20),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catTipoContacto.associate = (models) => {
     catTipoContacto.hasMany(models.volContacto, {
-      foreignKey: "id_tipo_contacto",
+      foreignKey: "tipo_contacto_id",
       as: "contactos",
     });
   };

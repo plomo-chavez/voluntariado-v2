@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catParentesco = sequelize.define(
     "catParentesco",
     {
-      id_parentesco: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catParentesco.associate = (models) => {
     catParentesco.hasMany(models.volContactoEmergencia, {
-      foreignKey: "id_parentesco",
+      foreignKey: "parentesco_id",
       as: "contactosEmergencia",
     });
   };

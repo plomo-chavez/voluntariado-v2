@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catGradoEstudios = sequelize.define(
     "catGradoEstudios",
     {
-      id_grado_estudios: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catGradoEstudios.associate = (models) => {
     catGradoEstudios.hasMany(models.volDatosProfesionales, {
-      foreignKey: "id_grado_estudios",
+      foreignKey: "grado_estudios_id",
       as: "datosProfesionales",
     });
   };

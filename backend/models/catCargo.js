@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catCargo = sequelize.define(
     "catCargo",
     {
-      id_cargo: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -42,10 +42,10 @@ export default (sequelize, DataTypes) => {
   );
 
   catCargo.associate = (models) => {
-    catCargo.hasMany(models.volHistorial, {
-      foreignKey: "id_cargo",
-      as: "historiales",
-    });
+    // catCargo.hasMany(models.volHistorial, {
+    //   foreignKey: "cargo_id",
+    //   as: "historiales",
+    // });
   };
 
   return catCargo;

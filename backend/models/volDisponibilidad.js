@@ -2,34 +2,34 @@ export default (sequelize, DataTypes) => {
   const volDisponibilidad = sequelize.define(
     "volDisponibilidad",
     {
-      id_disponibilidad: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      id_voluntario: {
+      voluntario_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      id_dia: {
+      dia_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "cat_dia",
-          key: "id_dia",
+          key: "id",
         },
       },
-      id_turno: {
+      turno_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "cat_turno",
-          key: "id_turno",
+          key: "id",
         },
       },
       horario: {
@@ -45,16 +45,16 @@ export default (sequelize, DataTypes) => {
 
   volDisponibilidad.associate = (models) => {
     volDisponibilidad.belongsTo(models.volInfo, {
-      foreignKey: "id_voluntario",
+      foreignKey: "voluntario_id",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volDisponibilidad.belongsTo(models.catDia, {
-      foreignKey: "id_dia",
+      foreignKey: "dia_id",
       as: "dia",
     });
     volDisponibilidad.belongsTo(models.catTurno, {
-      foreignKey: "id_turno",
+      foreignKey: "turno_id",
       as: "turno",
     });
   };

@@ -7,21 +7,21 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      id_voluntario: {
+      voluntario_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      id_medio: {
+      medio_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "cat_medio_difusion",
-          key: "id_medio",
+          key: "id",
         },
       },
       otro_medio: {

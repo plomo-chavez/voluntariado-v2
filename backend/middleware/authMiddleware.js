@@ -14,8 +14,18 @@ const getUserToken = async (userID) => {
 };
 
 const authMiddleware = async (req, res, next) => {
+  const debug = process.env.DEBUG_REQUEST_AUTH === "true";
   const authHeader = req.headers.authorization;
+  let logMsg = "";
+  let logData = {};
   if (!authHeader) {
+    logMsg = "[AUTH DENIED] Token no proporcionado";
+    logData = {
+      url: req.originalUrl,
+      method: req.method,
+      headers: req.headers,
+    };
+    if (debug) console.log(logMsg, logData);
     return res.json({ message: "Token no proporcionado" });
   }
 
@@ -23,15 +33,35 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     if (token == "dev-token") {
-      req.user = await getUserToken(1); // Agregar los datos del usuario al objeto de la solicitud
-      next(); // Continuar con la siguiente función
+      req.user = await getUserToken(1);
+      logMsg = "[AUTH GRANTED] Acceso concedido";
+      logData = {
+        user: req.user,
+        url: req.originalUrl,
+        method: req.method,
+      };
+      if (debug) console.log(logMsg, logData);
+      next();
     } else {
-      // Verifica y decodifica el token JWT
       const decoded = verifyEncryptedJWT(token);
-      req.user = await getUserToken(decoded.id); // Agregar los datos del usuario al objeto de la solicitud
-      next(); // Continuar con la siguiente función
+      req.user = await getUserToken(decoded.id);
+      logMsg = "[AUTH GRANTED] Acceso concedido";
+      logData = {
+        user: req.user,
+        url: req.originalUrl,
+        method: req.method,
+      };
+      if (debug) console.log(logMsg, logData);
+      next();
     }
   } catch (error) {
+    logMsg = "[AUTH DENIED] Token inválido o expirado";
+    logData = {
+      url: req.originalUrl,
+      method: req.method,
+      headers: req.headers,
+    };
+    if (debug) console.log(logMsg, logData);
     return res.json({ message: "Token inválido o expirado" });
   }
 };

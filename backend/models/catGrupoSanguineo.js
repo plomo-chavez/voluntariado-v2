@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const catGrupoSanguineo = sequelize.define(
     "catGrupoSanguineo",
     {
-      id_grupo_sanguineo: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catGrupoSanguineo.associate = (models) => {
     catGrupoSanguineo.hasMany(models.volInfo, {
-      foreignKey: "id_grupo_sanguineo",
+      foreignKey: "grupo_sanguineo_id",
       as: "voluntarios",
     });
   };

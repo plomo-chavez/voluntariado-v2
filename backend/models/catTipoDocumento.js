@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catTipoDocumento = sequelize.define(
     "catTipoDocumento",
     {
-      id_tipo_documento: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
@@ -15,6 +15,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TINYINT(1),
         allowNull: false,
         defaultValue: 1,
+      },
+      label: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
       },
       created_at: {
         type: DataTypes.DATE,
@@ -43,7 +47,7 @@ export default (sequelize, DataTypes) => {
 
   catTipoDocumento.associate = (models) => {
     catTipoDocumento.hasMany(models.volDocumento, {
-      foreignKey: "id_tipo_documento",
+      foreignKey: "tipo_documento_id",
       as: "documentos",
     });
   };

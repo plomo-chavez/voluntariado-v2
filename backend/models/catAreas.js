@@ -1,13 +1,13 @@
 export default (sequelize, DataTypes) => {
-  const catCoordinacion = sequelize.define(
-    "catCoordinacion",
+  const catAreas = sequelize.define(
+    "catAreas",
     {
-      id_coordinacion: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -32,7 +32,7 @@ export default (sequelize, DataTypes) => {
       },
     },
     {
-      tableName: "cat_coordinacion",
+      tableName: "cat_areas",
       paranoid: true,
       timestamps: true,
       createdAt: "created_at",
@@ -41,12 +41,7 @@ export default (sequelize, DataTypes) => {
     },
   );
 
-  catCoordinacion.associate = (models) => {
-    catCoordinacion.hasMany(models.volHistorial, {
-      foreignKey: "id_coordinacion",
-      as: "historiales",
-    });
-  };
+  catAreas.associate = (models) => {};
 
-  return catCoordinacion;
+  return catAreas;
 };

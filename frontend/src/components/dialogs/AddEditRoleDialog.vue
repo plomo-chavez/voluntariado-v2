@@ -1,171 +1,259 @@
 <script setup lang="ts">
-import { VForm } from 'vuetify/components/VForm'
+import { VForm } from "vuetify/components/VForm";
 
 interface Permission {
-  name: string
-  read: boolean
-  write: boolean
-  create: boolean
+  name: string;
+  read: boolean;
+  write: boolean;
+  create: boolean;
+  children?: Permission[];
 }
 
 interface Roles {
-  name: string
-  permissions: Permission[]
+  name: string;
+  permissions: Permission[];
 }
 
 interface Props {
-  rolePermissions?: Roles
-  isDialogVisible: boolean
+  rolePermissions?: Roles;
+  isDialogVisible: boolean;
 }
 interface Emit {
-  (e: 'update:isDialogVisible', value: boolean): void
-  (e: 'update:rolePermissions', value: Roles): void
+  (e: "update:isDialogVisible", value: boolean): void;
+  (e: "update:rolePermissions", value: Roles): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   rolePermissions: () => ({
-    name: '',
+    name: "",
     permissions: [],
   }),
-})
+});
 
-const emit = defineEmits<Emit>()
+const emit = defineEmits<Emit>();
 
 // 👉 Permission List
 const permissions = ref<Permission[]>([
   {
-    name: 'User Management',
+    name: "User Management",
+    read: false,
+    write: false,
+    create: false,
+    children: [
+      {
+        name: "Create User",
+        read: false,
+        write: false,
+        create: false,
+      },
+      {
+        name: "Edit User",
+        read: false,
+        write: false,
+        create: false,
+      },
+      {
+        name: "Delete User",
+        read: false,
+        write: false,
+        create: false,
+      },
+    ],
+  },
+  {
+    name: "Content Management",
+    read: false,
+    write: false,
+    create: false,
+    children: [
+      {
+        name: "Create Content",
+        read: false,
+        write: false,
+        create: false,
+      },
+      {
+        name: "Edit Content",
+        read: false,
+        write: false,
+        create: false,
+      },
+    ],
+  },
+  {
+    name: "Disputes Management",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'Content Management',
+    name: "Database Management",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'Disputes Management',
+    name: "Financial Management",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'Database Management',
+    name: "Reporting",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'Financial Management',
+    name: "API Control",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'Reporting',
+    name: "Repository Management",
     read: false,
     write: false,
     create: false,
   },
   {
-    name: 'API Control',
+    name: "Payroll",
     read: false,
     write: false,
     create: false,
   },
-  {
-    name: 'Repository Management',
-    read: false,
-    write: false,
-    create: false,
-  },
-  {
-    name: 'Payroll',
-    read: false,
-    write: false,
-    create: false,
-  },
-])
+]);
 
-const isSelectAll = ref(false)
-const role = ref('')
-const refPermissionForm = ref<VForm>()
+const isSelectAll = ref(false);
+const role = ref("");
+const refPermissionForm = ref<VForm>();
 
 const checkedCount = computed(() => {
-  let counter = 0
+  let counter = 0;
 
-  permissions.value.forEach(permission => {
+  permissions.value.forEach((permission) => {
     Object.entries(permission).forEach(([key, value]) => {
-      if (key !== 'name' && value)
-        counter++
-    })
-  })
+      if (key !== "name" && value) counter++;
+    });
+  });
 
-  return counter
-})
+  return counter;
+});
 
-const isIndeterminate = computed(() => checkedCount.value > 0 && checkedCount.value < (permissions.value.length * 3))
+const isIndeterminate = computed(
+  () =>
+    checkedCount.value > 0 && checkedCount.value < permissions.value.length * 3,
+);
+
+// Función para seleccionar/deseleccionar todos los hijos de un permiso
+function setChildren(
+  permission: Permission,
+  val: boolean,
+  key?: "read" | "write" | "create",
+) {
+  if (permission.children) {
+    permission.children.forEach((child) => {
+      if (key) {
+        (child as any)[key] = val;
+      } else {
+        child.read = val;
+        child.write = val;
+        child.create = val;
+      }
+    });
+  }
+}
+
+// Cuando se selecciona un padre, selecciona/deselecciona todos los hijos
+function onParentCheck(
+  permission: Permission,
+  key: "read" | "write" | "create",
+  val: boolean,
+) {
+  (permission as any)[key] = val;
+  setChildren(permission, val, key);
+}
+
+// Cuando se selecciona un hijo, si todos los hijos están seleccionados, selecciona el padre; si no, lo deselecciona
+function onChildCheck(
+  permission: Permission,
+  key: "read" | "write" | "create",
+) {
+  if (!permission.children) return;
+  const allChecked = permission.children.every((child) => (child as any)[key]);
+  (permission as any)[key] = allChecked;
+}
 
 // select all
-watch(isSelectAll, val => {
-  permissions.value = permissions.value.map(permission => ({
-    ...permission,
-    read: val,
-    write: val,
-    create: val,
-  }))
-})
+watch(isSelectAll, (val) => {
+  permissions.value = permissions.value.map((permission) => {
+    const updated = {
+      ...permission,
+      read: val,
+      write: val,
+      create: val,
+    };
+    setChildren(updated, val);
+    return updated;
+  });
+});
 
 // if Indeterminate is false, then set isSelectAll to false
 watch(isIndeterminate, () => {
-  if (!isIndeterminate.value)
-    isSelectAll.value = false
-})
+  if (!isIndeterminate.value) isSelectAll.value = false;
+});
 
 // if all permissions are checked, then set isSelectAll to true
-watch(permissions, () => {
-  if (checkedCount.value === (permissions.value.length * 3))
-    isSelectAll.value = true
-}, { deep: true })
+watch(
+  permissions,
+  () => {
+    if (checkedCount.value === permissions.value.length * 3)
+      isSelectAll.value = true;
+  },
+  { deep: true },
+);
 
 // if rolePermissions is not empty, then set permissions
-watch(() => props, () => {
-  if (props.rolePermissions && props.rolePermissions.permissions.length) {
-    role.value = props.rolePermissions.name
-    permissions.value = permissions.value.map(permission => {
-      const rolePermission = props.rolePermissions?.permissions.find(item => item.name === permission.name)
+watch(
+  () => props,
+  () => {
+    if (props.rolePermissions && props.rolePermissions.permissions.length) {
+      role.value = props.rolePermissions.name;
+      permissions.value = permissions.value.map((permission) => {
+        const rolePermission = props.rolePermissions?.permissions.find(
+          (item) => item.name === permission.name,
+        );
 
-      if (rolePermission) {
-        return {
-          ...permission,
-          ...rolePermission,
+        if (rolePermission) {
+          return {
+            ...permission,
+            ...rolePermission,
+          };
         }
-      }
 
-      return permission
-    })
-  }
-})
+        return permission;
+      });
+    }
+  },
+);
 
 const onSubmit = () => {
   const rolePermissions = {
     name: role.value,
     permissions: permissions.value,
-  }
+  };
 
-  emit('update:rolePermissions', rolePermissions)
-  emit('update:isDialogVisible', false)
-  isSelectAll.value = false
-  refPermissionForm.value?.reset()
-}
+  emit("update:rolePermissions", rolePermissions);
+  emit("update:isDialogVisible", false);
+  isSelectAll.value = false;
+  refPermissionForm.value?.reset();
+};
 
 const onReset = () => {
-  emit('update:isDialogVisible', false)
-  isSelectAll.value = false
-  refPermissionForm.value?.reset()
-}
+  emit("update:isDialogVisible", false);
+  isSelectAll.value = false;
+  refPermissionForm.value?.reset();
+};
 </script>
 
 <template>
@@ -181,11 +269,9 @@ const onReset = () => {
       <VCardText>
         <!-- 👉 Title -->
         <h4 class="text-h4 text-center mb-2">
-          {{ props.rolePermissions.name ? 'Edit' : 'Add New' }} Role
+          {{ props.rolePermissions.name ? "Edit" : "Add New" }} Role
         </h4>
-        <p class="text-body-1 text-center mb-6">
-          Set Role Permissions
-        </p>
+        <p class="text-body-1 text-center mb-6">Set Role Permissions</p>
 
         <!-- 👉 Form -->
         <VForm ref="refPermissionForm">
@@ -196,9 +282,7 @@ const onReset = () => {
             placeholder="Enter Role Name"
           />
 
-          <h5 class="text-h5 my-6">
-            Role Permissions
-          </h5>
+          <h5 class="text-h5 my-6">Role Permissions</h5>
 
           <!-- 👉 Role Permissions -->
 
@@ -206,9 +290,7 @@ const onReset = () => {
             <!-- 👉 Admin  -->
             <tr>
               <td>
-                <h6 class="text-h6">
-                  Administrator Access
-                </h6>
+                <h6 class="text-h6">Administrator Access</h6>
               </td>
               <td colspan="3">
                 <div class="d-flex justify-end">
@@ -222,10 +304,7 @@ const onReset = () => {
             </tr>
 
             <!-- 👉 Other permission loop -->
-            <template
-              v-for="permission in permissions"
-              :key="permission.name"
-            >
+            <template v-for="permission in permissions" :key="permission.name">
               <tr>
                 <td>
                   <h6 class="text-h6">
@@ -235,7 +314,10 @@ const onReset = () => {
                 <td>
                   <div class="d-flex justify-end">
                     <VCheckbox
-                      v-model="permission.read"
+                      :model-value="permission.read"
+                      @update:model-value="
+                        (val) => onParentCheck(permission, 'read', val)
+                      "
                       label="Read"
                     />
                   </div>
@@ -243,7 +325,10 @@ const onReset = () => {
                 <td>
                   <div class="d-flex justify-end">
                     <VCheckbox
-                      v-model="permission.write"
+                      :model-value="permission.write"
+                      @update:model-value="
+                        (val) => onParentCheck(permission, 'write', val)
+                      "
                       label="Write"
                     />
                   </div>
@@ -251,26 +336,73 @@ const onReset = () => {
                 <td>
                   <div class="d-flex justify-end">
                     <VCheckbox
-                      v-model="permission.create"
+                      :model-value="permission.create"
+                      @update:model-value="
+                        (val) => onParentCheck(permission, 'create', val)
+                      "
                       label="Create"
                     />
                   </div>
                 </td>
               </tr>
+              <!-- Renderizar hijos si existen -->
+              <template v-if="permission.children">
+                <tr v-for="child in permission.children" :key="child.name">
+                  <td style="padding-left: 2rem">
+                    <span class="text-body-1">↳ {{ child.name }}</span>
+                  </td>
+                  <td>
+                    <div class="d-flex justify-end">
+                      <VCheckbox
+                        :model-value="child.read"
+                        @update:model-value="
+                          (val) => {
+                            child.read = val;
+                            onChildCheck(permission, 'read');
+                          }
+                        "
+                        label="Read"
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex justify-end">
+                      <VCheckbox
+                        :model-value="child.write"
+                        @update:model-value="
+                          (val) => {
+                            child.write = val;
+                            onChildCheck(permission, 'write');
+                          }
+                        "
+                        label="Write"
+                      />
+                    </div>
+                  </td>
+                  <td>
+                    <div class="d-flex justify-end">
+                      <VCheckbox
+                        :model-value="child.create"
+                        @update:model-value="
+                          (val) => {
+                            child.create = val;
+                            onChildCheck(permission, 'create');
+                          }
+                        "
+                        label="Create"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </template>
           </VTable>
 
           <!-- 👉 Actions button -->
           <div class="d-flex align-center justify-center gap-4">
-            <VBtn @click="onSubmit">
-              Submit
-            </VBtn>
+            <VBtn @click="onSubmit"> Submit </VBtn>
 
-            <VBtn
-              color="secondary"
-              variant="tonal"
-              @click="onReset"
-            >
+            <VBtn color="secondary" variant="tonal" @click="onReset">
               Cancel
             </VBtn>
           </div>
@@ -283,7 +415,8 @@ const onReset = () => {
 <style lang="scss">
 .permission-table {
   td {
-    border-block-end: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    border-block-end: 1px solid
+      rgba(var(--v-border-color), var(--v-border-opacity));
     padding-block: 0.5rem;
 
     .v-checkbox {

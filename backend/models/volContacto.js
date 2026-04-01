@@ -7,21 +7,21 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      id_voluntario: {
+      voluntario_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      id_tipo_contacto: {
+      tipo_contacto_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "cat_tipo_contacto",
-          key: "id_tipo_contacto",
+          key: "id",
         },
       },
       numero: {
@@ -37,12 +37,12 @@ export default (sequelize, DataTypes) => {
 
   volContacto.associate = (models) => {
     volContacto.belongsTo(models.volInfo, {
-      foreignKey: "id_voluntario",
+      foreignKey: "voluntario_id",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volContacto.belongsTo(models.catTipoContacto, {
-      foreignKey: "id_tipo_contacto",
+      foreignKey: "tipo_contacto_id",
       as: "tipoContacto",
     });
   };

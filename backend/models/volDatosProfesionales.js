@@ -7,21 +7,21 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      id_voluntario: {
+      voluntario_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      id_grado_estudios: {
+      grado_estudios_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
           model: "cat_grado_estudios",
-          key: "id_grado_estudios",
+          key: "id",
         },
       },
       profesion: {
@@ -45,12 +45,12 @@ export default (sequelize, DataTypes) => {
 
   volDatosProfesionales.associate = (models) => {
     volDatosProfesionales.belongsTo(models.volInfo, {
-      foreignKey: "id_voluntario",
+      foreignKey: "voluntario_id",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volDatosProfesionales.belongsTo(models.catGradoEstudios, {
-      foreignKey: "id_grado_estudios",
+      foreignKey: "grado_estudios_id",
       as: "gradoEstudios",
     });
   };

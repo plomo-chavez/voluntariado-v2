@@ -15,9 +15,9 @@ interface NuevoElementoPayload {
   segundo_apellido: string;
   correo: string;
   telefono: string;
-  estado: string | number | null;
-  delegacion: string | number | null;
-  area: string | number | null;
+  estado?: any;
+  delegacion?: any;
+  area?: any;
 }
 
 const props = withDefaults(
@@ -44,16 +44,30 @@ const emit = defineEmits<{
 const step = ref<1 | 2>(1);
 
 const form = ref<NuevoElementoPayload>({
-  curp: "",
-  nombre: "",
-  segundo_nombre: "",
-  primer_apellido: "",
-  segundo_apellido: "",
-  correo: "",
-  telefono: "",
-  estado: null,
-  delegacion: null,
-  area: null,
+  curp: "CAQJ940610HGRHRS03",
+  nombre: "Jesus",
+  segundo_nombre: "Ramon",
+  primer_apellido: "Chavez",
+  segundo_apellido: "Wuiroz",
+  correo: "jesus@gmail.com",
+  telefono: "7442077733",
+  estado: {
+    label: "Guerrero",
+    id: 12,
+  },
+  delegacion: {
+    id: 1,
+    estado_id: 12,
+    label: "Delegación local en Acapulco",
+    estatus: 1,
+    created_at: "2026-03-31T05:35:13.000Z",
+    updated_at: "2026-03-31T06:26:09.000Z",
+    deleted_at: null,
+  },
+  area: {
+    label: "Juventud",
+    id: 2,
+  },
 });
 
 const curpSchema = [
@@ -97,16 +111,25 @@ const formSchema = [
     required: true,
   },
   {
+    required: true,
     label: "Estado",
     type: "select",
     model: "estado",
+    classElement: " col-4 ",
     catalogo: "estados",
   },
   {
+    required: true,
     label: "Delegación",
     type: "select",
     model: "delegacion",
+    dependenciaQuery: "estado",
+    dependenciaQueryFiltro: "estado_id",
     catalogo: "delegaciones",
+    classElement: " col-4 ",
+    config: {
+      fullInfo: true,
+    },
   },
   {
     label: "Área",
@@ -137,7 +160,30 @@ const handleClose = () => {
   resetModal();
 };
 
-const validateCurpAndContinue = () => {
+const validarInBDCURP = async (curp: string): Promise<boolean> => {
+  try {
+    let isValid = true;
+    await apiRequest({
+      url: "/api/elemento/verificar",
+      payload: { curp },
+      showMessages: false,
+      onSuccess: (response: any) => {
+        console.log("CURP no encontrada en BDC, se puede usar.", !response);
+        isValid = !response;
+      },
+      onError: () => {
+        isValid = true;
+      },
+    });
+
+    return isValid;
+  } catch (error) {
+    console.error("Error al validar CURP en BDC:", error);
+    return false;
+  }
+};
+
+const validateCurpAndContinue = async () => {
   const curp = (form.value.curp || "").trim().toUpperCase();
   form.value.curp = curp;
 
@@ -159,11 +205,11 @@ const validateCurpAndContinue = () => {
     return;
   }
 
-  const exists = props.existingCurps.some(
-    (item) => item.toUpperCase() === curp,
-  );
+  const validacionInBD = await validarInBDCURP(curp);
 
-  if (exists) {
+  console.log("[validacionInBD] =>", validacionInBD);
+
+  if (!validacionInBD) {
     showErrorMessage({
       title: "CURP existente",
       message: "Esta CURP ya está registrada.",
@@ -174,25 +220,23 @@ const validateCurpAndContinue = () => {
   step.value = 2;
 };
 
-const submitForm = () => {
-  if (
-    !form.value.nombre ||
-    !form.value.primer_apellido ||
-    !form.value.correo ||
-    !form.value.telefono
-  ) {
-    showErrorMessage({
-      title: "Campos incompletos",
-      message: "Completa nombre, primer apellido, correo y teléfono.",
-    });
-    return;
-  }
+const submitForm = async () => {
+  let payload = {
+    ...form.value,
+  };
 
-  emit("submit", { ...form.value });
-  handleClose();
+  await apiRequest({
+    url: "/api/elemento",
+    payload,
+    messageType: "toast",
+    onSuccess: () => {
+      console.log("Datos enviados correctamente:", payload);
+      handleClose();
+    },
+  });
 };
 
-const handleFormUpdate = (value: Record<string, any>) => {
+const handleFormUpdate = async (value: Record<string, any>) => {
   form.value = {
     ...form.value,
     ...value,

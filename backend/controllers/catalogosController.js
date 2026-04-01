@@ -12,7 +12,7 @@ const tablaMap = {
     filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
   },
   estados: {
-    tabla: "catEstados",
+    tabla: "catEstado",
     filtros: { estatus: 1 },
   },
   municipios: {
@@ -20,7 +20,7 @@ const tablaMap = {
     filtros: { estatus: 1 },
   },
   delegaciones: {
-    tabla: "catDelegaciones",
+    tabla: "catDelegacion",
     filtros: { estatus: 1 },
   },
   "tipos-servicio": {

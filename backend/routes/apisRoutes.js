@@ -1,20 +1,26 @@
 import express from "express";
 
 import authController from "../controllers/authController.js";
+import logRequestMiddleware from "../middleware/logRequestMiddleware.js";
 
 import catalogosDinamicosRoutes from "./catalogosDinamicosRoutes.js";
 import catalogosRoutes from "./catalogosRoutes.js";
 import logRoutes from "./logRoutes.js";
 import pagesRoutes from "./pagesRoutes.js";
 import usuariosRoutes from "./usuariosRoutes.js";
+import elementosRoutes from "./elementosRoutes.js";
 
 const router = express.Router();
+
+// Middleware para loguear todas las peticiones
+router.use(logRequestMiddleware);
 
 // ===== Auth =====
 router.post("/api/login", authController.login);
 router.post("/api/verificar/:pagina", authController.verificarToken);
 
 // ===== Sub-rutas =====
+router.use("/api", elementosRoutes);
 router.use("/api", usuariosRoutes);
 router.use("/api", catalogosRoutes);
 router.use("/api", catalogosDinamicosRoutes);

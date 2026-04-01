@@ -1,35 +1,35 @@
 export default (sequelize, DataTypes) => {
-  const volHistorial = sequelize.define(
-    "volHistorial",
+  const volCargos = sequelize.define(
+    "volCargos",
     {
-      id_historial: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      id_voluntario: {
+      voluntario_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      id_coordinacion: {
+      coordinacion_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
           model: "cat_coordinacion",
-          key: "id_coordinacion",
+          key: "id",
         },
       },
-      id_cargo: {
+      cargo_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
           model: "cat_cargo",
-          key: "id_cargo",
+          key: "id",
         },
       },
       fecha_inicio: {
@@ -52,21 +52,21 @@ export default (sequelize, DataTypes) => {
     },
   );
 
-  volHistorial.associate = (models) => {
-    volHistorial.belongsTo(models.volInfo, {
-      foreignKey: "id_voluntario",
-      as: "voluntario",
-      onDelete: "CASCADE",
-    });
-    volHistorial.belongsTo(models.catCoordinacion, {
-      foreignKey: "id_coordinacion",
-      as: "coordinacion",
-    });
-    volHistorial.belongsTo(models.catCargo, {
-      foreignKey: "id_cargo",
-      as: "cargo",
-    });
+  volCargos.associate = (models) => {
+    // volCargos.belongsTo(models.volInfo, {
+    //   foreignKey: "voluntario_id",
+    //   as: "voluntario",
+    //   onDelete: "CASCADE",
+    // });
+    // volCargos.belongsTo(models.catAreas, {
+    //   foreignKey: "coordinacion_id",
+    //   as: "coordinacion",
+    // });
+    // volCargos.belongsTo(models.catCargo, {
+    //   foreignKey: "cargo_id",
+    //   as: "cargo",
+    // });
   };
 
-  return volHistorial;
+  return volCargos;
 };

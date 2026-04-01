@@ -8,8 +8,8 @@ const formSchema = [
 ];
 
 const tableHeaders = [
-  { title: "ID", key: "id_estado" },
-  { title: "Nombre", key: "nombre" },
+  { title: "ID", key: "id" },
+  { title: "Nombre", key: "label" },
   { title: "Estatus", key: "estatus" },
   { title: "Creación", key: "created_at" },
 ];

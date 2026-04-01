@@ -2,12 +2,16 @@ export default (sequelize, DataTypes) => {
   const catDelegacion = sequelize.define(
     "catDelegacion",
     {
-      id_delegacion: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      estado_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      label: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -43,9 +47,11 @@ export default (sequelize, DataTypes) => {
 
   catDelegacion.associate = (models) => {
     catDelegacion.hasMany(models.volInfo, {
-      foreignKey: "id_delegacion",
+      foreignKey: "delegacion_id",
       as: "voluntarios",
     });
+    // Si hay relación con estado, agregarla aquí:
+    // catDelegacion.belongsTo(models.catEstado, { foreignKey: "estado_id", as: "estado" });
   };
 
   return catDelegacion;

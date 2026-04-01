@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const catEstadoCivil = sequelize.define(
     "catEstadoCivil",
     {
-      id_estado_civil: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      nombre: {
+      label: {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catEstadoCivil.associate = (models) => {
     catEstadoCivil.hasMany(models.volInfo, {
-      foreignKey: "id_estado_civil",
+      foreignKey: "estado_civil_id",
       as: "voluntarios",
     });
   };
