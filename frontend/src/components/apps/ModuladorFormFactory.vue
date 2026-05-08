@@ -31,6 +31,7 @@ const props = withDefaults(
     customTitle?: boolean;
     showIconButtonSubmit?: boolean;
     showIconButtonCancel?: boolean;
+    showMessageRequired?: boolean;
     showButtonSubmit?: boolean;
     showButtonCancel?: boolean;
     iconButtonCancel?: string;
@@ -40,6 +41,7 @@ const props = withDefaults(
   {
     title: null,
     formModal: false,
+    showMessageRequired: true,
     divCard: false,
     formLive: false,
     isDisabled: false,
@@ -56,7 +58,7 @@ const props = withDefaults(
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
     titleClass: "",
-  }
+  },
 );
 
 const emit = defineEmits<{
@@ -128,6 +130,7 @@ function handleCancel() {
           :textButtonSubmit="props.textButtonSubmit"
           :iconButtonCancel="props.iconButtonCancel"
           :iconButtonSubmit="props.iconButtonSubmit"
+          :showMessageRequired="props.showMessageRequired"
           @submit="handleSubmit"
           @cancel="handleCancel"
         />

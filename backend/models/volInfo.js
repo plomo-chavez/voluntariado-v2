@@ -84,6 +84,14 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      fecha_nacimiento: {
+        type: DataTypes.STRING(30),
+        allowNull: true,
+      },
+      telefono: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
       correo: {
         type: DataTypes.STRING(100),
         allowNull: true,
@@ -123,9 +131,36 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      area_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        references: {
+          model: "cat_areas",
+          key: "id",
+        },
+      },
+      cargo_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        references: {
+          model: "cat_cargo",
+          key: "id",
+        },
+      },
+      fecha_cr: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
+      fecha_area: {
+        type: DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
     },
     {
-      tableName: "vol_info",
       paranoid: true,
       timestamps: true,
       createdAt: "created_at",
@@ -154,6 +189,14 @@ export default (sequelize, DataTypes) => {
     volInfo.belongsTo(models.catDelegacion, {
       foreignKey: "delegacion_id",
       as: "delegacion",
+    });
+    volInfo.belongsTo(models.catAreas, {
+      foreignKey: "area_id",
+      as: "area",
+    });
+    volInfo.belongsTo(models.catCargo, {
+      foreignKey: "cargo_id",
+      as: "cargo",
     });
     volInfo.hasMany(models.volCargos, {
       foreignKey: "voluntario_id",

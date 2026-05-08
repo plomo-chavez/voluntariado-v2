@@ -35,6 +35,28 @@ const schema = [
     required: true,
   },
   { label: "Numero asociado", type: "text", model: "numero_asociado" },
+  { label: "Fecha ingreso a CR", type: "date", model: "fecha_ingreso_cr" },
+  { label: "Fecha ingreso al area", type: "date", model: "fecha_ingreso_area" },
+  { label: "Estado", type: "select", model: "id_estado", catalogo: "estados" },
+  {
+    label: "Delegacion",
+    type: "select",
+    model: "delegacion",
+    catalogo: "delegaciones",
+  },
+  {
+    label: "Area",
+    type: "select",
+    model: "area",
+    catalogo: "areas",
+    required: true,
+  },
+  {
+    label: "Cargo",
+    type: "select",
+    model: "cargo",
+    catalogo: "cargos",
+  },
   { label: "Nombre", type: "text", model: "nombre", required: true },
   { label: "Segundo nombre", type: "text", model: "segundo_nombre" },
   {
@@ -45,6 +67,12 @@ const schema = [
   },
   { label: "Segundo apellido", type: "text", model: "segundo_apellido" },
   { label: "CURP", type: "text", model: "curp", required: true },
+  {
+    label: "Fecha de nacimiento",
+    type: "date",
+    model: "fecha_nacimiento",
+    required: true,
+  },
   { label: "Telefono", type: "text", model: "telefono", required: true },
   {
     label: "Correo electronico",
@@ -52,54 +80,36 @@ const schema = [
     model: "correo",
     required: true,
   },
-  {
-    label: "Fecha de nacimiento",
-    type: "date",
-    model: "fecha_nacimiento",
-    required: true,
-  },
   { label: "Lugar de nacimiento", type: "text", model: "lugar_nacimiento" },
   {
     label: "Nacionalidad",
     type: "select",
-    model: "id_nacionalidad",
+    model: "nacionalidad",
     catalogo: "nacionalidades",
   },
   {
     label: "Sexo",
-    type: "select",
+    type: "switch",
     model: "sexo",
     catalogo: "sexos",
+    options: [
+      { label: "Masculino", value: "Masculino" },
+      { label: "Femenino", value: "Femenino" },
+    ],
     required: true,
   },
   {
     label: "Estado civil",
     type: "select",
-    model: "id_estado_civil",
-    catalogo: "estados-civiles",
+    model: "estado_civil",
+    catalogo: "estado-civil",
   },
   {
-    label: "Grupo sanguineo",
+    label: "Tipo de sangre",
     type: "select",
-    model: "id_grupo_sanguineo",
+    model: "tipos_sangre",
     catalogo: "grupos-sanguineos",
   },
-  {
-    label: "Area",
-    type: "select",
-    model: "id_area",
-    catalogo: "areas",
-    required: true,
-  },
-  { label: "Estado", type: "select", model: "id_estado", catalogo: "estados" },
-  {
-    label: "Delegacion",
-    type: "select",
-    model: "id_delegacion",
-    catalogo: "delegaciones",
-  },
-  { label: "Fecha ingreso a CR", type: "date", model: "fecha_ingreso_cr" },
-  { label: "Fecha ingreso al area", type: "date", model: "fecha_ingreso_area" },
 ];
 
 const catalogos: Record<string, Record<string | number, string>> = {
@@ -478,6 +488,7 @@ async function handleSave() {
         <ModuladorFormFactory
           :schema="schema"
           :modelValue="localData"
+          :showMessageRequired="false"
           :formLive="true"
           @update:modelValue="(val) => (localData.value = val)"
         />
@@ -696,7 +707,7 @@ async function handleSave() {
 }
 
 .edit-mode-wrap {
-  background: var(--accent-soft);
+  /* background: var(--accent-soft); */
   border: 1px solid #f3d1d1;
   border-radius: 12px;
   padding: 0.8rem;
