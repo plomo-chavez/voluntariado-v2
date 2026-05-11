@@ -1,6 +1,7 @@
 import Sequelize from "sequelize";
 import db from "../models/index.js";
 
+import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 
@@ -8,6 +9,7 @@ const { Op } = Sequelize;
 const { volInfo } = db;
 
 const { getAllFromModel } = functionHelper;
+const { getRelaciones } = functionsCustomHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
 
@@ -43,6 +45,25 @@ function transformElementoData(data) {
     delete tmp.area;
   }
 
+  if (tmp.cargo?.id) {
+    tmp.cargo_id = tmp.cargo.id;
+    delete tmp.cargo;
+  }
+
+  if (tmp.nacionalidad?.id) {
+    tmp.nacionalidad_id = tmp.nacionalidad.id;
+    delete tmp.nacionalidad;
+  }
+
+  if (tmp.estado_civil?.id) {
+    tmp.estado_civil_id = tmp.estado_civil.id;
+    delete tmp.estado_civil;
+  }
+
+  if (tmp.grupo_sanguineo?.id) {
+    tmp.grupo_sanguineo_id = tmp.grupo_sanguineo.id;
+    delete tmp.grupo_sanguineo;
+  }
   return tmp;
 }
 
@@ -219,8 +240,64 @@ const verificar = async (req, res) => {
   }
 };
 
+const getById = async (req, res) => {
+  try {
+    const id = req.params?.id;
+
+    if (!id) {
+      return res.json({
+        result: false,
+        message: "ID de elemento es requerido",
+        data: null,
+      });
+    }
+
+    const relaciones = await getRelaciones([
+      "area",
+      "cargo",
+      "delegacion",
+      "estado",
+      "estado_civil",
+      "grupo_sanguineo",
+      "nacionalidad",
+    ]);
+
+    const query = {
+      where: { id },
+      paranoid: false,
+      include: [...relaciones],
+    };
+
+    console.log("[getById] =>", query);
+    console.log("[getById] =>", relaciones);
+
+    const elemento = await volInfo.findOne(query);
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "Elemento no encontrado",
+        data: null,
+      });
+    }
+
+    return res.json({
+      result: true,
+      message: "Elemento encontrado",
+      data: elemento,
+    });
+  } catch (error) {
+    return res.json({
+      result: false,
+      message: "Error al obtener elemento: " + error.message,
+      data: null,
+    });
+  }
+};
+
 export default {
   getAll,
+  getById,
   createOrUpdate,
   delete: remove,
   softDelete,

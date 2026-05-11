@@ -78,7 +78,7 @@ const CATALOGS_MAP = {
     supportsStatus: true,
     supportsSoftDelete: true,
   },
-  "grupo-sanguineo": {
+  "tipos-sangre": {
     modelo: models.catGrupoSanguineo,
     modeloString: "catGrupoSanguineo",
     primaryKey: "id",

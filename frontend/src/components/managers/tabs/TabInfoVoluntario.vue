@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
-import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
 import { computed, ref, watch } from "vue";
-import { toast } from "vue3-toastify";
 
 const props = defineProps<{
   data: Record<string, any>;
@@ -32,12 +30,12 @@ const schema = [
     label: "Numero interno",
     type: "text",
     model: "numero_interno",
-    required: true,
+    required: false,
   },
   { label: "Numero asociado", type: "text", model: "numero_asociado" },
-  { label: "Fecha ingreso a CR", type: "date", model: "fecha_ingreso_cr" },
-  { label: "Fecha ingreso al area", type: "date", model: "fecha_ingreso_area" },
-  { label: "Estado", type: "select", model: "id_estado", catalogo: "estados" },
+  { label: "Fecha ingreso a CR", type: "date", model: "fecha_cr" },
+  { label: "Fecha ingreso al area", type: "date", model: "fecha_area" },
+  { label: "Estado", type: "select", model: "estado", catalogo: "estados" },
   {
     label: "Delegacion",
     type: "select",
@@ -49,7 +47,7 @@ const schema = [
     type: "select",
     model: "area",
     catalogo: "areas",
-    required: true,
+    required: false,
   },
   {
     label: "Cargo",
@@ -57,35 +55,35 @@ const schema = [
     model: "cargo",
     catalogo: "cargos",
   },
-  { label: "Nombre", type: "text", model: "nombre", required: true },
+  { label: "Nombre", type: "text", model: "nombre", required: false },
   { label: "Segundo nombre", type: "text", model: "segundo_nombre" },
   {
     label: "Primer apellido",
     type: "text",
     model: "primer_apellido",
-    required: true,
+    required: false,
   },
   { label: "Segundo apellido", type: "text", model: "segundo_apellido" },
-  { label: "CURP", type: "text", model: "curp", required: true },
+  { label: "CURP", type: "text", model: "curp", required: false },
   {
     label: "Fecha de nacimiento",
     type: "date",
     model: "fecha_nacimiento",
-    required: true,
+    required: false,
   },
-  { label: "Telefono", type: "text", model: "telefono", required: true },
+  { label: "Telefono", type: "text", model: "telefono", required: false },
   {
     label: "Correo electronico",
     type: "text",
     model: "correo",
-    required: true,
+    required: false,
   },
   { label: "Lugar de nacimiento", type: "text", model: "lugar_nacimiento" },
   {
     label: "Nacionalidad",
     type: "select",
     model: "nacionalidad",
-    catalogo: "nacionalidades",
+    catalogo: "nacionalidad",
   },
   {
     label: "Sexo",
@@ -96,7 +94,7 @@ const schema = [
       { label: "Masculino", value: "Masculino" },
       { label: "Femenino", value: "Femenino" },
     ],
-    required: true,
+    required: false,
   },
   {
     label: "Estado civil",
@@ -107,96 +105,10 @@ const schema = [
   {
     label: "Tipo de sangre",
     type: "select",
-    model: "tipos_sangre",
+    model: "grupo_sanguineo",
     catalogo: "grupos-sanguineos",
   },
 ];
-
-const catalogos: Record<string, Record<string | number, string>> = {
-  sexos: { M: "Masculino", F: "Femenino", O: "Otro" },
-  "estados-civiles": {
-    1: "Soltero(a)",
-    2: "Casado(a)",
-    3: "Union libre",
-    4: "Divorciado(a)",
-    5: "Viudo(a)",
-  },
-};
-
-const nombreCompleto = computed(() => {
-  return [
-    localData.value.nombre,
-    localData.value.segundo_nombre,
-    localData.value.primer_apellido,
-    localData.value.segundo_apellido,
-  ]
-    .filter(Boolean)
-    .join(" ");
-});
-
-const iniciales = computed(() => {
-  const nombre = localData.value.nombre?.[0] ?? "";
-  const apellido = localData.value.primer_apellido?.[0] ?? "";
-  return (nombre + apellido || "VN").toUpperCase();
-});
-
-const edadCalculada = computed(() => {
-  const fecha = localData.value.fecha_nacimiento;
-  if (!fecha) return "-";
-  const hoy = new Date();
-  const nacimiento = new Date(fecha);
-  if (isNaN(nacimiento.getTime())) return "-";
-  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-  const m = hoy.getMonth() - nacimiento.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
-  return edad >= 0 ? edad : "-";
-});
-
-const antiguedadCalculada = computed(() => {
-  const fecha = localData.value.fecha_ingreso_cr;
-  if (!fecha) return "-";
-  const hoy = new Date();
-  const ingreso = new Date(fecha);
-  if (isNaN(ingreso.getTime())) return "-";
-  let anios = hoy.getFullYear() - ingreso.getFullYear();
-  const m = hoy.getMonth() - ingreso.getMonth();
-  if (m < 0 || (m === 0 && hoy.getDate() < ingreso.getDate())) anios--;
-  if (anios < 0) return "-";
-  return `${anios} ${anios === 1 ? "ano" : "anos"}`;
-});
-
-const estatusActivo = computed(() => {
-  const raw = localData.value.estatus;
-  return raw === true || raw === 1 || raw === "1" || raw === "activo";
-});
-
-const estatusLabel = computed(() =>
-  estatusActivo.value ? "Activo" : "Inactivo",
-);
-
-const areaHeader = computed(() => {
-  return (
-    localData.value.area_nombre ||
-    localData.value.area ||
-    localData.value.id_area ||
-    "-"
-  );
-});
-
-const cargoHeader = computed(() => {
-  return (
-    localData.value.cargo_nombre ||
-    localData.value.cargo ||
-    localData.value.id_cargo ||
-    "-"
-  );
-});
-
-const identificadorHeader = computed(() => {
-  const asociado = localData.value.numero_asociado;
-  if (asociado) return { label: "N. asociado", value: asociado };
-  return { label: "N. interno", value: localData.value.numero_interno || "-" };
-});
 
 function safeValue(value: any): string {
   return value === null || value === undefined || value === ""
@@ -208,10 +120,14 @@ const institutionalItems = computed(() => [
   {
     key: "delegacion",
     label: "Delegacion",
-    value: `${safeValue(localData.value.id_estado)} / ${safeValue(localData.value.id_delegacion)}`,
+    value: `${safeValue(localData.value.delegacion?.label)} / ${safeValue(localData.value.id_delegacion)}`,
   },
-  { key: "area", label: "Area", value: safeValue(localData.value.id_area) },
-  { key: "cargo", label: "Cargo", value: safeValue(cargoHeader.value) },
+  { key: "area", label: "Area", value: safeValue(localData.value.area?.label) },
+  {
+    key: "cargo",
+    label: "Cargo",
+    value: safeValue(localData.value.cargo?.label),
+  },
   {
     key: "numero_interno",
     label: "Numero interno",
@@ -223,19 +139,19 @@ const institutionalItems = computed(() => [
     value: safeValue(localData.value.numero_asociado),
   },
   {
-    key: "fecha_ingreso_cr",
+    key: "fecha_cr",
     label: "Fecha de ingreso a la CR",
-    value: formatDate(localData.value.fecha_ingreso_cr),
+    value: formatDateMoment(localData.value.fecha_cr, "DD/MM/YYYY"),
   },
   {
     key: "antiguedad",
     label: "Antiguedad",
-    value: safeValue(antiguedadCalculada.value),
+    value: calcularDiferenciaFecha(localData.value.fecha_cr, "años"),
   },
   {
-    key: "fecha_ingreso_area",
+    key: "fecha_area",
     label: "Fecha de ingreso al area",
-    value: formatDate(localData.value.fecha_ingreso_area),
+    value: formatDateMoment(localData.value.fecha_area, "DD/MM/YYYY"),
   },
 ]);
 
@@ -244,12 +160,12 @@ const personalItems = computed(() => [
   {
     key: "edad",
     label: "Edad",
-    value: `${safeValue(edadCalculada.value)} anos`,
+    value: `${safeValue(calcularDiferenciaFecha(localData.value.fecha_nacimiento, "años"))} años`,
   },
   {
     key: "fecha_nacimiento",
     label: "Fecha de nacimiento",
-    value: formatDate(localData.value.fecha_nacimiento),
+    value: formatDateMoment(localData.value.fecha_nacimiento, "DD/MM/YYYY"),
   },
   {
     key: "lugar_nacimiento",
@@ -259,17 +175,17 @@ const personalItems = computed(() => [
   {
     key: "sexo",
     label: "Sexo",
-    value: formatByCatalog("sexos", localData.value.sexo),
+    value: safeValue(localData.value.sexo),
   },
   {
     key: "estado_civil",
     label: "Estado civil",
-    value: formatByCatalog("estados-civiles", localData.value.id_estado_civil),
+    value: safeValue(localData.value.estado_civil?.label),
   },
   {
     key: "tipo_sangre",
     label: "Tipo de sangre",
-    value: safeValue(localData.value.id_grupo_sanguineo),
+    value: safeValue(localData.value.grupo_sanguineo?.label),
   },
   {
     key: "telefono",
@@ -284,55 +200,6 @@ const personalItems = computed(() => [
   },
 ]);
 
-function formatDate(value: any): string {
-  if (!value) return "-";
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? String(value) : d.toLocaleDateString("es-MX");
-}
-
-function formatByCatalog(catalogo: string, value: any): string {
-  if (value === null || value === undefined || value === "") return "-";
-  return catalogos[catalogo]?.[value] ?? String(value);
-}
-
-function validateForm() {
-  const errors: string[] = [];
-  const requiredFields = [
-    { key: "numero_interno", label: "Numero interno" },
-    { key: "nombre", label: "Nombre" },
-    { key: "primer_apellido", label: "Primer apellido" },
-    { key: "curp", label: "CURP" },
-    { key: "telefono", label: "Telefono" },
-    { key: "correo", label: "Correo electronico" },
-    { key: "sexo", label: "Sexo" },
-    { key: "id_area", label: "Area" },
-    { key: "fecha_nacimiento", label: "Fecha de nacimiento" },
-  ];
-
-  requiredFields.forEach((field) => {
-    if (!localData.value[field.key]) {
-      errors.push(`El campo ${field.label} es obligatorio.`);
-    }
-  });
-
-  if (localData.value.correo) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(localData.value.correo)) {
-      errors.push("El correo electronico no tiene un formato valido.");
-    }
-  }
-
-  if (localData.value.curp) {
-    const curpRegex = /^[A-Z][AEIOUX][A-Z]{2}\d{6}[HM][A-Z]{5}[0-9A-Z]\d$/i;
-    if (!curpRegex.test(localData.value.curp)) {
-      errors.push("El CURP no tiene un formato valido.");
-    }
-  }
-
-  validationErrors.value = errors;
-  return errors.length === 0;
-}
-
 function handleEdit() {
   localData.value = { ...props.data };
   validationErrors.value = [];
@@ -346,32 +213,23 @@ function handleCancel() {
 }
 
 async function handleSave() {
-  if (!validateForm()) {
-    showErrorMessage({
-      title: "Validacion",
-      message: validationErrors.value[0] || "Revisa los campos requeridos",
-    });
-    return;
-  }
-
-  loading.value = true;
-  try {
-    emit("update:data", { ...localData.value });
-    toast.success("Perfil actualizado correctamente", { theme: "dark" });
-    isEditing.value = false;
-  } catch (error: any) {
-    showErrorMessage({
-      title: "Error",
-      message: error?.message || "Error al guardar",
-    });
-  } finally {
-    loading.value = false;
-  }
+  const payload = { ...localData.value, step: 1 };
+  console.log("Payload to save:", payload);
+  await apiRequest({
+    url: "/api/elemento",
+    payload,
+    messageType: "toast",
+    onSuccess: (response: any) => {
+      emit("update:data", { ...response });
+      isEditing.value = false;
+    },
+  });
+  emit("update:data", { ...localData.value });
 }
 </script>
 
 <template>
-  <div class="perfil-user">
+  <div v-if="true" class="perfil-user">
     <div class="perfil-header-card">
       <div class="header-left">
         <VAvatar size="72" class="perfil-avatar" color="red-darken-2">
@@ -380,44 +238,42 @@ async function handleSave() {
             :src="localData.foto"
             alt="Foto de perfil"
           />
-          <span v-else class="avatar-text">{{ iniciales }}</span>
+          <span v-else class="avatar-text">{{ "-" }}</span>
         </VAvatar>
 
         <div class="header-user-meta">
           <h2 class="user-name">
-            {{ nombreCompleto || "Voluntario sin nombre" }}
+            {{ nombreCompleto(localData) || "Voluntario sin nombre" }}
           </h2>
-          <p class="user-role-line">{{ areaHeader }} - {{ cargoHeader }}</p>
+          <p class="user-role-line">
+            {{ safeValue(localData?.area?.label) }} -
+            {{ safeValue(localData?.cargo?.label) }}
+          </p>
           <div class="user-badges">
             <p color="red-darken-2" variant="flat" size="small" label>
-              {{ identificadorHeader.value }}
+              {{ safeValue(localData.numero_asociado) }}
             </p>
             <VChip
-              :color="estatusActivo ? 'success' : 'grey-darken-1'"
+              :color="true ? 'success' : 'grey-darken-1'"
               variant="tonal"
               size="small"
               label
             >
-              {{ estatusLabel }}
+              {{ localData.estatus === 1 ? "Activo" : "Inactivo" }}
             </VChip>
           </div>
         </div>
       </div>
 
-      <VTooltip text="Editar informacion del perfil" location="top">
-        <template #activator="{ props: tooltipProps }">
-          <VBtn
-            v-bind="tooltipProps"
-            v-if="!isEditing"
-            class="edit-btn-desktop"
-            color="red-darken-2"
-            @click="handleEdit"
-          >
-            <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
-            Editar perfil
-          </VBtn>
-        </template>
-      </VTooltip>
+      <VBtn
+        v-if="!isEditing"
+        class="edit-btn-desktop"
+        color="red-darken-2"
+        @click="handleEdit"
+      >
+        <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
+        Editar perfil
+      </VBtn>
     </div>
 
     <Transition name="fade-slide" mode="out-in">
@@ -490,19 +346,9 @@ async function handleSave() {
           :modelValue="localData"
           :showMessageRequired="false"
           :formLive="true"
-          @update:modelValue="(val) => (localData.value = val)"
+          @submit="handleSave"
+          @cancel="handleCancel"
         />
-
-        <div class="actions-wrap mt-4">
-          <VBtn color="red-darken-2" :loading="loading" @click="handleSave">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true" />
-            Guardar cambios
-          </VBtn>
-          <VBtn variant="tonal" color="secondary" @click="handleCancel">
-            <i class="fa-solid fa-xmark" aria-hidden="true" />
-            Cancelar
-          </VBtn>
-        </div>
       </div>
     </Transition>
   </div>

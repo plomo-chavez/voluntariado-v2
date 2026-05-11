@@ -4,6 +4,61 @@ const { Op } = db.Sequelize;
 const { createRecord, updateRecord } = CRUDController;
 const { Usuarios, Elementos, Unidades } = db;
 
+const models = db;
+
+const getRelaciones = async (relaciones) => {
+  return relaciones
+    .map((rel) => {
+      switch (rel) {
+        case "area":
+          return {
+            model: models.catAreas,
+            as: "area",
+            attributes: ["id", "label"],
+          };
+        case "cargo":
+          return {
+            model: models.catCargo,
+            as: "cargo",
+            attributes: ["id", "label"],
+          };
+        case "delegacion":
+          return {
+            model: models.catDelegacion,
+            as: "delegacion",
+            attributes: ["id", "label"],
+          };
+        case "estado":
+          return {
+            model: models.catEstado,
+            as: "estado",
+            attributes: ["id", "label"],
+          };
+        case "estado_civil":
+          return {
+            model: models.catEstadoCivil,
+            as: "estado_civil",
+            attributes: ["id", "label"],
+          };
+        case "grupo_sanguineo":
+          return {
+            model: models.catGrupoSanguineo,
+            as: "grupo_sanguineo",
+            attributes: ["id", "label"],
+          };
+        case "nacionalidad":
+          return {
+            model: models.catNacionalidad,
+            as: "nacionalidad",
+            attributes: ["id", "label"],
+          };
+        default:
+          return null;
+      }
+    })
+    .filter(Boolean);
+};
+
 const getFiltrosForTipoUsuario = async (req) => {
   const userRole = req?.user ?? null;
 
@@ -99,4 +154,8 @@ const handleElementosAndUnidades = async (data, reporteId) => {
 
   }
 };
-export default { getFiltrosForTipoUsuario, handleElementosAndUnidades };
+export default {
+  getFiltrosForTipoUsuario,
+  handleElementosAndUnidades,
+  getRelaciones,
+};

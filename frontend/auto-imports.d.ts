@@ -19,6 +19,7 @@ declare global {
   const avatarText: typeof import('./src/@core/utils/formatters')['avatarText']
   const axiosInstance: typeof import('./src/utils/axiosInstance')['axiosInstance']
   const betweenValidator: typeof import('./src/@core/utils/validators')['betweenValidator']
+  const calcularDiferenciaFecha: typeof import('./src/utils/helper')['calcularDiferenciaFecha']
   const calcularDiferenciaTiempo: typeof import('./src/utils/helper')['calcularDiferenciaTiempo']
   const computed: typeof import('vue')['computed']
   const computedAsync: typeof import('@vueuse/core')['computedAsync']
@@ -425,6 +426,7 @@ declare module 'vue' {
     readonly avatarText: UnwrapRef<typeof import('./src/@core/utils/formatters')['avatarText']>
     readonly axiosInstance: UnwrapRef<typeof import('./src/utils/axiosInstance')['axiosInstance']>
     readonly betweenValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['betweenValidator']>
+    readonly calcularDiferenciaFecha: UnwrapRef<typeof import('./src/utils/helper')['calcularDiferenciaFecha']>
     readonly calcularDiferenciaTiempo: UnwrapRef<typeof import('./src/utils/helper')['calcularDiferenciaTiempo']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly computedAsync: UnwrapRef<typeof import('@vueuse/core')['computedAsync']>

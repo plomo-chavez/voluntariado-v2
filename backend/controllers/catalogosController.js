@@ -23,37 +23,25 @@ const tablaMap = {
     tabla: "catDelegacion",
     filtros: { estatus: 1 },
   },
-  "tipos-servicio": {
-    tabla: "catTiposServicios",
-    filtros: { estatus: 1 },
-  },
-  "tipos-agresion": {
-    tabla: "catTiposAgresion",
-    filtros: { estatus: 1 },
-  },
-  "tipos-incidente": {
-    tabla: "catTiposIncidente",
-    filtros: { estatus: 1 },
-  },
-  "tipos-solicitante": {
-    tabla: "catTiposSolicitante",
-    filtros: { estatus: 1 },
-  },
   areas: {
     tabla: "catAreas",
     filtros: { estatus: 1 },
   },
-  agresores: {
-    tabla: "catAgresores",
+  cargos: {
+    tabla: "catCargo",
     filtros: { estatus: 1 },
   },
-  "sitios-incidente": {
-    tabla: "catSitiosIncidente",
+  "estado-civil": {
+    tabla: "catEstadoCivil",
     filtros: { estatus: 1 },
   },
-  horarios: {
-    tabla: "catHorarios",
-    filtros: {},
+  "grupos-sanguineos": {
+    tabla: "catGrupoSanguineo",
+    filtros: { estatus: 1 },
+  },
+  nacionalidad: {
+    tabla: "catNacionalidad",
+    filtros: { estatus: 1 },
   },
 };
 
@@ -65,7 +53,7 @@ const getCatalogo = async (req, res, tabla) => {
     if (!tablaReal) {
       return res.json({
         result: false,
-        message: "Tabla no válida",
+        message: "[CatalogosController] Tabla no válida",
         data: [],
       });
     }
@@ -90,7 +78,8 @@ const getCatalogo = async (req, res, tabla) => {
   } catch (e) {
     return res.json({
       result: false,
-      message: "Error al obtener los registros: " + e.message,
+      message:
+        "[CatalogosController] Error al obtener los registros: " + e.message,
       data: [],
     });
   }

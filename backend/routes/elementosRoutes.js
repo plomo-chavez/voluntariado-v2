@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.post("/elemento", elementosController.createOrUpdate);
+router.get("/elemento/:id", elementosController.getById);
 router.post("/elementos", elementosController.getAll);
 router.post("/elemento/eliminar", elementosController.delete);
 router.post("/elemento/eliminar/soft", elementosController.softDelete);

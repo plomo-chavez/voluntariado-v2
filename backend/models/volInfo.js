@@ -162,6 +162,7 @@ export default (sequelize, DataTypes) => {
     },
     {
       paranoid: true,
+      tableName: "vol_info",
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
@@ -176,11 +177,11 @@ export default (sequelize, DataTypes) => {
     });
     volInfo.belongsTo(models.catEstadoCivil, {
       foreignKey: "estado_civil_id",
-      as: "estadoCivil",
+      as: "estado_civil",
     });
     volInfo.belongsTo(models.catGrupoSanguineo, {
       foreignKey: "grupo_sanguineo_id",
-      as: "grupoSanguineo",
+      as: "grupo_sanguineo",
     });
     volInfo.belongsTo(models.catEstado, {
       foreignKey: "estado_id",

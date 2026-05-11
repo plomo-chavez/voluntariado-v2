@@ -1,4 +1,11 @@
-import { format, formatDistanceToNow } from "date-fns";
+import {
+  differenceInDays,
+  differenceInHours,
+  differenceInMonths,
+  differenceInYears,
+  format,
+  formatDistanceToNow,
+} from "date-fns";
 import { es } from "date-fns/locale";
 import moment from "moment";
 import { isRef, toRaw } from "vue";
@@ -301,4 +308,48 @@ export function formatDateMoment(
   format: any = "D [de] MMMM [de] YYYY",
 ): string {
   return moment(date).locale("es").format(format);
+}
+
+/**
+ * Calcula la diferencia entre una fecha y la fecha actual
+ * @param {string | Date} fecha - La fecha en cualquier formato (string o Date)
+ * @param {string} unidad - La unidad de tiempo: 'años', 'meses', 'dias' o 'horas'
+ * @returns {number} - La diferencia en la unidad especificada
+ * @example
+ * calcularDiferenciaFecha('2025-01-01', 'años') // Retorna la diferencia en años
+ * calcularDiferenciaFecha('2025-01-01', 'meses') // Retorna la diferencia en meses
+ */
+export function calcularDiferenciaFecha(
+  fecha: string | Date,
+  unidad: "años" | "meses" | "dias" | "horas" = "dias",
+): number {
+  try {
+    // Parsear la fecha
+    const fechaParsed = typeof fecha === "string" ? new Date(fecha) : fecha;
+    const ahora = new Date();
+
+    // Validar que la fecha sea válida
+    if (isNaN(fechaParsed.getTime())) {
+      console.error("Fecha inválida:", fecha);
+      return 0;
+    }
+
+    // Calcular la diferencia según la unidad
+    switch (unidad.toLowerCase()) {
+      case "años":
+        return differenceInYears(ahora, fechaParsed);
+      case "meses":
+        return differenceInMonths(ahora, fechaParsed);
+      case "dias":
+        return differenceInDays(ahora, fechaParsed);
+      case "horas":
+        return differenceInHours(ahora, fechaParsed);
+      default:
+        console.warn(`Unidad no válida: ${unidad}. Usando 'dias' por defecto.`);
+        return differenceInDays(ahora, fechaParsed);
+    }
+  } catch (error) {
+    console.error("Error al calcular diferencia de fechas:", error);
+    return 0;
+  }
 }

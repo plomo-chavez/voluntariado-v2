@@ -19,10 +19,10 @@ export function useCatalogo() {
         case "estados":           url = "/api/catalogos/estados"; break;
         case "delegaciones":      url = "/api/catalogos/delegaciones"; break;
         case "areas":             url = "/api/catalogos/areas"; break;
-        case "cargos":             url = "/api/catalogos/cargos"; break;
-        case "nacionalidad":     url = "/api/catalogos/nacionalidad"; break;
-        case "estado-civil":    url = "/api/catalogos/estado-civil"; break;
-        case "grupos-sanguineos":  url = "/api/catalogos/grupos-sanguineos"; break;
+        case "cargos":            url = "/api/catalogos/cargos"; break;
+        case "nacionalidad":      url = "/api/catalogos/nacionalidad"; break;
+        case "estado-civil":      url = "/api/catalogos/estado-civil"; break;
+        case "grupos-sanguineos": url = "/api/catalogos/grupos-sanguineos"; break;
       }
 
       let payload: any = dependenciaFiltro || item.payload || {};

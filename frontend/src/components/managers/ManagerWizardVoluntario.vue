@@ -4,17 +4,17 @@ import TabFormacion from "@/components/managers/tabs/TabFormacion.vue";
 import TabHoras from "@/components/managers/tabs/TabHoras.vue";
 import TabInfoPersonal from "@/components/managers/tabs/TabInfoPersonal.vue";
 import TabInfoVoluntario from "@/components/managers/tabs/TabInfoVoluntario.vue";
-import { ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 
 // ─── Props / Emits ───────────────────────────────────────────────────────────────
 const props = withDefaults(
   defineProps<{
-    data?: Record<string, any>;
+    data?: any;
     title?: string | null;
   }>(),
   {
     title: "Perfil de Voluntario",
-    data: () => ({}),
+    data: () => null,
   },
 );
 
@@ -38,137 +38,28 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["key"];
 
 const activeTab = ref<TabKey>("infoVoluntario");
-
-// ─── Datos del voluntario ────────────────────────────────────────────────────────
-const dataDummie: Record<string, any> = {
-  numero_interno: "CR-99201-PZ",
-  numero_asociado: "ASC-2014-0012",
-  nombre: "Juan",
-  segundo_nombre: "Ignacio",
-  primer_apellido: "Perez",
-  segundo_apellido: "Lopez",
-  fecha_nacimiento: "1992-04-15",
-  lugar_nacimiento: "CDMX",
-  id_nacionalidad: "Mexicana",
-  sexo: "M",
-  id_estado_civil: 2,
-  id_grupo_sanguineo: "O+",
-  curp: "PELJ920415HDFRRL02",
-  telefono: "+52 55 1234 5678",
-  correo: "juan.perez@redcross.org.mx",
-  id_area: "Socorros / Operaciones Especiales",
-  area_nombre: "Socorros",
-  cargo_nombre: "Especialista en Respuesta a Desastres",
-  id_estado: "Personal de Base",
-  id_delegacion: "CDMX Central",
-  fecha_ingreso_cr: "2014-03-15",
-  fecha_ingreso_area: "2020-01-01",
-  estatus: true,
-  seguro_social: "IMSS 45871233",
-  seguro_institucional: "Poliza CR-22019",
-  capacidades_diferentes: false,
-  alergias: "Penicilina",
-  enfermedades: "Ninguna",
-  direccion: "Av. Reforma 120",
-  colonia: "Juarez",
-  no_interno: "4B",
-  no_externo: "120",
-  cp: "06600",
-  estado_domicilio: "CDMX",
-  ciudad: "Cuauhtemoc",
-  pasaporte: "G23456789",
-  licencia: "CDMX-A99812",
-  contacto_emergencia_nombre: "Ana Lopez",
-  contacto_emergencia_parentesco: "Hermana",
-  contacto_emergencia_telefono: "+52 55 9876 5432",
-  grado_estudios: "Licenciatura",
-  profesion: "Paramedico",
-  ocupacion_actual: "Coordinador de brigada",
-  empresa_institucion: "Cruz Roja Mexicana",
-  idioma: "Ingles",
-  idioma_escritura: "80%",
-  idioma_hablado: "70%",
-  medio_difusion: "Por recomendacion de un amigo",
-  expectativas_cruz_roja: "Capacitacion continua y crecimiento profesional",
-  voluntario_otra_institucion: true,
-  disponibilidad_lunes: true,
-  disponibilidad_martes: true,
-  disponibilidad_miercoles: false,
-  disponibilidad_jueves: true,
-  disponibilidad_viernes: true,
-  disponibilidad_sabado: false,
-  disponibilidad_domingo: true,
-  turno: "Vespertino",
-  horario: "16:00 - 20:00",
-  foto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80",
-  formaciones: [
-    {
-      id: "form-1",
-      tipo: "institucional",
-      area: "Socorros",
-      capacitacion: "Primeros Auxilios Avanzados",
-      fecha: "2025-11-15",
-      evidencia_nombre: "constancia-primeros-auxilios.pdf",
-      evidencia_url:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-    {
-      id: "form-2",
-      tipo: "externo",
-      nombre_taller: "Manejo de Estrés en Emergencias",
-      institucion: "CENAPRED",
-      fecha: "2026-01-20",
-      evidencia_nombre: "diploma-estres-emergencias.pdf",
-      evidencia_url:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-  ],
-  horas_registros: [
-    {
-      id: "hora-1",
-      area: "Socorros",
-      actividad: "Guardia de ambulancia",
-      fecha_inicio: "2026-02-03",
-      hora_inicio: "08:00",
-      fecha_fin: "2026-02-03",
-      hora_fin: "12:30",
-      acumulado: 4.5,
-    },
-    {
-      id: "hora-2",
-      area: "Socorros",
-      actividad: "Apoyo en simulacro delegacional",
-      fecha_inicio: "2026-02-10",
-      hora_inicio: "09:00",
-      fecha_fin: "2026-02-10",
-      hora_fin: "13:00",
-      acumulado: 4,
-    },
-    {
-      id: "hora-3",
-      area: "Juventud",
-      actividad: "Taller comunitario de prevención",
-      fecha_inicio: "2026-02-17",
-      hora_inicio: "16:00",
-      fecha_fin: "2026-02-17",
-      hora_fin: "19:15",
-      acumulado: 3.25,
-    },
-  ],
-};
-
-const voluntarioData = ref<Record<string, any>>({
-  ...dataDummie,
-  ...(props.data ?? {}),
-});
+const voluntarioData = ref<any>(null);
 
 function handleUpdateData(val: Record<string, any>) {
   voluntarioData.value = { ...voluntarioData.value, ...val };
 }
+onBeforeMount(async () => {
+  await apiRequest({
+    method: "GET",
+    url: "/api/elemento/" + props.data.id,
+    messageType: "toast",
+    onSuccess: (response: any) => {
+      voluntarioData.value = {
+        ...deepToRaw(props.data),
+        ...deepToRaw(response),
+      };
+    },
+  });
+});
 </script>
 
 <template>
-  <div class="perfil-shell">
+  <div v-if="voluntarioData != null" class="perfil-shell">
     <!-- Cabecera -->
     <div class="perfil-header mb-4">
       <div class="d-flex align-center gap-2">
@@ -246,6 +137,12 @@ function handleUpdateData(val: Record<string, any>) {
         </VWindow>
       </VCardText>
     </VCard>
+  </div>
+  <div v-else>
+    <div class="tab-placeholder">
+      <VIcon size="48" color="primary" icon="mdi-account-card" />
+      <p class="mt-2">No se encontraron datos del voluntario.</p>
+    </div>
   </div>
 </template>
 

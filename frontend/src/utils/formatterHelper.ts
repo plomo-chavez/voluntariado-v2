@@ -32,14 +32,17 @@ export function handleFormatStatus(value: any): any {
   return value === 1 ? "Activo" : "Inactivo";
 }
 
+// "segundo_nombre": "Ramon",
+//   "primer_apellido": "Chavez",
+//   "segundo_apellido": "Quiroz",
 export function nombreCompleto(value: any): string {
   return (
     (value?.nombre ?? "") +
     " " +
-    (value?.segundoNombre ?? "") +
+    (value?.segundoNombre ?? value?.segundo_nombre ?? "") +
     " " +
-    (value?.primerApellido ?? "") +
+    (value?.primerApellido ?? value?.primer_apellido ?? "") +
     " " +
-    (value?.segundoApellido ?? "")
+    (value?.segundoApellido ?? value?.segundo_apellido ?? "")
   );
 }
