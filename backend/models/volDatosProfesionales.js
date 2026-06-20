@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const volDatosProfesionales = sequelize.define(
     "volDatosProfesionales",
     {
-      id_profesional: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      voluntario_id: {
+      id_voluntario: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: "CASCADE",
       },
-      grado_estudios_id: {
+      id_grado_estudios: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -36,6 +36,24 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
+      pasaporte: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      licencia: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      pasaporteVencimiento: {
+        field: "pasaporteVencimiento",
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      licenciaVencimiento: {
+        field: "licenciaVencimiento",
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       tableName: "vol_datos_profesionales",
@@ -45,12 +63,12 @@ export default (sequelize, DataTypes) => {
 
   volDatosProfesionales.associate = (models) => {
     volDatosProfesionales.belongsTo(models.volInfo, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volDatosProfesionales.belongsTo(models.catGradoEstudios, {
-      foreignKey: "grado_estudios_id",
+      foreignKey: "id_grado_estudios",
       as: "gradoEstudios",
     });
   };

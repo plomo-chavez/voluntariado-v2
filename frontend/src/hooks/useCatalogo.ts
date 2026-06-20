@@ -23,6 +23,8 @@ export function useCatalogo() {
         case "nacionalidad":      url = "/api/catalogos/nacionalidad"; break;
         case "estado-civil":      url = "/api/catalogos/estado-civil"; break;
         case "grupos-sanguineos": url = "/api/catalogos/grupos-sanguineos"; break;
+        case "parentesco":        url = "/api/catalogos/parentesco"; break;
+        case "grados-estudios":   url = "/api/catalogos/grados-estudios"; break;
       }
 
       let payload: any = dependenciaFiltro || item.payload || {};

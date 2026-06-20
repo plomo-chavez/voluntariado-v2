@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catParentesco.associate = (models) => {
     catParentesco.hasMany(models.volContactoEmergencia, {
-      foreignKey: "parentesco_id",
+      foreignKey: "id_parentesco",
       as: "contactosEmergencia",
     });
   };

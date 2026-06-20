@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const volContactoEmergencia = sequelize.define(
     "volContactoEmergencia",
     {
-      id_emergencia: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      voluntario_id: {
+      id_voluntario: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: "CASCADE",
       },
-      label: {
+      nombre: {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(20),
         allowNull: true,
       },
-      parentesco_id: {
+      id_parentesco: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -45,12 +45,12 @@ export default (sequelize, DataTypes) => {
 
   volContactoEmergencia.associate = (models) => {
     volContactoEmergencia.belongsTo(models.volInfo, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volContactoEmergencia.belongsTo(models.catParentesco, {
-      foreignKey: "parentesco_id",
+      foreignKey: "id_parentesco",
       as: "parentesco",
     });
   };

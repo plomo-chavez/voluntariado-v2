@@ -221,15 +221,13 @@ export default (sequelize, DataTypes) => {
       foreignKey: "id_voluntario",
       as: "direccion",
     });
-    volInfo.hasMany(models.volContactoEmergencia, {
-      foreignKey: "voluntario_id",
-      as: "contactosEmergencia",
-      onDelete: "CASCADE",
+    volInfo.hasOne(models.volContactoEmergencia, {
+      foreignKey: "id_voluntario",
+      as: "contactoEmergencia",
     });
-    volInfo.hasMany(models.volDatosProfesionales, {
-      foreignKey: "voluntario_id",
-      as: "datosProfesionales",
-      onDelete: "CASCADE",
+    volInfo.hasOne(models.volDatosProfesionales, {
+      foreignKey: "id_voluntario",
+      as: "profesionales",
     });
     volInfo.hasMany(models.volIdioma, {
       foreignKey: "voluntario_id",

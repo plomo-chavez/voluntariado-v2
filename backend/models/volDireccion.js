@@ -2,7 +2,7 @@ export default (sequelize, DataTypes) => {
   const volDireccion = sequelize.define(
     "volDireccion",
     {
-      id_direccion: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,

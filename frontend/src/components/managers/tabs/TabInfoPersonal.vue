@@ -81,31 +81,54 @@ const sectionSchemas: Record<string, any[]> = {
     {
       label: "Nombre",
       type: "text",
-      model: "contacto_emergencia_nombre",
+      model: "nombre",
     },
     {
       label: "Parentesco",
-      type: "text",
-      model: "contacto_emergencia_parentesco",
+      type: "select",
+      catalogo: "parentesco",
+      model: "parentesco",
     },
     {
       label: "Telefono",
       type: "text",
-      model: "contacto_emergencia_telefono",
+      model: "telefono",
     },
   ],
   profesionales: [
-    { label: "Grado de estudios", type: "text", model: "grado_estudios" },
+    {
+      label: "Grado de estudios",
+      type: "select",
+      catalogo: "grados-estudios",
+      model: "grado_estudios",
+    },
     { label: "Profesion", type: "text", model: "profesion" },
     { label: "Ocupacion actual", type: "text", model: "ocupacion_actual" },
     {
       label: "Empresa o institucion",
       type: "text",
-      model: "empresa_institucion",
+      model: "empresa",
     },
-    { label: "Idioma", type: "text", model: "idioma" },
-    { label: "% escritura", type: "text", model: "idioma_escritura" },
-    { label: "% hablado", type: "text", model: "idioma_hablado" },
+    {
+      label: "Pasaporte",
+      type: "text",
+      model: "pasaporte",
+    },
+    {
+      label: "Pasaporte vencimiento",
+      type: "date",
+      model: "pasaporteVencimiento",
+    },
+    {
+      label: "Licencia",
+      type: "text",
+      model: "licencia",
+    },
+    {
+      label: "Licencia vencimiento",
+      type: "date",
+      model: "licenciaVencimiento",
+    },
   ],
   interes: [
     {
@@ -209,42 +232,23 @@ const contactoItems = computed<FieldItem[]>(() => [
     label: "Ciudad",
     value: safeValue(localData.value.direccion.ciudad),
   },
-  {
-    key: "pasaporte",
-    label: "Pasaporte",
-    value: safeValue(localData.value.direccion.pasaporte),
-  },
-  {
-    key: "licencia",
-    label: "Licencia",
-    value: safeValue(localData.value.direccion.licencia),
-  },
 ]);
 
 const emergenciaItems = computed<FieldItem[]>(() => [
   {
     key: "emergencia_nombre",
     label: "Nombre",
-    value: pickValue(
-      localData.value.contacto_emergencia_nombre,
-      localData.value.nombre_emergencia,
-    ),
+    value: safeValue(localData.value.contactoEmergencia.nombre),
   },
   {
     key: "emergencia_parentesco",
     label: "Parentesco",
-    value: pickValue(
-      props.data.contacto_emergencia_parentesco,
-      props.data.parentesco_emergencia,
-    ),
+    value: safeValue(localData.value.contactoEmergencia.parentesco.label),
   },
   {
     key: "emergencia_telefono",
     label: "Telefono",
-    value: pickValue(
-      props.data.contacto_emergencia_telefono,
-      props.data.telefono_emergencia,
-    ),
+    value: safeValue(localData.value.contactoEmergencia.telefono),
   },
 ]);
 
@@ -252,37 +256,48 @@ const profesionalesItems = computed<FieldItem[]>(() => [
   {
     key: "grado_estudios",
     label: "Grado de estudios",
-    value: safeValue(props.data.grado_estudios),
+    value: safeValue(localData.value.profesionales.gradoEstudios.label),
   },
   {
     key: "profesion",
     label: "Profesion",
-    value: safeValue(props.data.profesion),
+    value: safeValue(localData.value.profesionales.profesion),
   },
   {
     key: "ocupacion_actual",
     label: "Ocupacion actual",
-    value: safeValue(props.data.ocupacion_actual),
+    value: safeValue(localData.value.profesionales.ocupacion_actual),
   },
   {
     key: "empresa_institucion",
     label: "Empresa o institucion",
-    value: safeValue(props.data.empresa_institucion),
+    value: safeValue(localData.value.profesionales.empresa),
   },
   {
-    key: "idioma",
-    label: "Idioma",
-    value: safeValue(props.data.idioma),
+    key: "pasaporte",
+    label: "Pasaporte",
+    value: safeValue(localData.value.profesionales.pasaporte),
   },
   {
-    key: "idioma_escritura",
-    label: "% escritura",
-    value: safeValue(props.data.idioma_escritura),
+    key: "pasaporteVencimiento",
+    label: "Vencimiento del pasaporte",
+    value: formatDateMoment(
+      localData.value.profesionales.pasaporteVencimiento,
+      "DD/MM/YYYY",
+    ),
   },
   {
-    key: "idioma_hablado",
-    label: "% hablado",
-    value: safeValue(props.data.idioma_hablado),
+    key: "licencia",
+    label: "Licencia",
+    value: safeValue(localData.value.profesionales.licencia),
+  },
+  {
+    key: "licenciaVencimiento",
+    label: "Vencimiento de la licencia",
+    value: formatDateMoment(
+      localData.value.profesionales.licenciaVencimiento,
+      "DD/MM/YYYY",
+    ),
   },
 ]);
 
@@ -290,7 +305,10 @@ const interesItems = computed<FieldItem[]>(() => [
   {
     key: "medio_difusion",
     label: "Como te enteraste de la institucion",
-    value: pickValue(props.data.medio_difusion, props.data.como_te_enteraste),
+    value: pickValue(
+      localData.value.medio_difusion,
+      props.data.como_te_enteraste,
+    ),
     full: true,
   },
   {
@@ -487,8 +505,23 @@ function handleEditSection(sectionKey: string) {
   switch (sectionKey) {
     case "contacto":
       localDataActive.value = {
-        id: localData.value.id,
+        id_voluntario: localData.value.id,
+        section: sectionKey,
         ...localData.value.direccion,
+      };
+      break;
+    case "emergencia":
+      localDataActive.value = {
+        id_voluntario: localData.value.id,
+        section: sectionKey,
+        ...localData.value.contactoEmergencia,
+      };
+      break;
+    case "profesionales":
+      localDataActive.value = {
+        id_voluntario: localData.value.id,
+        section: sectionKey,
+        ...localData.value.profesionales,
       };
       break;
   }
@@ -512,10 +545,7 @@ function handleCancel() {
 }
 
 async function handleSave() {
-  const payload = {
-    ...localDataActive.value,
-    section: activeEditSection.value,
-  };
+  const payload = { ...localDataActive.value };
   console.log("Payload to save:", payload);
   await apiRequest({
     url: "/api/elemento",

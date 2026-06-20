@@ -46,6 +46,60 @@ const getRelaciones = async (relaciones) => {
               },
             ],
           };
+        case "contactoEmergencia":
+          return {
+            model: models.volContactoEmergencia,
+            as: "contactoEmergencia",
+            attributes: ["id", "nombre", "id_parentesco", "telefono"],
+            include: [
+              {
+                model: models.catParentesco,
+                as: "parentesco",
+                attributes: ["id", "label"],
+              },
+            ],
+          };
+        case "idiomas":
+          return {
+            model: models.volIdiomas,
+            as: "idiomas",
+            attributes: ["id", "nombre", "escrito", "hablado"],
+          };
+        case "profesionales":
+          return {
+            model: models.volDatosProfesionales,
+            as: "profesionales",
+            include: [
+              {
+                model: models.catGradoEstudios,
+                as: "gradoEstudios",
+                attributes: ["id", "label"],
+              },
+            ],
+          };
+        case "intereses":
+          return {
+            model: models.volIntereses,
+            as: "intereses",
+          };
+        case "disponibilidad":
+          return {
+            model: models.volDisponibilidad,
+            as: "disponibilidad",
+            attributes: ["id", "nombre"],
+          };
+        case "direccion":
+          return {
+            model: models.volDireccion,
+            as: "direccion",
+            include: [
+              {
+                model: models.catEstado,
+                as: "estado",
+                attributes: ["id", "label"],
+              },
+            ],
+          };
         case "estado_civil":
           return {
             model: models.catEstadoCivil,

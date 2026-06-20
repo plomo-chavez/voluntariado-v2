@@ -86,7 +86,7 @@ const validateRecord = async (tabla, filters, dataReturn = false) => {
       : { result: true, message: "Validación exitosa" };
 
     if (dataReturn) {
-      response.data = registro.toJSON();
+      response.data = !registro ? null : registro.toJSON();
     }
 
     return response;

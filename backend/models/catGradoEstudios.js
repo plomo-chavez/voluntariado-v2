@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catGradoEstudios.associate = (models) => {
     catGradoEstudios.hasMany(models.volDatosProfesionales, {
-      foreignKey: "grado_estudios_id",
+      foreignKey: "id_grado_estudios",
       as: "datosProfesionales",
     });
   };

@@ -74,7 +74,6 @@ async function transformFormSectionsToPayload(data) {
   let payload = {};
   let existeRecord;
 
-  console.log("[transformFormSectionsToPayload - Data: ", data);
   switch (data.section) {
     case "contacto":
       tableModel = "volDireccion";
@@ -82,12 +81,10 @@ async function transformFormSectionsToPayload(data) {
       existeRecord = await validateRecord(
         tableModel,
         {
-          id_voluntario: data.id,
+          id_voluntario: data.id_voluntario,
         },
         true,
       );
-
-      console.log("[existeRecord: ", existeRecord.data);
 
       isCreate = existeRecord.result;
 
@@ -101,20 +98,64 @@ async function transformFormSectionsToPayload(data) {
         cp: data.cp || "",
         id_estado: data.estado?.id || null,
       };
-      if (!isCreate) {
-        payload.id = existeRecord.data.id_direccion;
-      }
 
+      break;
+    case "emergencia":
+      tableModel = "volContactoEmergencia";
+
+      existeRecord = await validateRecord(
+        tableModel,
+        {
+          id_voluntario: data.id_voluntario,
+        },
+        true,
+      );
+
+      isCreate = existeRecord.result;
+
+      payload = {
+        id_voluntario: data.id_voluntario,
+        nombre: data.nombre || "",
+        telefono: data.telefono || "",
+        celular: data.celular || "",
+        id_parentesco: data.parentesco?.id || "",
+      };
+      break;
+    case "profesionales":
+      tableModel = "volDatosProfesionales";
+
+      existeRecord = await validateRecord(
+        tableModel,
+        {
+          id_voluntario: data.id_voluntario,
+        },
+        true,
+      );
+
+      isCreate = existeRecord.result;
+
+      payload = {
+        id_voluntario: data.id_voluntario,
+        id_grado_estudios: data.grado_estudios?.id || null,
+        profesion: data.profesion || "",
+        ocupacion_actual: data.ocupacion_actual || "",
+        empresa: data.empresa || "",
+        pasaporte: data.pasaporte || "",
+        pasaporteVencimiento: data.pasaporteVencimiento || "",
+        licencia: data.licencia || "",
+        licenciaVencimiento: data.licenciaVencimiento || "",
+      };
+      break;
+    case "salud":
       break;
     case "salud":
       break;
   }
 
-  console.log("[transformFormSectionsToPayload] =>", {
-    isCreate,
-    tableModel,
-    payload,
-  });
+  if (!isCreate) {
+    payload.id = existeRecord.data.id;
+  }
+
   const elemento = isCreate
     ? await createRecord(tableModel, payload)
     : await updateRecord(tableModel, payload);
@@ -131,7 +172,6 @@ async function transformFormSectionsToPayload(data) {
 async function saveElemento(data) {
   try {
     if (data.section) {
-      console.log("[saveElemento] => Guardando sección:", data.section);
       return transformFormSectionsToPayload(data);
     } else {
       const isCreate = !data.id && !data.id;
@@ -282,12 +322,6 @@ const verificar = async (req, res) => {
       paranoid: false,
     });
 
-    console.log("[verificar] =>", {
-      curp,
-      elemento,
-      exists: !!elemento,
-    });
-
     return res.json({
       result: true,
       message: elemento
@@ -321,10 +355,15 @@ const getById = async (req, res) => {
       "cargo",
       "delegacion",
       "direccion",
+      "contactoEmergencia",
       "estado",
       "estado_civil",
       "grupo_sanguineo",
       "nacionalidad",
+      // "idiomas",
+      "profesionales",
+      // "intereses",
+      // "disponibilidad",
     ]);
 
     const query = {
@@ -332,9 +371,6 @@ const getById = async (req, res) => {
       paranoid: false,
       include: [...relaciones],
     };
-
-    console.log("[getById] =>", query);
-    console.log("[getById] =>", relaciones);
 
     const elemento = await volInfo.findOne(query);
 

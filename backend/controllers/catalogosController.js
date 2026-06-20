@@ -43,6 +43,14 @@ const tablaMap = {
     tabla: "catNacionalidad",
     filtros: { estatus: 1 },
   },
+  parentesco: {
+    tabla: "catParentesco",
+    filtros: { estatus: 1 },
+  },
+  "grados-estudios": {
+    tabla: "catGradoEstudios",
+    filtros: { estatus: 1 },
+  },
 };
 
 const getCatalogo = async (req, res, tabla) => {
