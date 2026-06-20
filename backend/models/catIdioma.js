@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catIdioma.associate = (models) => {
     catIdioma.hasMany(models.volIdioma, {
-      foreignKey: "idioma_id",
+      foreignKey: "id_idioma",
       as: "voluntariosIdiomas",
     });
   };

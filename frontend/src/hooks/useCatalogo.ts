@@ -26,6 +26,7 @@ export function useCatalogo() {
         case "parentesco":        url = "/api/catalogos/parentesco"; break;
         case "grados-estudios":   url = "/api/catalogos/grados-estudios"; break;
         case "medio-difusion":    url = "/api/catalogos/medio-difusion"; break;
+        case "idiomas":           url = "/api/catalogos/idiomas"; break;
       }
 
       let payload: any = dependenciaFiltro || item.payload || {};

@@ -208,14 +208,12 @@ export default (sequelize, DataTypes) => {
       as: "cargo",
     });
     volInfo.hasMany(models.volCargos, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "cargos",
-      onDelete: "CASCADE",
     });
     volInfo.hasMany(models.volContacto, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "contactos",
-      onDelete: "CASCADE",
     });
     volInfo.hasOne(models.volDireccion, {
       foreignKey: "id_voluntario",
@@ -230,19 +228,16 @@ export default (sequelize, DataTypes) => {
       as: "profesionales",
     });
     volInfo.hasMany(models.volIdioma, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "idiomas",
-      onDelete: "CASCADE",
     });
     volInfo.hasMany(models.volDocumento, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "documentos",
-      onDelete: "CASCADE",
     });
     volInfo.hasMany(models.volDisponibilidad, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "disponibilidades",
-      onDelete: "CASCADE",
     });
     volInfo.hasOne(models.volInfoExtra, {
       foreignKey: "id_voluntario",

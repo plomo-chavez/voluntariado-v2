@@ -2,16 +2,21 @@ export default (sequelize, DataTypes) => {
   const volIdioma = sequelize.define(
     "volIdioma",
     {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
       id_voluntario: {
         type: DataTypes.INTEGER,
-        primaryKey: true,
+        allowNull: true,
         references: {
           model: "vol_info",
-          key: "id_voluntario",
+          key: "id",
         },
         onDelete: "CASCADE",
       },
-      idioma_id: {
+      id_idioma: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         references: {
@@ -19,11 +24,11 @@ export default (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      nivel_escrito: {
+      escrito: {
         type: DataTypes.STRING(20),
         allowNull: true,
       },
-      nivel_hablado: {
+      hablado: {
         type: DataTypes.STRING(20),
         allowNull: true,
       },
@@ -41,7 +46,7 @@ export default (sequelize, DataTypes) => {
       onDelete: "CASCADE",
     });
     volIdioma.belongsTo(models.catIdioma, {
-      foreignKey: "idioma_id",
+      foreignKey: "id_idioma",
       as: "idioma",
     });
   };

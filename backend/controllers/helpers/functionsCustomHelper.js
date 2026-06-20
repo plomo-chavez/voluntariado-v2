@@ -61,9 +61,15 @@ const getRelaciones = async (relaciones) => {
           };
         case "idiomas":
           return {
-            model: models.volIdiomas,
+            model: models.volIdioma,
             as: "idiomas",
-            attributes: ["id", "nombre", "escrito", "hablado"],
+            include: [
+              {
+                model: models.catIdioma,
+                as: "idioma",
+                attributes: ["id", "label"],
+              },
+            ],
           };
         case "profesionales":
           return {

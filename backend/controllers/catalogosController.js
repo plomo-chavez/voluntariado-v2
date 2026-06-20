@@ -55,6 +55,10 @@ const tablaMap = {
     tabla: "catMedioDifusion",
     filtros: { estatus: 1 },
   },
+  idiomas: {
+    tabla: "catIdioma",
+    filtros: { estatus: 1 },
+  },
 };
 
 const getCatalogo = async (req, res, tabla) => {

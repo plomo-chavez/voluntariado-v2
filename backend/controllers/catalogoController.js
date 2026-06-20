@@ -86,7 +86,7 @@ const CATALOGS_MAP = {
     supportsStatus: true,
     supportsSoftDelete: true,
   },
-  idioma: {
+  idiomas: {
     modelo: models.catIdioma,
     modeloString: "catIdioma",
     primaryKey: "id",

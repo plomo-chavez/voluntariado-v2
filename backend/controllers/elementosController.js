@@ -67,6 +67,51 @@ function transformElementoData(data) {
   return tmp;
 }
 
+async function saveVolIdiomas(id_voluntario, idiomas = []) {
+  if (!id_voluntario) {
+    return {
+      result: false,
+      message: "El id_voluntario es requerido para guardar idiomas",
+      data: [],
+    };
+  }
+
+  try {
+    return await db.sequelize.transaction(async (transaction) => {
+      await db.volIdioma.destroy({
+        where: { id_voluntario },
+        transaction,
+      });
+
+      const idiomasArray = Array.isArray(idiomas) ? idiomas : [];
+
+      for (const item of idiomasArray) {
+        await db.volIdioma.create(
+          {
+            id_voluntario,
+            id_idioma: item.idioma.id,
+            escrito: item.escrito || "",
+            hablado: item.hablado || "",
+          },
+          { transaction },
+        );
+      }
+
+      return {
+        result: true,
+        message: "Idiomas actualizados con éxito",
+      };
+    });
+  } catch (error) {
+    console.error("Error guardando idiomas:", error);
+    return {
+      result: false,
+      message: "Error al guardar idiomas: " + error.message,
+      data: [],
+    };
+  }
+}
+
 async function transformFormSectionsToPayload(data) {
   const sections = ["contacto", "salud"];
   let isCreate = false;
@@ -167,8 +212,9 @@ async function transformFormSectionsToPayload(data) {
         otraInstitucion: data.otraInstitucion || 0,
       };
 
-      console.log("[payload] =>", payload);
       break;
+    case "idiomas":
+      return saveVolIdiomas(data.id_voluntario, data.idiomas);
   }
 
   if (!isCreate) {
@@ -379,7 +425,7 @@ const getById = async (req, res) => {
       "estado_civil",
       "grupo_sanguineo",
       "nacionalidad",
-      // "idiomas",
+      "idiomas",
       "profesionales",
       "intereses",
       // "disponibilidad",

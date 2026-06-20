@@ -18,7 +18,7 @@ type SectionItem = {
   key: string;
   title: string;
   icon: string;
-  items: FieldItem[];
+  items?: FieldItem[];
 };
 
 const emit = defineEmits<{
@@ -26,15 +26,19 @@ const emit = defineEmits<{
 }>();
 
 const activeEditSection = ref<string | null>(null);
-// const activeEditSection = ref<string | null>(null);
-const localData = ref<Record<string, any>>({ ...props.data });
-const localDataActive = ref<Record<string, any>>({ ...props.data });
+const localData = ref<any>({ ...props.data });
+const localDataActive = ref<Record<string, any>>({});
+const editingIdiomaIndex = ref<number | null>(null);
+const showIdiomaForm = ref(false);
 
 watch(
   () => props.data,
   (val) => {
     if (!activeEditSection.value) {
-      localData.value = { ...val };
+      localData.value = {
+        ...val,
+        idiomas: Array.isArray(val?.idiomas) ? [...val.idiomas] : [],
+      };
     }
   },
   { deep: true },
@@ -150,6 +154,19 @@ const sectionSchemas: Record<string, any[]> = {
         { label: "Si", value: true },
         { label: "No", value: false },
       ],
+    },
+  ],
+  idiomas: [
+    { label: "Idioma", type: "select", catalogo: "idiomas", model: "idioma" },
+    {
+      label: "Porcentaje Escrito",
+      type: "text",
+      model: "escrito",
+    },
+    {
+      label: "Porcentaje Hablado",
+      type: "text",
+      model: "hablado",
     },
   ],
   disponibilidad: [
@@ -398,12 +415,6 @@ const sections = computed<SectionItem[]>(() => [
     items: profesionalesItems.value,
   },
   {
-    key: "interes",
-    title: "Datos de interes institucional",
-    icon: "fa-solid fa-hand-holding-heart",
-    items: interesItems.value,
-  },
-  {
     key: "disponibilidad",
     title: "Datos de disponibilidad",
     icon: "fa-solid fa-calendar-days",
@@ -527,20 +538,99 @@ function handleEditSection(sectionKey: string) {
         ...localData.value.intereses,
       };
       break;
+    case "idiomas":
+      localDataActive.value = Array.isArray(localData.value.idiomas)
+        ? [...localData.value.idiomas]
+        : [];
+      break;
   }
   setTimeout(() => {
     activeEditSection.value = sectionKey;
   }, 100);
 }
 
+function resetIdiomaForm() {
+  editingIdiomaIndex.value = null;
+  showIdiomaForm.value = false;
+}
+
+function openIdiomaForm(index: string | number | null = null) {
+  if (!Array.isArray(localDataActive.value)) {
+    localDataActive.value = [];
+  }
+
+  if (index === null) {
+    localDataActive.value.push({
+      index: `${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      label: "",
+      escrito: 0,
+      hablado: 0,
+    });
+    return;
+  }
+
+  const numericIndex = Number(index);
+  if (!Number.isNaN(numericIndex) && localDataActive.value?.[numericIndex]) {
+    // already visible as inline form
+  }
+}
+
+function handleUpdateIdioma(
+  value: Record<string, any>,
+  index: string | number,
+) {
+  const numericIndex = Number(index);
+  if (Number.isNaN(numericIndex)) return;
+  if (!Array.isArray(localDataActive.value)) {
+    localDataActive.value = [];
+  }
+  localDataActive.value[numericIndex] = {
+    ...localDataActive.value[numericIndex],
+    ...value,
+  };
+}
+
+function handleSaveIdioma() {
+  // Mantengo la función para compatibilidad si se necesita guardar por separado.
+}
+
+function handleDeleteIdioma(index: string | number) {
+  const numericIndex = Number(index);
+  if (!Array.isArray(localDataActive.value)) return;
+  if (Number.isNaN(numericIndex)) return;
+  localDataActive.value.splice(numericIndex, 1);
+}
+
+function handleDeleteAllIdiomas() {
+  localDataActive.value = [];
+  resetIdiomaForm();
+}
+
 function handleCancelEdit() {
-  localData.value = { ...props.data };
+  localData.value = {
+    ...props.data,
+    idiomas: Array.isArray(props.data?.idiomas) ? [...props.data.idiomas] : [],
+  };
+  resetIdiomaForm();
   activeEditSection.value = null;
 }
 
-function handleSaveSection() {
-  emit("update:data", { ...localData.value });
-  activeEditSection.value = null;
+async function handleSaveSection() {
+  const payload = {
+    section: activeEditSection.value,
+    id_voluntario: props.data.id,
+    idiomas: Array.isArray(localDataActive.value)
+      ? [...localDataActive.value]
+      : [],
+  };
+  await apiRequest({
+    url: "/api/elemento",
+    payload,
+    messageType: "toast",
+    onSuccess: () => {
+      activeEditSection.value = null;
+    },
+  });
 }
 
 function handleCancel() {
@@ -549,7 +639,6 @@ function handleCancel() {
 
 async function handleSave() {
   const payload = { ...localDataActive.value };
-  console.log("Payload to save:", payload);
   await apiRequest({
     url: "/api/elemento",
     payload,
@@ -563,8 +652,8 @@ async function handleSave() {
 </script>
 
 <template>
-  <pre>^{{ activeEditSection }}</pre>
   <div class="personal-root">
+    <!-- Secciones genericas -->
     <section
       v-for="section in regularSections"
       :key="section.key"
@@ -609,7 +698,107 @@ async function handleSave() {
         </div>
       </div>
     </section>
+    <!-- Seccion de idiomas -->
+    <section class="personal-section availability-wrap">
+      <header class="section-header">
+        <div class="section-header-left">
+          <i :class="`fa-solid fa-languaje section-icon`" aria-hidden="true" />
+          <h3 class="section-title">Idiomas</h3>
+        </div>
+        <VBtn
+          size="x-small"
+          icon
+          variant="flat"
+          color="white"
+          class="section-edit-btn section-edit-btn--availability"
+          @click="handleEditSection('idiomas')"
+        >
+          <i class="fa-solid fa-pen" aria-hidden="true" />
+        </VBtn>
+      </header>
 
+      <div v-if="activeEditSection === 'idiomas'" class="section-form-wrap">
+        <div class="idiomas-toolbar">
+          <VBtn size="small" color="primary" @click="openIdiomaForm(null)">
+            <i class="fa-solid fa-plus" aria-hidden="true" />
+            Agregar nuevo idioma
+          </VBtn>
+          <VBtn
+            size="small"
+            variant="tonal"
+            color="error"
+            :disabled="!localDataActive?.length"
+            @click="handleDeleteAllIdiomas"
+          >
+            <i class="fa-solid fa-trash" aria-hidden="true" />
+            Eliminar todos
+          </VBtn>
+        </div>
+
+        <div
+          v-for="(idioma, index) in localDataActive"
+          :key="idioma.id || index"
+          class="idioma-editor"
+        >
+          <div class="idioma-row idioma-row--form">
+            <div class="idioma-form">
+              <ModuladorFormFactory
+                :schema="sectionSchemas.idiomas"
+                :modelValue="idioma"
+                :formLive="true"
+                :showButtonsAction="false"
+                :showButtonSubmit="false"
+                :showButtonCancel="false"
+                @update:modelValue="(val) => handleUpdateIdioma(val, index)"
+              />
+            </div>
+            <div class="idioma-actions">
+              <VBtn
+                size="x-small"
+                variant="flat"
+                color="error"
+                @click="handleDeleteIdioma(index)"
+              >
+                <i class="fa-solid fa-trash" aria-hidden="true" />
+              </VBtn>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-form-actions section-form-actions--main">
+          <VBtn size="small" color="red-darken-2" @click="handleSaveSection">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true" />
+            Guardar
+          </VBtn>
+          <VBtn
+            size="small"
+            variant="tonal"
+            color="secondary"
+            @click="handleCancelEdit"
+          >
+            <i class="fa-solid fa-xmark" aria-hidden="true" />
+            Cancelar
+          </VBtn>
+        </div>
+      </div>
+
+      <div v-else class="availability-box">
+        <div v-if="!props.data.idiomas?.length" class="idiomas-empty">
+          No hay idiomas registrados
+        </div>
+        <div v-else class="idiomas-list">
+          <div
+            v-for="(idioma, index) in props.data.idiomas"
+            :key="idioma.id || index"
+            class="idioma-row idioma-row--main"
+          >
+            <div class="cell idioma-cell">{{ idioma.idioma?.label }}</div>
+            <div class="cell idioma-cell">Escrito: {{ idioma.escrito }}%</div>
+            <div class="cell idioma-cell">Hablado: {{ idioma.hablado }}%</div>
+          </div>
+        </div>
+      </div>
+    </section>
     <!-- <section
       v-if="disponibilidadSection"
       class="personal-section availability-wrap"
@@ -773,6 +962,68 @@ async function handleSave() {
   display: flex;
   gap: 0.55rem;
   margin-top: 0.55rem;
+}
+
+.section-form-actions--main {
+  margin-top: 1rem;
+}
+
+.idiomas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+.idioma-form {
+  width: 100% !important;
+}
+
+.idiomas-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.idioma-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.75rem;
+  border: 1px solid #edf1f6;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.idioma-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.idioma-meta span {
+  color: #475569;
+  font-weight: 500;
+}
+
+.idioma-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.idioma-editor {
+  margin-bottom: 1rem;
+}
+
+.idiomas-empty {
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed #d1d5db;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  margin-bottom: 1rem;
 }
 
 .fields-grid {
