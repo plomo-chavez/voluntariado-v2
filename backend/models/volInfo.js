@@ -244,10 +244,9 @@ export default (sequelize, DataTypes) => {
       as: "disponibilidades",
       onDelete: "CASCADE",
     });
-    volInfo.hasMany(models.volInfoExtra, {
-      foreignKey: "voluntario_id",
-      as: "infoExtra",
-      onDelete: "CASCADE",
+    volInfo.hasOne(models.volInfoExtra, {
+      foreignKey: "id_voluntario",
+      as: "intereses",
     });
   };
 

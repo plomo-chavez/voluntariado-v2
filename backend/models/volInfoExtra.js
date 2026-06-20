@@ -2,12 +2,12 @@ export default (sequelize, DataTypes) => {
   const volInfoExtra = sequelize.define(
     "volInfoExtra",
     {
-      id_info: {
+      id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
       },
-      voluntario_id: {
+      id_voluntario: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         },
         onDelete: "CASCADE",
       },
-      medio_id: {
+      id_medio: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -47,6 +47,12 @@ export default (sequelize, DataTypes) => {
       detalle_experiencia: {
         type: DataTypes.TEXT,
         allowNull: true,
+      },
+      otraInstitucion: {
+        field: "otraInstitucion",
+        type: DataTypes.TINYINT(1),
+        allowNull: false,
+        defaultValue: 0,
       },
     },
     {

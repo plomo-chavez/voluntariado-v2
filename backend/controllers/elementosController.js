@@ -146,9 +146,28 @@ async function transformFormSectionsToPayload(data) {
         licenciaVencimiento: data.licenciaVencimiento || "",
       };
       break;
-    case "salud":
-      break;
-    case "salud":
+    case "interes":
+      tableModel = "volInfoExtra";
+
+      existeRecord = await validateRecord(
+        tableModel,
+        {
+          id_voluntario: data.id_voluntario,
+        },
+        true,
+      );
+
+      isCreate = existeRecord.result;
+
+      payload = {
+        id_voluntario: data.id_voluntario,
+        id_medio: data.medioDifusion?.id || null,
+        motivo: data.motivo || "",
+        expectativas: data.expectativas || "",
+        otraInstitucion: data.otraInstitucion || 0,
+      };
+
+      console.log("[payload] =>", payload);
       break;
   }
 
@@ -362,7 +381,7 @@ const getById = async (req, res) => {
       "nacionalidad",
       // "idiomas",
       "profesionales",
-      // "intereses",
+      "intereses",
       // "disponibilidad",
     ]);
 

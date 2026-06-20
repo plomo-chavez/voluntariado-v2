@@ -4,9 +4,16 @@ import { computed, ref, watch } from "vue";
 import { safeValue } from "./customFunctionsInfo";
 import SectionVoluntario from "./SectionVoluntario.vue";
 
-const props = defineProps<{
-  data: Record<string, any>;
-}>();
+// ─── Props / Emits ───────────────────────────────────────────────────────────────
+const props = withDefaults(
+  defineProps<{
+    data: Record<string, any>;
+    change: boolean;
+  }>(),
+  {
+    change: false,
+  },
+);
 
 const emit = defineEmits<{
   (event: "update:data", value: Record<string, any>): void;
@@ -221,7 +228,6 @@ async function handleSave() {
       isEditing.value = false;
     },
   });
-  emit("update:data", { ...localData.value });
 }
 onMounted(() => {
   isEditing.value = false;
@@ -231,7 +237,7 @@ onMounted(() => {
 <template>
   <div v-if="true" class="perfil-user">
     <div class="perfil-header-card">
-      <SectionVoluntario :data="localData" />
+      <SectionVoluntario :data="localData" :change="props.change" />
 
       <VBtn
         v-if="!isEditing"

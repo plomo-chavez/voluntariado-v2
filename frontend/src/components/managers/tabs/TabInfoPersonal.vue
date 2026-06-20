@@ -133,18 +133,23 @@ const sectionSchemas: Record<string, any[]> = {
   interes: [
     {
       label: "Como te enteraste de la institucion",
-      type: "text",
-      model: "medio_difusion",
+      type: "select",
+      catalogo: "medio-difusion",
+      model: "medioDifusion",
     },
     {
       label: "Que esperas recibir de la Cruz Roja",
       type: "text",
-      model: "expectativas_cruz_roja",
+      model: "expectativas",
     },
     {
       label: "Has sido voluntario en otra institucion",
-      type: "text",
-      model: "voluntario_otra_institucion",
+      type: "switch",
+      model: "otraInstitucion",
+      options: [
+        { label: "Si", value: true },
+        { label: "No", value: false },
+      ],
     },
   ],
   disponibilidad: [
@@ -305,26 +310,17 @@ const interesItems = computed<FieldItem[]>(() => [
   {
     key: "medio_difusion",
     label: "Como te enteraste de la institucion",
-    value: pickValue(
-      localData.value.medio_difusion,
-      props.data.como_te_enteraste,
-    ),
-    full: true,
+    value: safeValue(localData.value?.intereses.medioDifusion?.label ?? ""),
   },
   {
     key: "expectativas",
     label: "Que esperas recibir de la Cruz Roja",
-    value: pickValue(
-      props.data.expectativas_cruz_roja,
-      props.data.que_esperas_recibir,
-    ),
-    full: true,
+    value: safeValue(localData.value?.intereses?.expectativas ?? ""),
   },
   {
     key: "voluntario_otra_institucion",
     label: "Alguna vez has sido voluntario de otra institucion",
-    value: normalizeBool(props.data.voluntario_otra_institucion),
-    full: true,
+    value: normalizeBool(localData.value.intereses?.otraInstitucion ?? false),
   },
 ]);
 
@@ -524,6 +520,13 @@ function handleEditSection(sectionKey: string) {
         ...localData.value.profesionales,
       };
       break;
+    case "interes":
+      localDataActive.value = {
+        id_voluntario: localData.value.id,
+        section: sectionKey,
+        ...localData.value.intereses,
+      };
+      break;
   }
   setTimeout(() => {
     activeEditSection.value = sectionKey;
@@ -553,15 +556,14 @@ async function handleSave() {
     messageType: "toast",
     onSuccess: (response: any) => {
       emit("update:data", { ...response });
+      activeEditSection.value = null;
     },
   });
-  emit("update:data", { ...localData.value });
 }
 </script>
 
 <template>
   <pre>^{{ activeEditSection }}</pre>
-  <pre>^{{ localDataActive }}</pre>
   <div class="personal-root">
     <section
       v-for="section in regularSections"
@@ -608,7 +610,7 @@ async function handleSave() {
       </div>
     </section>
 
-    <section
+    <!-- <section
       v-if="disponibilidadSection"
       class="personal-section availability-wrap"
     >
@@ -709,7 +711,7 @@ async function handleSave() {
           <div class="time-box">{{ horarioParts.fin }}</div>
         </div>
       </div>
-    </section>
+    </section> -->
   </div>
 </template>
 

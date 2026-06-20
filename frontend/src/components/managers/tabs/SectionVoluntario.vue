@@ -2,9 +2,16 @@
 import { ref } from "vue";
 import { safeValue } from "./customFunctionsInfo";
 
-const props = defineProps<{
-  data: Record<string, any>;
-}>();
+// ─── Props / Emits ───────────────────────────────────────────────────────────────
+const props = withDefaults(
+  defineProps<{
+    data: Record<string, any>;
+    change: boolean;
+  }>(),
+  {
+    change: false,
+  },
+);
 
 const emit = defineEmits<{
   (event: "update:data", value: Record<string, any>): void;
@@ -12,9 +19,19 @@ const emit = defineEmits<{
 
 const isEditing = ref(true);
 const localData = ref(JSON.parse(JSON.stringify(props.data)));
+
 onMounted(() => {
   isEditing.value = false;
 });
+
+watch(
+  () => props.change,
+  () => {
+    isEditing.value = true;
+    localData.value = JSON.parse(JSON.stringify(props.data));
+    isEditing.value = false;
+  },
+);
 </script>
 
 <template>

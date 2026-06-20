@@ -79,8 +79,15 @@ const getRelaciones = async (relaciones) => {
           };
         case "intereses":
           return {
-            model: models.volIntereses,
+            model: models.volInfoExtra,
             as: "intereses",
+            include: [
+              {
+                model: models.catMedioDifusion,
+                as: "medioDifusion",
+                attributes: ["id", "label"],
+              },
+            ],
           };
         case "disponibilidad":
           return {

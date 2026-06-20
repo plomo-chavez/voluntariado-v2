@@ -51,6 +51,10 @@ const tablaMap = {
     tabla: "catGradoEstudios",
     filtros: { estatus: 1 },
   },
+  "medio-difusion": {
+    tabla: "catMedioDifusion",
+    filtros: { estatus: 1 },
+  },
 };
 
 const getCatalogo = async (req, res, tabla) => {

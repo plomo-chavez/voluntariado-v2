@@ -43,7 +43,7 @@ export default (sequelize, DataTypes) => {
 
   catMedioDifusion.associate = (models) => {
     catMedioDifusion.hasMany(models.volInfoExtra, {
-      foreignKey: "medio_difusion_id",
+      foreignKey: "id_medio",
       as: "informacionExtra",
     });
   };

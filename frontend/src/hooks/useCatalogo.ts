@@ -25,6 +25,7 @@ export function useCatalogo() {
         case "grupos-sanguineos": url = "/api/catalogos/grupos-sanguineos"; break;
         case "parentesco":        url = "/api/catalogos/parentesco"; break;
         case "grados-estudios":   url = "/api/catalogos/grados-estudios"; break;
+        case "medio-difusion":    url = "/api/catalogos/medio-difusion"; break;
       }
 
       let payload: any = dependenciaFiltro || item.payload || {};

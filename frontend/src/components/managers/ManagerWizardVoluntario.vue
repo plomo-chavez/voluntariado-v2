@@ -40,23 +40,33 @@ type TabKey = (typeof TABS)[number]["key"];
 const activeTab = ref<TabKey>("infoVoluntario");
 const voluntarioData = ref<any>(null);
 const show = ref<boolean>(false);
+const moodChange = ref<boolean>(false);
 
-function handleUpdateData(val: Record<string, any>) {
-  voluntarioData.value = { ...voluntarioData.value, ...val };
+async function handleUpdateData(val: Record<string, any>) {
+  await getData();
 }
-onBeforeMount(async () => {
+
+async function getData() {
   await apiRequest({
     method: "GET",
+    loader: true,
     url: "/api/elemento/" + props.data.id,
     messageType: "toast",
     onSuccess: (response: any) => {
+      moodChange.value = !moodChange.value;
       voluntarioData.value = {
         ...deepToRaw(props.data),
         ...deepToRaw(response),
       };
-      show.value = true;
+      setTimeout(() => {
+        show.value = true;
+        moodChange.value = !moodChange.value;
+      }, 100);
     },
   });
+}
+onBeforeMount(async () => {
+  await getData();
 });
 </script>
 
@@ -107,6 +117,7 @@ onBeforeMount(async () => {
           <VWindowItem value="infoVoluntario">
             <TabInfoVoluntario
               :data="voluntarioData"
+              :change="moodChange"
               @update:data="handleUpdateData"
             />
           </VWindowItem>
