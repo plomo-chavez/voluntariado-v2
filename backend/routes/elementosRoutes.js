@@ -11,6 +11,7 @@ router.use(authMiddleware);
 router.post("/elemento", elementosController.createOrUpdate);
 router.get("/elemento/:id", elementosController.getById);
 router.post("/elementos", elementosController.getAll);
+router.post("/elemento/descargar", elementosController.descargarDocumentos);
 router.post("/elemento/eliminar", elementosController.delete);
 router.post("/elemento/eliminar/soft", elementosController.softDelete);
 router.post("/elemento/verificar", elementosController.verificar);

@@ -21,6 +21,16 @@ const emit = defineEmits<{
 
 const isEditing = ref(false);
 const loading = ref(false);
+const modalExpediente = ref(false);
+const expedienteOptions = ref([
+  { label: "Carátula", value: "caratula", selected: false },
+  {
+    label: "Registro de aspirante",
+    value: "registro_aspirante",
+    selected: false,
+  },
+  { label: "Carta compromiso", value: "carta_compromiso", selected: false },
+]);
 const validationErrors = ref<string[]>([]);
 const localData = ref(JSON.parse(JSON.stringify(props.data)));
 
@@ -218,7 +228,6 @@ function handleCancel() {
 
 async function handleSave() {
   const payload = { ...localData.value, step: 1 };
-  console.log("Payload to save:", payload);
   await apiRequest({
     url: "/api/elemento",
     payload,
@@ -229,6 +238,34 @@ async function handleSave() {
     },
   });
 }
+
+function handleOpenModalExpediente() {
+  expedienteOptions.value.forEach((opt) => (opt.selected = false));
+  modalExpediente.value = true;
+}
+
+function handleCloseModalExpediente() {
+  modalExpediente.value = false;
+}
+async function handleDescargarDocumentos(all: any = false) {
+  const payload = {
+    id_voluntario: props.data.id,
+    documentos: expedienteOptions.value
+      .filter((opt) => opt.selected)
+      .map((opt) => opt.value),
+    all,
+  };
+  await apiRequest({
+    payload,
+    loader: true,
+    messageType: "toast",
+    url: "/api/elemento/descargar",
+    onSuccess: (response: any) => {
+      modalExpediente.value = false;
+    },
+  });
+}
+
 onMounted(() => {
   isEditing.value = false;
 });
@@ -239,15 +276,26 @@ onMounted(() => {
     <div class="perfil-header-card">
       <SectionVoluntario :data="localData" :change="props.change" />
 
-      <VBtn
-        v-if="!isEditing"
-        class="edit-btn-desktop"
-        color="red-darken-2"
-        @click="handleEdit"
-      >
-        <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
-        Editar perfil
-      </VBtn>
+      <div class="header-actions">
+        <VBtn
+          v-if="!isEditing"
+          class="edit-btn-desktop"
+          color="red-darken-2"
+          @click="handleEdit"
+        >
+          <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
+          Editar perfil
+        </VBtn>
+        <VBtn
+          v-if="!isEditing"
+          class="edit-btn-desktop"
+          color="red-darken-2"
+          @click="handleOpenModalExpediente"
+        >
+          <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
+          Descargar expediente
+        </VBtn>
+      </div>
     </div>
 
     <Transition name="fade-slide" mode="out-in">
@@ -325,6 +373,46 @@ onMounted(() => {
         />
       </div>
     </Transition>
+
+    <VDialog :model-value="modalExpediente" persistent class="v-dialog-sm">
+      <DialogCloseBtn @click="handleCloseModalExpediente" />
+      <!-- prettier-ignore -->
+      <VCard title="Descargar Expediente">
+        <VCardText class="py-2">
+          <div class="expediente-options">
+            <div
+              v-for="option in expedienteOptions"
+              :key="option.value"
+            >
+              <VCheckbox
+                v-model="option.selected"
+                :label="option.label"
+                hide-details
+              />
+            </div>
+          </div>
+        </VCardText>
+
+        <VCardActions>
+          <VSpacer />
+          <VBtn
+            color="primary"
+            variant="tonal"
+            :disabled="!expedienteOptions.some(opt => opt.selected)"
+            @click="handleDescargarDocumentos"
+          >
+            Descargar seleccionados
+          </VBtn>
+          <VBtn
+            color="red-darken-2"
+            variant="tonal"
+            @click="handleDescargarDocumentos(true)"
+          >
+            Descargar todo
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </div>
 </template>
 
@@ -367,6 +455,12 @@ onMounted(() => {
 
 .header-user-meta {
   min-width: 0;
+}
+
+.header-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .user-name {
@@ -536,6 +630,16 @@ onMounted(() => {
 .actions-wrap {
   display: flex;
   gap: 0.6rem;
+}
+
+.expediente-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.option-item {
+  padding: 0.5rem;
 }
 
 .fade-slide-enter-active,

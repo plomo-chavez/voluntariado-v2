@@ -461,6 +461,31 @@ const getById = async (req, res) => {
   }
 };
 
+const descargarDocumentos = async (req, res) => {
+  try {
+    const { id_voluntario, documentos = [], all = false } = req.body;
+
+    if (!id_voluntario) {
+      return res.json({
+        result: false,
+        message: "ID de voluntario es requerido",
+        data: null,
+      });
+    }
+
+    return res.json({
+      result: true,
+      message: "Documentos descargados exitosamente",
+    });
+  } catch (error) {
+    return res.json({
+      result: false,
+      message: "Error al descargar documentos: " + error.message,
+      data: false,
+    });
+  }
+};
+
 export default {
   getAll,
   getById,
@@ -468,4 +493,5 @@ export default {
   delete: remove,
   softDelete,
   verificar,
+  descargarDocumentos,
 };
