@@ -77,13 +77,19 @@ const updateRecord = async (tabla, data) => {
   }
 };
 
-const validateRecord = async (tabla, filters) => {
+const validateRecord = async (tabla, filters, dataReturn = false) => {
   try {
     const registro = await sequelize.models[tabla].findOne({ where: filters });
 
-    return registro
+    let response = registro
       ? { result: false, message: "El registro ya existe" }
       : { result: true, message: "Validación exitosa" };
+
+    if (dataReturn) {
+      response.data = registro.toJSON();
+    }
+
+    return response;
   } catch (error) {
     console.error("Error al validar registro:", error);
     return {

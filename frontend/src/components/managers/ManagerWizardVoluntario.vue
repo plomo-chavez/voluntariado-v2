@@ -39,6 +39,7 @@ type TabKey = (typeof TABS)[number]["key"];
 
 const activeTab = ref<TabKey>("infoVoluntario");
 const voluntarioData = ref<any>(null);
+const show = ref<boolean>(false);
 
 function handleUpdateData(val: Record<string, any>) {
   voluntarioData.value = { ...voluntarioData.value, ...val };
@@ -53,12 +54,13 @@ onBeforeMount(async () => {
         ...deepToRaw(props.data),
         ...deepToRaw(response),
       };
+      show.value = true;
     },
   });
 });
 </script>
 
-<template>
+<template v-if="show">
   <div v-if="voluntarioData != null" class="perfil-shell">
     <!-- Cabecera -->
     <div class="perfil-header mb-4">

@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
 import { computed, ref, watch } from "vue";
+import { safeValue } from "./customFunctionsInfo";
+import SectionVoluntario from "./SectionVoluntario.vue";
 
 const props = defineProps<{
   data: Record<string, any>;
@@ -13,13 +15,14 @@ const emit = defineEmits<{
 const isEditing = ref(false);
 const loading = ref(false);
 const validationErrors = ref<string[]>([]);
-const localData = ref({ ...props.data });
+const localData = ref(JSON.parse(JSON.stringify(props.data)));
 
+// Sincroniza localData cuando props.data cambia (pero sin relación compartida)
 watch(
   () => props.data,
-  (val) => {
+  (newData) => {
     if (!isEditing.value) {
-      localData.value = { ...val };
+      localData.value = JSON.parse(JSON.stringify(newData));
     }
   },
   { deep: true },
@@ -110,12 +113,6 @@ const schema = [
   },
 ];
 
-function safeValue(value: any): string {
-  return value === null || value === undefined || value === ""
-    ? "-"
-    : String(value);
-}
-
 const institutionalItems = computed(() => [
   {
     key: "delegacion",
@@ -201,13 +198,13 @@ const personalItems = computed(() => [
 ]);
 
 function handleEdit() {
-  localData.value = { ...props.data };
+  localData.value = JSON.parse(JSON.stringify(props.data));
   validationErrors.value = [];
   isEditing.value = true;
 }
 
 function handleCancel() {
-  localData.value = { ...props.data };
+  localData.value = JSON.parse(JSON.stringify(props.data));
   validationErrors.value = [];
   isEditing.value = false;
 }
@@ -226,44 +223,15 @@ async function handleSave() {
   });
   emit("update:data", { ...localData.value });
 }
+onMounted(() => {
+  isEditing.value = false;
+});
 </script>
 
 <template>
   <div v-if="true" class="perfil-user">
     <div class="perfil-header-card">
-      <div class="header-left">
-        <VAvatar size="72" class="perfil-avatar" color="red-darken-2">
-          <img
-            v-if="localData.foto"
-            :src="localData.foto"
-            alt="Foto de perfil"
-          />
-          <span v-else class="avatar-text">{{ "-" }}</span>
-        </VAvatar>
-
-        <div class="header-user-meta">
-          <h2 class="user-name">
-            {{ nombreCompleto(localData) || "Voluntario sin nombre" }}
-          </h2>
-          <p class="user-role-line">
-            {{ safeValue(localData?.area?.label) }} -
-            {{ safeValue(localData?.cargo?.label) }}
-          </p>
-          <div class="user-badges">
-            <p color="red-darken-2" variant="flat" size="small" label>
-              {{ safeValue(localData.numero_asociado) }}
-            </p>
-            <VChip
-              :color="true ? 'success' : 'grey-darken-1'"
-              variant="tonal"
-              size="small"
-              label
-            >
-              {{ localData.estatus === 1 ? "Activo" : "Inactivo" }}
-            </VChip>
-          </div>
-        </div>
-      </div>
+      <SectionVoluntario :data="localData" />
 
       <VBtn
         v-if="!isEditing"

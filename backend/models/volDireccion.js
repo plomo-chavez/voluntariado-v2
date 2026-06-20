@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      voluntario_id: {
+      id_voluntario: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -36,7 +36,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
-      estado_id: {
+      cp: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      id_estado: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -53,12 +57,12 @@ export default (sequelize, DataTypes) => {
 
   volDireccion.associate = (models) => {
     volDireccion.belongsTo(models.volInfo, {
-      foreignKey: "voluntario_id",
+      foreignKey: "id_voluntario",
       as: "voluntario",
       onDelete: "CASCADE",
     });
     volDireccion.belongsTo(models.catEstado, {
-      foreignKey: "estado_id",
+      foreignKey: "id_estado",
       as: "estado",
     });
   };

@@ -159,6 +159,14 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
+      seguro_personal: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      seguro_institucional: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
     },
     {
       paranoid: true,
@@ -209,10 +217,9 @@ export default (sequelize, DataTypes) => {
       as: "contactos",
       onDelete: "CASCADE",
     });
-    volInfo.hasMany(models.volDireccion, {
-      foreignKey: "voluntario_id",
-      as: "direcciones",
-      onDelete: "CASCADE",
+    volInfo.hasOne(models.volDireccion, {
+      foreignKey: "id_voluntario",
+      as: "direccion",
     });
     volInfo.hasMany(models.volContactoEmergencia, {
       foreignKey: "voluntario_id",

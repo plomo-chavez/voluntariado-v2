@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
 import { computed, ref, watch } from "vue";
+import { normalizeBool, pickValue, safeValue } from "./customFunctionsInfo";
 
 const props = defineProps<{
   data: Record<string, any>;
@@ -25,7 +26,9 @@ const emit = defineEmits<{
 }>();
 
 const activeEditSection = ref<string | null>(null);
+// const activeEditSection = ref<string | null>(null);
 const localData = ref<Record<string, any>>({ ...props.data });
+const localDataActive = ref<Record<string, any>>({ ...props.data });
 
 watch(
   () => props.data,
@@ -39,7 +42,7 @@ watch(
 
 const sectionSchemas: Record<string, any[]> = {
   salud: [
-    { label: "Seguro social", type: "text", model: "seguro_social" },
+    { label: "Seguro social", type: "text", model: "seguro_personal" },
     {
       label: "Seguro institucional",
       type: "text",
@@ -54,12 +57,22 @@ const sectionSchemas: Record<string, any[]> = {
     { label: "Enfermedades", type: "text", model: "enfermedades" },
   ],
   contacto: [
-    { label: "Direccion", type: "text", model: "direccion" },
+    {
+      label: "Direccion",
+      type: "text",
+      model: "direccion",
+      classElement: "col-12",
+    },
     { label: "Colonia", type: "text", model: "colonia" },
-    { label: "No. interno", type: "text", model: "no_interno" },
-    { label: "No. externo", type: "text", model: "no_externo" },
+    { label: "No. interno", type: "text", model: "numero_interior" },
+    { label: "No. externo", type: "text", model: "numero_exterior" },
     { label: "CP", type: "text", model: "cp" },
-    { label: "Estado", type: "text", model: "estado_domicilio" },
+    {
+      label: "Estado",
+      type: "select",
+      catalogo: "estados",
+      model: "estado",
+    },
     { label: "Ciudad", type: "text", model: "ciudad" },
     { label: "Pasaporte", type: "text", model: "pasaporte" },
     { label: "Licencia", type: "text", model: "licencia" },
@@ -128,32 +141,11 @@ const sectionSchemas: Record<string, any[]> = {
   ],
 };
 
-function safeValue(value: any): string {
-  return value === null || value === undefined || value === ""
-    ? "-"
-    : String(value);
-}
-
-function pickValue(...values: any[]): string {
-  for (const value of values) {
-    if (value !== null && value !== undefined && value !== "") {
-      return String(value);
-    }
-  }
-  return "-";
-}
-
-function normalizeBool(value: any): string {
-  if (value === true || value === 1 || value === "1") return "Si";
-  if (value === false || value === 0 || value === "0") return "No";
-  return safeValue(value);
-}
-
 const saludItems = computed<FieldItem[]>(() => [
   {
-    key: "seguro_social",
+    key: "seguro_personal",
     label: "Seguro social",
-    value: pickValue(props.data.seguro_social, props.data.nss),
+    value: safeValue(props.data.seguro_personal),
   },
   {
     key: "seguro_institucional",
@@ -181,54 +173,51 @@ const contactoItems = computed<FieldItem[]>(() => [
   {
     key: "direccion",
     label: "Direccion",
-    value: safeValue(props.data.direccion),
+    value: safeValue(localData.value.direccion.direccion),
     full: true,
   },
   {
     key: "colonia",
     label: "Colonia",
-    value: safeValue(props.data.colonia),
+    value: safeValue(localData.value.direccion.colonia),
   },
   {
     key: "no_interno",
     label: "No. interno",
-    value: pickValue(
-      props.data.no_interno,
-      props.data.numero_interno_domicilio,
-    ),
+    value: safeValue(localData.value.direccion.numero_interior),
   },
   {
     key: "no_externo",
     label: "No. externo",
-    value: pickValue(
-      props.data.no_externo,
-      props.data.numero_externo_domicilio,
-    ),
+    value: safeValue(localData.value.direccion.numero_exterior),
   },
   {
     key: "cp",
     label: "CP",
-    value: pickValue(props.data.cp, props.data.codigo_postal),
+    value: pickValue(
+      localData.value.direccion.cp,
+      localData.value.direccion.codigo_postal,
+    ),
   },
   {
     key: "estado",
     label: "Estado",
-    value: safeValue(props.data.estado_domicilio || props.data.estado),
+    value: safeValue(localData.value.direccion.estado.label),
   },
   {
     key: "ciudad",
     label: "Ciudad",
-    value: safeValue(props.data.ciudad),
+    value: safeValue(localData.value.direccion.ciudad),
   },
   {
     key: "pasaporte",
     label: "Pasaporte",
-    value: safeValue(props.data.pasaporte),
+    value: safeValue(localData.value.direccion.pasaporte),
   },
   {
     key: "licencia",
     label: "Licencia",
-    value: safeValue(props.data.licencia),
+    value: safeValue(localData.value.direccion.licencia),
   },
 ]);
 
@@ -237,8 +226,8 @@ const emergenciaItems = computed<FieldItem[]>(() => [
     key: "emergencia_nombre",
     label: "Nombre",
     value: pickValue(
-      props.data.contacto_emergencia_nombre,
-      props.data.nombre_emergencia,
+      localData.value.contacto_emergencia_nombre,
+      localData.value.nombre_emergencia,
     ),
   },
   {
@@ -495,8 +484,17 @@ const horarioParts = computed(() => {
 });
 
 function handleEditSection(sectionKey: string) {
-  localData.value = { ...props.data };
-  activeEditSection.value = sectionKey;
+  switch (sectionKey) {
+    case "contacto":
+      localDataActive.value = {
+        id: localData.value.id,
+        ...localData.value.direccion,
+      };
+      break;
+  }
+  setTimeout(() => {
+    activeEditSection.value = sectionKey;
+  }, 100);
 }
 
 function handleCancelEdit() {
@@ -508,9 +506,32 @@ function handleSaveSection() {
   emit("update:data", { ...localData.value });
   activeEditSection.value = null;
 }
+
+function handleCancel() {
+  activeEditSection.value = null;
+}
+
+async function handleSave() {
+  const payload = {
+    ...localDataActive.value,
+    section: activeEditSection.value,
+  };
+  console.log("Payload to save:", payload);
+  await apiRequest({
+    url: "/api/elemento",
+    payload,
+    messageType: "toast",
+    onSuccess: (response: any) => {
+      emit("update:data", { ...response });
+    },
+  });
+  emit("update:data", { ...localData.value });
+}
 </script>
 
 <template>
+  <pre>^{{ activeEditSection }}</pre>
+  <pre>^{{ localDataActive }}</pre>
   <div class="personal-root">
     <section
       v-for="section in regularSections"
@@ -537,26 +558,11 @@ function handleSaveSection() {
       <div v-if="activeEditSection === section.key" class="section-form-wrap">
         <ModuladorFormFactory
           :schema="sectionSchemas[section.key] || []"
-          :modelValue="localData"
+          :modelValue="localDataActive"
           :formLive="true"
-          @update:modelValue="(val) => (localData.value = val)"
+          @submit="handleSave"
+          @cancel="handleCancel"
         />
-
-        <div class="section-form-actions">
-          <VBtn size="small" color="red-darken-2" @click="handleSaveSection">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true" />
-            Guardar
-          </VBtn>
-          <VBtn
-            size="small"
-            variant="tonal"
-            color="secondary"
-            @click="handleCancelEdit"
-          >
-            <i class="fa-solid fa-xmark" aria-hidden="true" />
-            Cancelar
-          </VBtn>
-        </div>
       </div>
 
       <div v-else class="fields-grid">

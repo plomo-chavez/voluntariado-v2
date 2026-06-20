@@ -47,7 +47,7 @@ export default (sequelize, DataTypes) => {
       as: "voluntarios",
     });
     catEstado.hasMany(models.volDireccion, {
-      foreignKey: "estado_id",
+      foreignKey: "id_estado",
       as: "direcciones",
     });
   };

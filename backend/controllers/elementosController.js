@@ -67,44 +67,108 @@ function transformElementoData(data) {
   return tmp;
 }
 
+async function transformFormSectionsToPayload(data) {
+  const sections = ["contacto", "salud"];
+  let isCreate = false;
+  let tableModel = "";
+  let payload = {};
+  let existeRecord;
+
+  console.log("[transformFormSectionsToPayload - Data: ", data);
+  switch (data.section) {
+    case "contacto":
+      tableModel = "volDireccion";
+
+      existeRecord = await validateRecord(
+        tableModel,
+        {
+          id_voluntario: data.id,
+        },
+        true,
+      );
+
+      console.log("[existeRecord: ", existeRecord.data);
+
+      isCreate = existeRecord.result;
+
+      payload = {
+        id_voluntario: data.id,
+        direccion: data.direccion || "",
+        colonia: data.colonia || "",
+        numero_exterior: data.numero_exterior || "",
+        numero_interior: data.numero_interior || "",
+        ciudad: data.ciudad || "",
+        cp: data.cp || "",
+        id_estado: data.estado?.id || null,
+      };
+      if (!isCreate) {
+        payload.id = existeRecord.data.id_direccion;
+      }
+
+      break;
+    case "salud":
+      break;
+  }
+
+  console.log("[transformFormSectionsToPayload] =>", {
+    isCreate,
+    tableModel,
+    payload,
+  });
+  const elemento = isCreate
+    ? await createRecord(tableModel, payload)
+    : await updateRecord(tableModel, payload);
+
+  return {
+    result: true,
+    message: isCreate
+      ? "Elemento creado con éxito"
+      : "Elemento actualizado con éxito",
+    data: elemento,
+  };
+}
+
 async function saveElemento(data) {
   try {
-    const isCreate = !data.id && !data.id;
+    if (data.section) {
+      console.log("[saveElemento] => Guardando sección:", data.section);
+      return transformFormSectionsToPayload(data);
+    } else {
+      const isCreate = !data.id && !data.id;
+      const validation = validateElementoData(data);
+      if (!validation.result) return validation;
 
-    const validation = validateElementoData(data);
-    if (!validation.result) return validation;
+      const existeCurp = await validateRecord("volInfo", {
+        curp: data.curp,
+        ...(!isCreate && {
+          id: {
+            [Op.ne]: data.id || data.id,
+          },
+        }),
+      });
 
-    const existeCurp = await validateRecord("volInfo", {
-      curp: data.curp,
-      ...(!isCreate && {
-        id: {
-          [Op.ne]: data.id || data.id,
-        },
-      }),
-    });
+      if (!existeCurp.result) {
+        return {
+          result: false,
+          message: "La CURP ya está registrada",
+          data: [],
+        };
+      }
 
-    if (!existeCurp.result) {
+      let payload = transformElementoData(data);
+
+      const elemento = isCreate
+        ? await createRecord("volInfo", payload)
+        : await updateRecord("volInfo", payload);
+
       return {
-        result: false,
-        message: "La CURP ya está registrada",
-        data: [],
+        result: true,
+        message: isCreate
+          ? "Elemento creado con éxito"
+          : "Elemento actualizado con éxito",
+        data: elemento,
       };
     }
-
-    const payload = transformElementoData(data);
-
-    console.log("[payload] =>", payload);
-    const elemento = isCreate
-      ? await createRecord("volInfo", payload)
-      : await updateRecord("volInfo", payload);
-
-    return {
-      result: true,
-      message: isCreate
-        ? "Elemento creado con éxito"
-        : "Elemento actualizado con éxito",
-      data: elemento,
-    };
   } catch (e) {
     let errorMessage = {
       result: false,
@@ -256,6 +320,7 @@ const getById = async (req, res) => {
       "area",
       "cargo",
       "delegacion",
+      "direccion",
       "estado",
       "estado_civil",
       "grupo_sanguineo",

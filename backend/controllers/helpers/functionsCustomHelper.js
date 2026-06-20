@@ -34,6 +34,18 @@ const getRelaciones = async (relaciones) => {
             as: "estado",
             attributes: ["id", "label"],
           };
+        case "direccion":
+          return {
+            model: models.volDireccion,
+            as: "direccion",
+            include: [
+              {
+                model: models.catEstado,
+                as: "estado",
+                attributes: ["id", "label"],
+              },
+            ],
+          };
         case "estado_civil":
           return {
             model: models.catEstadoCivil,
