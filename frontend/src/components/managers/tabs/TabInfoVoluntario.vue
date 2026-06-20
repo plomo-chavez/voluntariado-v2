@@ -255,6 +255,7 @@ async function handleDescargarDocumentos(all: any = false) {
       .map((opt) => opt.value),
     all,
   };
+
   await apiRequest({
     payload,
     loader: true,
@@ -262,6 +263,30 @@ async function handleDescargarDocumentos(all: any = false) {
     url: "/api/elemento/descargar",
     onSuccess: (response: any) => {
       modalExpediente.value = false;
+
+      if (response?.fileBase64 && response?.filename) {
+        const byteCharacters = atob(response.fileBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const ext = (response.filename || "").split(".").pop()?.toLowerCase();
+        const mimeMap = {
+          pdf: "application/pdf",
+          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          doc: "application/msword",
+        };
+        const mime: any = mimeMap[ext] || "application/octet-stream";
+        const blob = new Blob([byteArray], { type: mime });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = response.filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(link.href);
+      }
     },
   });
 }

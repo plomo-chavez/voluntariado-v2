@@ -4,7 +4,6 @@ import db from "../models/index.js";
 import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
-
 const { Op } = Sequelize;
 const { volInfo } = db;
 
@@ -474,14 +473,9 @@ const descargarDocumentos = async (req, res) => {
     }
 
     return res.json({
-      result: true,
-      message: "Documentos descargados exitosamente",
-    });
-  } catch (error) {
-    return res.json({
       result: false,
-      message: "Error al descargar documentos: " + error.message,
-      data: false,
+      message: "Error al descargar documentos: " + shortMessage,
+      data: null,
     });
   }
 };
