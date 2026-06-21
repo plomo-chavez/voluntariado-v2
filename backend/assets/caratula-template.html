@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carátula de Expediente – Cruz Roja Mexicana</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        display: flex;
+        justify-content: center;
+      }
+
+      @page {
+        size: A4;
+        margin: 8mm 10mm;
+      }
+      .page {
+        width: 100%;
+        font-size: 12px;
+      }
+
+      /* ── HEADER ── */
+      .header-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #ed1b2e;
+        margin-bottom: 8px;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo-placeholder {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+        background: #c8102e;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 900;
+        font-size: 18px;
+      }
+      .org-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #111827;
+        letter-spacing: -0.5px;
+        line-height: 20px;
+      }
+      .org-motto {
+        font-size: 11px;
+        font-weight: 500;
+        color: #6b7280;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+      .header-right {
+        text-align: right;
+      }
+      .header-cycle {
+        font-size: 11px;
+        font-weight: 700;
+        color: #4b5563;
+        text-transform: uppercase;
+      }
+      .header-title {
+        font-size: 17px;
+        font-weight: 900;
+        color: #ed1b2e;
+        white-space: nowrap;
+      }
+
+      /* ── REGISTRY GRID ── */
+      .registry-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        border: 1px solid #d1d5db;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+      .reg-no {
+        grid-column: 1 / span 3;
+      }
+      .reg-a1 {
+        grid-column: 4 / span 3;
+      }
+      .reg-a2 {
+        grid-column: 7 / span 3;
+      }
+      .reg-fecha {
+        grid-column: 10 / span 3;
+      }
+
+      .reg-cell {
+        border-right: 1px solid #d1d5db;
+        display: flex;
+        flex-direction: column;
+      }
+      .reg-cell:last-child {
+        border-right: none;
+      }
+      .reg-fecha {
+        border-right: none;
+      }
+
+      .cell-label {
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 4px 9px 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #4b5563;
+      }
+      .cell-value {
+        padding: 7px 10px;
+        min-height: 24px;
+        font-family: "Courier New", monospace;
+        font-style: italic;
+        font-size: 11px;
+        color: #6b7280;
+      }
+      .cell-empty {
+        min-height: 18px;
+      }
+
+      .fecha-inner {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .fecha-top {
+        background: #f3f4f6;
+        border-bottom: 1px solid #d1d5db;
+        text-align: center;
+        padding: 3px 8px 4px;
+        font-size: 8px;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+      }
+      .fecha-cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        flex: 1;
+      }
+      .fecha-col-label {
+        padding: 3px 8px;
+        font-size: 8px;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+        text-align: center;
+        border-bottom: 1px solid #d1d5db;
+      }
+      .fecha-col-label + .fecha-col-label {
+        border-left: 1px solid #d1d5db;
+      }
+      .fecha-col-body {
+        min-height: 20px;
+      }
+      .fecha-col-body + .fecha-col-body {
+        border-left: 1px solid #d1d5db;
+      }
+
+      /* ── SECTION WRAPPER ── */
+      .section-wrap {
+        border: 1px solid #d1d5db;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 6px;
+      }
+      .section-header {
+        background: #ed1b2e;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 10px;
+      }
+      .section-header-text {
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+      }
+
+      /* ── PERSONAL DATA ── */
+      .data-row {
+        display: grid;
+        border-top: 1px solid #d1d5db;
+      }
+      .data-row:first-of-type {
+        border-top: none;
+      }
+      .data-cell {
+        border-right: 1px solid #d1d5db;
+        display: flex;
+        flex-direction: column;
+      }
+      .data-cell:last-child {
+        border-right: none;
+      }
+      .data-label {
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 4px 9px 3px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #4b5563;
+      }
+      .data-body {
+        min-height: 24px;
+        background: #fff;
+        padding: 5px 9px;
+      }
+      .row-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .row-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* ── DOCUMENTATION ── */
+      .foreigners-row {
+        background: #eeeeee;
+        border-top: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 5px 4px;
+      }
+      .doc-section-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .checks {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .id-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px;
+      }
+      .others-row {
+        border-top: 1px solid #f3f4f6;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px 10px;
+        padding: 4px 4px 3px;
+      }
+      .check-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .checkbox {
+        width: 12px;
+        height: 12px;
+        flex-shrink: 0;
+        border: 1px solid #9ca3af;
+        border-radius: 1px;
+      }
+      .check-label {
+        font-size: 9px;
+        color: #1f2937;
+        white-space: nowrap;
+      }
+      .check-label-med {
+        font-weight: 500;
+      }
+
+      /* ── COURSES ── */
+      .courses-cols {
+        display: flex;
+      }
+      .course-col {
+        flex: 1;
+        border-right: 1px solid #d1d5db;
+        display: flex;
+        flex-direction: column;
+      }
+      .course-col:last-child {
+        border-right: none;
+      }
+      .course-col-head {
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        background: #f9fafb;
+        border-bottom: 1px solid #d1d5db;
+      }
+      .course-col-head span {
+        padding: 5px 8px;
+        font-size: 9px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .course-col-head span.fecha {
+        border-left: 1px solid #d1d5db;
+      }
+      .course-row {
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        border-top: 1px solid #e5e7eb;
+      }
+      .course-row:first-of-type {
+        border-top: none;
+      }
+      .course-name {
+        padding: 6px 12px;
+        font-size: 10px;
+        color: #1f2937;
+        min-height: 24px;
+        display: flex;
+        align-items: center;
+      }
+      .course-date {
+        border-left: 1px solid #e5e7eb;
+        min-height: 20px;
+      }
+
+      /* ── SPECIALIZED TABLE ── */
+      .spec-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .spec-table thead tr {
+        background: #f9fafb;
+        border-bottom: 1px solid #d1d5db;
+      }
+      .spec-table th {
+        padding: 7px 10px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .spec-table th:first-child {
+        border-right: 1px solid #d1d5db;
+        width: 67%;
+      }
+      .spec-table td {
+        border-top: 1px solid #e5e7eb;
+        height: 24px;
+        padding: 7px 9px;
+      }
+      .spec-table td:first-child {
+        border-right: 1px solid #e5e7eb;
+      }
+
+      /* ── OBSERVATIONS ── */
+      .obs-body {
+        min-height: 38px;
+        background: #fff;
+      }
+
+      /* ── SIGNATURE ── */
+      .signature-grid {
+        display: grid;
+        grid-template-columns: 7fr 5fr;
+        gap: 8px;
+        margin-bottom: 3px;
+      }
+      .sig-box {
+        border: 1px solid #d1d5db;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .sig-label {
+        background: #f3f4f6;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 3px 6px 2px;
+        font-size: 9px;
+        font-weight: 600;
+        color: #4b5563;
+        text-transform: uppercase;
+      }
+      .sig-label-center {
+        text-align: center;
+      }
+      .sig-body {
+        height: 40px;
+        background: #fff;
+      }
+      .sig-date-body {
+        height: 40px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 14px;
+        padding: 0 12px 5px;
+      }
+      .date-spacer {
+        width: 90px;
+        border-bottom: 1px solid #9ca3af;
+        height: 18px;
+      }
+      .date-field {
+        width: 90px;
+        border-bottom: 1px solid #9ca3af;
+        text-align: center;
+        padding-bottom: 2px;
+      }
+      .date-field span {
+        font-size: 9px;
+        color: #9ca3af;
+      }
+
+      /* ── FOOTER ── */
+      .inst-footer {
+        border-top: 1px solid #f3f4f6;
+        padding-top: 1px;
+        text-align: center;
+      }
+      .inst-footer p {
+        font-size: 8px;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        line-height: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <!-- HEADER -->
+      <div class="header-section">
+        <div class="header-left">
+          <div class="logo-placeholder">✚</div>
+          <div>
+            <div class="org-name">CRUZ ROJA MEXICANA</div>
+            <div class="org-motto">SEAMOS TODOS HERMANOS</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-cycle">CICLO DE GESTIÓN DEL VOLUNTARIADO</div>
+          <div class="header-title">CARÁTULA DE EXPEDIENTE</div>
+        </div>
+      </div>
+
+      <!-- REGISTRY GRID -->
+      <div class="registry-grid">
+        <div class="reg-cell reg-no">
+          <div class="cell-label">No. Registro o control</div>
+          <div class="cell-value">{{nombre}}</div>
+        </div>
+        <div class="reg-cell reg-a1">
+          <div class="cell-label">Número de asociado</div>
+          <div class="cell-empty"></div>
+        </div>
+        <div class="reg-cell reg-a2">
+          <div class="cell-label">Número de asociado</div>
+          <div class="cell-empty"></div>
+        </div>
+        <div class="reg-cell reg-fecha">
+          <div class="fecha-inner">
+            <div class="fecha-top">FECHA DE INCORPORACIÓN</div>
+            <div class="fecha-cols">
+              <div>
+                <div class="fecha-col-label">A LA INSTITUCIÓN</div>
+                <div class="fecha-col-body"></div>
+              </div>
+              <div>
+                <div
+                  class="fecha-col-label"
+                  style="border-left: 1px solid #d1d5db"
+                >
+                  AL ÁREA
+                </div>
+                <div
+                  class="fecha-col-body"
+                  style="border-left: 1px solid #d1d5db"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS PERSONALES -->
+      <div class="section-wrap">
+        <div class="section-header">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <circle cx="5" cy="5" r="4.5" stroke="white" stroke-width="1" />
+            <path
+              d="M5 2.5v2.8l1.8 1.1"
+              stroke="white"
+              stroke-width="1"
+              stroke-linecap="round"
+            />
+          </svg>
+          <span class="section-header-text">DATOS PERSONALES</span>
+        </div>
+        <div class="data-row row-3">
+          <div class="data-cell">
+            <div class="data-label">Nombre (s)</div>
+            <div class="data-body"></div>
+          </div>
+          <div class="data-cell">
+            <div class="data-label">Apellido paterno</div>
+            <div class="data-body"></div>
+          </div>
+          <div class="data-cell">
+            <div class="data-label">Apellido materno</div>
+            <div class="data-body"></div>
+          </div>
+        </div>
+        <div class="data-row row-3">
+          <div class="data-cell">
+            <div class="data-label">Puesto o función</div>
+            <div class="data-body"></div>
+          </div>
+          <div class="data-cell">
+            <div class="data-label">Adscrito a la Coordinación de</div>
+            <div class="data-body"></div>
+          </div>
+          <div class="data-cell">
+            <div class="data-label">Delegación</div>
+            <div class="data-body"></div>
+          </div>
+        </div>
+        <div class="data-row row-2">
+          <div class="data-cell">
+            <div class="data-label">Teléfono</div>
+            <div class="data-body"></div>
+          </div>
+          <div class="data-cell">
+            <div class="data-label">Correo electrónico</div>
+            <div class="data-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTACIÓN -->
+      <div class="section-wrap">
+        <div class="section-header">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <rect
+              x="2"
+              y="1"
+              width="7"
+              height="9"
+              rx="1"
+              stroke="white"
+              stroke-width="1"
+            />
+            <line
+              x1="4"
+              y1="5.5"
+              x2="8"
+              y2="5.5"
+              stroke="white"
+              stroke-width="1"
+            />
+            <line
+              x1="4"
+              y1="7.5"
+              x2="7"
+              y2="7.5"
+              stroke="white"
+              stroke-width="1"
+            />
+          </svg>
+          <span class="section-header-text"
+            >DOCUMENTACIÓN ENTREGADA PARA INTEGRAR EXPEDIENTE</span
+          >
+        </div>
+        <div class="foreigners-row">
+          <div class="doc-section-label">CASOS EXTRANJEROS:</div>
+          <div class="checks">
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">ID Ciudadanía</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">Forma migratoria</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">Pasaporte</span>
+            </div>
+          </div>
+        </div>
+        <div class="id-row">
+          <div class="doc-section-label">IDENTIDAD OFICIAL:</div>
+          <div class="checks">
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">Acta</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">IFE / INE</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">CURP</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">Cartilla</span>
+            </div>
+          </div>
+        </div>
+        <div class="others-row">
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med">Póliza de seguro</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med"
+              >Comprobante domicilio</span
+            >
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med"
+              >Comprobante estudios</span
+            >
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med">Comprobante laboral</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med">Carta compromiso</span>
+          </div>
+          <div class="check-item">
+            <div class="checkbox"></div>
+            <span class="check-label check-label-med"
+              >Carta confidencialidad</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- CURSOS DE FORMACIÓN BÁSICA -->
+      <div class="section-wrap">
+        <div class="section-header">
+          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+            <path
+              d="M6 0L0 3.3l2.2 1.2V7.7C2.2 8.6 3.9 9.8 6 9.8s3.8-1.2 3.8-2.1V4.5L12 3.3 6 0Z"
+              stroke="white"
+              stroke-width="0.8"
+              fill="none"
+            />
+          </svg>
+          <span class="section-header-text"
+            >CURSOS DE FORMACIÓN BÁSICA INSTITUCIONAL</span
+          >
+        </div>
+        <div class="courses-cols">
+          <div class="course-col">
+            <div class="course-col-head">
+              <span>CURSO</span><span class="fecha">FECHA</span>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Inducción a la Cruz Roja (ICR)</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Primeros auxilios</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Introducción a los Desastres (IDE)</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Acceso más seguro</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Seguridad para el voluntariado</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Voluntariado básico</div>
+              <div class="course-date"></div>
+            </div>
+          </div>
+          <div class="course-col">
+            <div class="course-col-head">
+              <span>CURSO</span><span class="fecha">FECHA</span>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Curso de RCF Básico</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Di no a la conducta sexual indebida</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Stay Safe 1</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Stay Safe 2</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">Stay Safe 3 (Coordinadores)</div>
+              <div class="course-date"></div>
+            </div>
+            <div class="course-row">
+              <div class="course-name">El mundo de la Cruz Roja Mexicana</div>
+              <div class="course-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMACIÓN ESPECIALIZADA -->
+      <div class="section-wrap">
+        <div class="section-header">
+          <svg width="9" height="12" viewBox="0 0 9 12" fill="none">
+            <rect
+              x="1"
+              y="1"
+              width="7"
+              height="10"
+              rx="1"
+              stroke="white"
+              stroke-width="1"
+            />
+            <line
+              x1="3"
+              y1="7"
+              x2="7"
+              y2="7"
+              stroke="white"
+              stroke-width="0.9"
+            />
+            <line
+              x1="3"
+              y1="9"
+              x2="6"
+              y2="9"
+              stroke="white"
+              stroke-width="0.9"
+            />
+          </svg>
+          <span class="section-header-text"
+            >FORMACIÓN ESPECIALIZADA INSTITUCIONAL</span
+          >
+        </div>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>CURSO (ORDEN CRONOLÓGICO DESCENDENTE)</th>
+              <th>FECHA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="section-wrap">
+        <div class="section-header">
+          <svg width="10" height="7" viewBox="0 0 10 7" fill="none">
+            <line
+              x1="0"
+              y1="0.5"
+              x2="10"
+              y2="0.5"
+              stroke="white"
+              stroke-width="1"
+            />
+            <line
+              x1="0"
+              y1="3.5"
+              x2="10"
+              y2="3.5"
+              stroke="white"
+              stroke-width="1"
+            />
+            <line
+              x1="0"
+              y1="6.5"
+              x2="7"
+              y2="6.5"
+              stroke="white"
+              stroke-width="1"
+            />
+          </svg>
+          <span class="section-header-text">OBSERVACIONES</span>
+        </div>
+        <div class="obs-body"></div>
+      </div>
+
+      <!-- SIGNATURE FOOTER -->
+      <div class="signature-grid">
+        <div class="sig-box">
+          <div class="sig-label">ELABORÓ (FIRMA Y NOMBRE)</div>
+          <div class="sig-body"></div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-label sig-label-center">FECHA DE LLENADO</div>
+          <div class="sig-date-body">
+            <div class="date-spacer"></div>
+            <div class="date-field"><span>MM</span></div>
+            <div class="date-field"><span>AAAA</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTITUTIONAL FOOTER -->
+      <div class="inst-footer">
+        <p>
+          CRUZ ROJA MEXICANA • ÁREA DE VOLUNTARIADO • CICLO DE GESTIÓN DEL
+          VOLUNTARIADO
+        </p>
+        <p>PÁGINA 1 DE 1</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -261,31 +261,53 @@ async function handleDescargarDocumentos(all: any = false) {
     loader: true,
     messageType: "toast",
     url: "/api/elemento/descargar",
+    responseFull: true,
     onSuccess: (response: any) => {
       modalExpediente.value = false;
-
       if (response?.fileBase64 && response?.filename) {
-        const byteCharacters = atob(response.fileBase64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        try {
+          const base64 = (response.fileBase64 || "").trim();
+          if (!base64) throw new Error("fileBase64 is empty");
+          console.log(
+            "Descarga iniciada:",
+            response.filename,
+            "sizeKB:",
+            response.sizeKB ?? "n/a",
+          );
+
+          const byteCharacters = atob(base64);
+          if (!byteCharacters)
+            throw new Error("Error decoding base64: empty result");
+
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+
+          const ext = (response.filename || "").split(".").pop()?.toLowerCase();
+          const mimeMap = {
+            pdf: "application/pdf",
+            docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            doc: "application/msword",
+          } as Record<string, string>;
+          const mime: any = mimeMap[ext || ""] || "application/octet-stream";
+
+          const blob = new Blob([byteArray], { type: mime });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = response.filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error(
+            "Error al generar/descargar archivo desde fileBase64:",
+            err,
+          );
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const ext = (response.filename || "").split(".").pop()?.toLowerCase();
-        const mimeMap = {
-          pdf: "application/pdf",
-          docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          doc: "application/msword",
-        };
-        const mime: any = mimeMap[ext] || "application/octet-stream";
-        const blob = new Blob([byteArray], { type: mime });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = response.filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(link.href);
       }
     },
   });
