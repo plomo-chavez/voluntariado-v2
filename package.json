@@ -25,6 +25,7 @@
     "escalade": "^3.2.0",
     "flatpickr": "^4.6.13",
     "get-caller-file": "^2.0.5",
+    "handlebars": "^4.7.9",
     "has-flag": "^4.0.0",
     "hi-base32": "^0.5.1",
     "is-fullwidth-code-point": "^3.0.0",

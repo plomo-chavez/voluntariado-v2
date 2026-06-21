@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 import puppeteer from "puppeteer";
+import os from "os";
+import { PDFDocument } from "pdf-lib";
 import Sequelize from "sequelize";
 import { fileURLToPath } from "url";
 import db from "../models/index.js";
@@ -8,6 +10,10 @@ import db from "../models/index.js";
 import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
+import {
+  generatePdfFromTemplateHTML,
+  prepareDocuments,
+} from "../utils/generateFilesHelper.js";
 const { Op } = Sequelize;
 const { volInfo } = db;
 
@@ -464,14 +470,31 @@ const getById = async (req, res) => {
   }
 };
 
+async function mergePdfBuffers(buffers = []) {
+  if (!Array.isArray(buffers) || buffers.length === 0) return null;
+
+  const mergedPdf = await PDFDocument.create();
+
+  for (const buf of buffers) {
+    const pdf = await PDFDocument.load(buf);
+    const copied = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+    copied.forEach((p) => mergedPdf.addPage(p));
+  }
+
+  const merged = await mergedPdf.save();
+  return Buffer.from(merged);
+}
+
 const descargarDocumentos = async (req, res) => {
   try {
-    const {
-      id_voluntario,
-      documentos = [],
-      all = false,
-      placeholders = {},
-    } = req.body;
+    let { id_voluntario, documentos = [], all } = req.body;
+
+    if (all) {
+      documentos = ["caratula"];
+    }
+    const data = {
+      nombre: "Juan",
+    };
 
     if (!id_voluntario) {
       return res.json({
@@ -481,134 +504,46 @@ const descargarDocumentos = async (req, res) => {
       });
     }
 
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const templatePath = path.join(
-      __dirname,
-      "../assets/caratula-template.html",
-    );
-    const outputDir = path.join(__dirname, "../assets/pruebas");
-    const outputPath = path.join(outputDir, `caratula-${id_voluntario}.pdf`);
-
-    let htmlTemplate = fs.readFileSync(templatePath, "utf8");
-
-    const mergedPlaceholders = {
-      ...(req.body.data || {}),
-      ...(placeholders || {}),
-      id_voluntario,
-    };
-
-    htmlTemplate = htmlTemplate.replace(/{{\s*([\w_-]+)\s*}}/g, (_, key) => {
-      const value = mergedPlaceholders[key];
-      return typeof value === "undefined" || value === null
-        ? ""
-        : String(value);
-    });
-
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(htmlTemplate, { waitUntil: "domcontentloaded" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
-    });
-
-    await browser.close();
-
-    // Logging adicional para depuración
-    console.log("🔧 Debug PDF generation:");
-    console.log(
-      "   templatePath:",
-      templatePath,
-      "exists:",
-      fs.existsSync(templatePath),
-    );
-    try {
-      const tplStat = fs.statSync(templatePath);
-      console.log("   template size:", tplStat.size, "bytes");
-    } catch (e) {
-      console.log("   no se pudo leer el template stat:", e.message);
-    }
-    console.log("   html length:", htmlTemplate ? htmlTemplate.length : 0);
-    console.log("   pdfBuffer length:", pdfBuffer ? pdfBuffer.length : 0);
-
-    fs.mkdirSync(outputDir, { recursive: true });
-    try {
-      fs.writeFileSync(outputPath, pdfBuffer);
-      console.log("   fs.writeFileSync OK ->", outputPath);
-    } catch (errWrite) {
-      console.error("❌ Error escribiendo PDF en disco:", errWrite);
-      return res.status(500).json({
+    if (!Array.isArray(documentos) || documentos.length === 0) {
+      return res.status(400).json({
         result: false,
-        message: "Error guardando PDF en servidor: " + errWrite.message,
-        data: { error: errWrite.code || null, path: outputPath },
-      });
-    }
-
-    // Verificar que el archivo se creó correctamente
-    const fileExists = fs.existsSync(outputPath);
-    const fileStats = fileExists ? fs.statSync(outputPath) : null;
-
-    console.log("📄 Info del PDF generado:");
-    console.log("   Ruta:", outputPath);
-    console.log("   Existe:", fileExists);
-    console.log(
-      "   Tamaño:",
-      fileStats ? `${(fileStats.size / 1024).toFixed(2)} KB` : "N/A",
-    );
-
-    if (!fileExists) {
-      return res.status(500).json({
-        result: false,
-        message: "Error: El archivo PDF no se creó correctamente",
+        message: "Se requiere un array 'documentos' con al menos un elemento",
         data: null,
       });
     }
 
-    // Si la petición viene desde AJAX / front-end (Accept: application/json
-    // o X-Requested-With) devolvemos el archivo en base64 para que el cliente
-    // pueda iniciarle la descarga. Si se llama con ?download=true, usamos
-    // res.download() para forzar descarga directa.
-    const wantsDownload =
-      String(req.query?.download || "").toLowerCase() === "true";
-    const acceptHeader = (req.headers?.accept || "").toLowerCase();
-    const isAjax = acceptHeader.includes("application/json") || req.xhr;
+    const filesGenerated = [];
 
-    // Responder con base64 para que el frontend lo convierta a Blob y lo descargue
     try {
-      const fileBuffer = fs.readFileSync(outputPath);
-      const fileBase64 = fileBuffer.toString("base64");
-      return res.json({
-        result: true,
-        filename: `caratula-${id_voluntario}.pdf`,
-        fileBase64,
-        sizeKB: fileStats ? Math.round(fileStats.size / 1024) : null,
+      // Procesar cada documento: validar y generar PDF temporal
+      for (let i = 0; i < documentos.length; i++) {
+        const doc = documentos[i];
+        const result = await generatePdfFromTemplateHTML({
+          outDir: "backend/assets/tmp",
+          template: doc,
+          data,
+        });
+
+        const buf = result.buffer;
+        filesGenerated.push(result);
+      }
+      const response = await prepareDocuments({
+        documents: filesGenerated,
       });
-    } catch (err) {
-      console.error("❌ Error leyendo archivo para base64:", err);
+
+      return res.json(response);
+    } catch (error) {
       return res.status(500).json({
         result: false,
-        message: "Error leyendo archivo para envío: " + err.message,
+        message: "Error al generar documentos: " + error.message,
         data: null,
       });
     }
   } catch (error) {
-    console.error("❌ Error en descargarDocumentos:", {
-      message: error.message,
-      stack: error.stack,
-      code: error.code,
-    });
     return res.status(500).json({
       result: false,
       message: "Error al descargar documentos: " + error.message,
-      data: {
-        errorCode: error.code,
-        errorMessage: error.message,
-      },
+      data: { errorCode: error.code, errorMessage: error.message },
     });
   }
 };
