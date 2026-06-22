@@ -1,7 +1,7 @@
-const moment = require("moment"); // Asegúrate de usar moment.js o una librería similar
+import moment from "moment"; // Asegúrate de usar moment.js o una librería similar
 function sumarFechas(
   fecha,
-  { formatoSalida, años = 0, meses = 0, dias = 0, operacion = "sumar" }
+  { formatoSalida, años = 0, meses = 0, dias = 0, operacion = "sumar" },
 ) {
   // Convertir la fecha a un objeto moment con el formato explícito
   let fechaMoment = moment(fecha, "DD/MM/YYYY", true);
@@ -23,7 +23,7 @@ function sumarFechas(
       .subtract(dias, "days");
   } else {
     throw new Error(
-      `Operación no válida: ${operacion}. Usa "sumar" o "restar".`
+      `Operación no válida: ${operacion}. Usa "sumar" o "restar".`,
     );
   }
 
@@ -115,7 +115,7 @@ function now(formatoSalida = null) {
     // Si es formato de fecha simple, usar formatearFecha existente
     if (
       ["yyyy-mm-dd", "dd/mm/yyyy", "mm/dd/yyyy", "dd-mm-yyyy"].includes(
-        formatoSalida.toLowerCase()
+        formatoSalida.toLowerCase(),
       )
     ) {
       return formatearFecha(fechaActual, formatoSalida);
@@ -151,10 +151,4 @@ function now(formatoSalida = null) {
   return fechaActual;
 }
 
-module.exports = {
-  sumarFechas,
-  formatearFecha,
-  now,
-  calcularEdad,
-  parsearFechaString,
-};
+export { sumarFechas, formatearFecha, now, calcularEdad, parsearFechaString };

@@ -21,6 +21,7 @@ yarn-error.log
 /.idea
 /.nova
 /.zed
+/backend/assets/tmp/
 
 # Logs
 logs

@@ -75,6 +75,7 @@ declare global {
   const getTokenRemainingSeconds: typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']
   const getTokenUser: typeof import('./src/utils/authHelper')['getTokenUser']
   const getUserData: typeof import('./src/utils/userUtils')['getUserData']
+  const getYearsSince: typeof import('./src/utils/dateHelper')['getYearsSince']
   const h: typeof import('vue')['h']
   const handleFormatStatus: typeof import('./src/utils/formatterHelper')['handleFormatStatus']
   const handleLogOut: typeof import('./src/utils/authHelper')['handleLogOut']
@@ -478,6 +479,7 @@ declare module 'vue' {
     readonly getTokenRemainingSeconds: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']>
     readonly getTokenUser: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenUser']>
     readonly getUserData: UnwrapRef<typeof import('./src/utils/userUtils')['getUserData']>
+    readonly getYearsSince: UnwrapRef<typeof import('./src/utils/dateHelper')['getYearsSince']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly handleFormatStatus: UnwrapRef<typeof import('./src/utils/formatterHelper')['handleFormatStatus']>
     readonly handleLogOut: UnwrapRef<typeof import('./src/utils/authHelper')['handleLogOut']>

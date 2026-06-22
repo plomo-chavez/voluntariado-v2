@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import fsSync from "fs"; // si usas fs/promises, añade también fsSync para lecturas sincrónicas
 import path from "path";
 import { fileURLToPath } from "url";
 import Handlebars from "handlebars";
@@ -79,6 +80,7 @@ export async function generatePdfFromTemplateHTML({
   outName,
   dir = path.join(backendRoot, "assets", "plantillas"),
   pdfOptions = {},
+  images = null,
 }) {
   if (!template) {
     return {
@@ -89,10 +91,89 @@ export async function generatePdfFromTemplateHTML({
 
   if (!outDir) {
     return {
-      result: false,
       message: "outDir es requerido",
     };
   }
+
+  // soporte por defecto para plantilla 'caratula'
+  if (template === "caratula" && !images) {
+    images = {
+      logoCRSrc: path.join(backendRoot, "assets", "resources", "logoCR.jpg"),
+    };
+  }
+
+  // Normalizar images: aceptar null, objeto { key: path } o array [{ key, path, data }]
+  const imagesArray = [];
+  if (images && !Array.isArray(images) && typeof images === "object") {
+    for (const [key, val] of Object.entries(images)) {
+      imagesArray.push({ key, path: val });
+    }
+  } else if (Array.isArray(images)) {
+    imagesArray.push(...images);
+  }
+
+  // Procesar imágenes y convertir a data URIs, inyectando en `data[key]` si no existe
+  if (imagesArray.length > 0) {
+    for (const img of imagesArray) {
+      try {
+        const key = img.key || img.name;
+        if (!key) continue;
+
+        // si ya existe un valor en data, no sobrescribir
+        if (typeof data[key] !== "undefined" && data[key] !== null) continue;
+
+        if (img.data && typeof img.data === "string") {
+          if (img.data.startsWith("data:")) {
+            data[key] = img.data;
+          } else {
+            data[key] = `data:image/png;base64,${img.data}`;
+          }
+          continue;
+        }
+
+        if (img.path && typeof img.path === "string") {
+          const imgPath = path.isAbsolute(img.path)
+            ? img.path
+            : resolveBackendPath(img.path);
+          try {
+            const buf = await fs.readFile(imgPath);
+            const ext = (path.extname(imgPath) || ".png").replace(/^\./, "").toLowerCase() || "png";
+            data[key] = `data:image/${ext};base64,${Buffer.from(buf).toString("base64")}`;
+          } catch (eimg) {
+            console.error(`No se pudo leer imagen ${imgPath}:`, eimg.message || eimg);
+          }
+        }
+      } catch (e) {
+        console.error("Error procesando images param:", e.message || e);
+      }
+    }
+  }
+
+  // Registrar helper inlineImage como respaldo (acepta path o key)
+  Handlebars.registerHelper("inlineImage", function (relativeOrAbsolutePathOrKey) {
+    try {
+      const arg = String(relativeOrAbsolutePathOrKey || "");
+      // si el argumento es una clave presente en data y ya es data URI, devolverla
+      if (data && typeof data[arg] === "string" && data[arg].startsWith("data:")) {
+        return data[arg];
+      }
+
+      // si el argumento parece una data URI ya
+      if (arg.startsWith("data:")) return arg;
+
+      // si el argumento es una ruta relativa/absoluta, leer el archivo
+      const imgPath = path.isAbsolute(arg) ? arg : resolveBackendPath(arg);
+      try {
+        const buf = fsSync.readFileSync(imgPath);
+        const ext = path.extname(imgPath).slice(1) || "png";
+        return `data:image/${ext};base64,${buf.toString("base64")}`;
+      } catch (e) {
+        return "";
+      }
+    } catch (e) {
+      return "";
+    }
+  });
 
   const templatesDir = path.isAbsolute(dir) ? dir : resolveBackendPath(dir);
 
@@ -132,12 +213,51 @@ export async function generatePdfFromTemplateHTML({
 
   /**
    * Helper para checkbox
-   *
-   * Uso:
-   * {{checkbox curp}}
-   */
-  Handlebars.registerHelper("checkbox", function (value) {
-    return value ? "☑" : "☐";
+
+    // Procesar imágenes opcionales: images = [{ key, path, data }]
+    if (images && Array.isArray(images)) {
+      for (const img of images) {
+        try {
+          const key = img.key || img.name;
+          if (!key) continue;
+
+          // si ya existe un valor en data, no sobrescribir
+          if (typeof data[key] !== "undefined" && data[key] !== null) continue;
+
+          if (img.data && typeof img.data === "string") {
+            // si ya es data URI o base64 crudo, intentar usar como data URI
+            if (img.data.startsWith("data:")) {
+              data[key] = img.data;
+            } else {
+              // asumir base64 crudo -> necesita tipo, default png
+              data[key] = `data:image/png;base64,${img.data}`;
+            }
+            continue;
+          }
+
+          if (img.path && typeof img.path === "string") {
+            const imgPath = path.isAbsolute(img.path) ? img.path : resolveBackendPath(img.path);
+            try {
+              const buf = await fs.readFile(imgPath);
+              const ext = (path.extname(imgPath) || ".png").replace(/^\./, "").toLowerCase() || "png";
+              data[key] = `data:image/${ext};base64,${Buffer.from(buf).toString("base64")}`;
+            } catch (eimg) {
+              // no detener el proceso si una imagen falla; dejar como -NoData-
+              console.error(`No se pudo leer imagen ${imgPath}:`, eimg.message);
+            }
+          }
+        } catch (e) {
+          console.error("Error procesando images param:", e.message);
+        }
+      }
+    }
+
+    // rellenar con '-NoData-' las claves faltantes
+    for (const k of keys) {
+      if (typeof data[k] === "undefined" || data[k] === null) {
+        data[k] = "-NoData-";
+      }
+    }
   });
 
   /**

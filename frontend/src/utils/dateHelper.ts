@@ -13,3 +13,21 @@ export async function getFechaAMPM() {
 
   return `${dia}-${mes}-${anio} / ${horas}:${minutos}:${segundos} ${ampm}`;
 }
+
+export function getYearsSince(startDate: any) {
+  if (!startDate) return null;
+
+  const fechaInicio = new Date(startDate);
+  if (Number.isNaN(fechaInicio.getTime())) return null;
+
+  const hoy = new Date();
+  let years = hoy.getFullYear() - fechaInicio.getFullYear();
+  const monthDiff = hoy.getMonth() - fechaInicio.getMonth();
+  const dayDiff = hoy.getDate() - fechaInicio.getDate();
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    years -= 1;
+  }
+
+  return years >= 0 ? years : 0;
+}

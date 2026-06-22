@@ -14,6 +14,7 @@ import {
   generatePdfFromTemplateHTML,
   prepareDocuments,
 } from "../utils/generateFilesHelper.js";
+import { calcularEdad } from "../utils/fechasHelper.js";
 const { Op } = Sequelize;
 const { volInfo } = db;
 
@@ -492,9 +493,8 @@ const descargarDocumentos = async (req, res) => {
     if (all) {
       documentos = ["caratula"];
     }
-    const data = {
-      nombre: "Juan",
-    };
+    const include = [];
+    let data = {};
 
     if (!id_voluntario) {
       return res.json({
@@ -502,6 +502,34 @@ const descargarDocumentos = async (req, res) => {
         message: "ID de voluntario es requerido",
         data: null,
       });
+    }
+
+    const voluntario = await volInfo.findOne({
+      where: { id: id_voluntario },
+      include,
+      paranoid: false,
+    });
+
+    if (documentos.includes("caratula")) {
+      data = {
+        ...data,
+        interno: voluntario.numero_interno || "-",
+        asociacion: voluntario.numero_asociado || "-",
+        fechaCR: voluntario.fecha_cr,
+        fechaArea: voluntario.fecha_area,
+        antiguedad: calcularEdad(voluntario.fecha_cr) + " años",
+        nombre:
+          voluntario.nombre +
+          (voluntario.segundo_nombre ? " " + voluntario.segundo_nombre : "-"),
+        paterno: voluntario.primer_apellido,
+        materno: voluntario.segundo_apellido,
+        curp: voluntario.curp,
+        correo: voluntario.correo,
+        cargo: voluntario.cargo || "-",
+        delegacion: voluntario.delegacion || "-",
+        area: voluntario.area || "-",
+        telefono: voluntario.telefono,
+      };
     }
 
     if (!Array.isArray(documentos) || documentos.length === 0) {
