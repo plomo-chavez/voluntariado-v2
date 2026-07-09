@@ -1,22 +1,17 @@
-import fs from "fs";
-import path from "path";
-import puppeteer from "puppeteer";
-import os from "os";
 import { PDFDocument } from "pdf-lib";
 import Sequelize from "sequelize";
-import { fileURLToPath } from "url";
 import db from "../models/index.js";
 
 import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
-import CRUDController from "./CRUDController.js";
-import functionHelper from "./db/functionHelper.js";
+import { calcularEdad } from "../utils/fechasHelper.js";
 import {
   generatePdfFromTemplateHTML,
   prepareDocuments,
 } from "../utils/generateFilesHelper.js";
-import { calcularEdad } from "../utils/fechasHelper.js";
+import CRUDController from "./CRUDController.js";
+import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
-const { volInfo } = db;
+const { volInfo, estadoElementos } = db;
 
 const { getAllFromModel } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
@@ -243,6 +238,28 @@ async function transformFormSectionsToPayload(data) {
     data: elemento,
   };
 }
+async function createNumberUnique(payload) {
+  let estadisticaEstado = await estadoElementos.findOne({
+    where: { estado_id: payload.estado_id },
+  });
+
+  let numero = 1;
+
+  if (!estadisticaEstado) {
+    estadisticaEstado = await estadoElementos.create({
+      estado_id: payload.estado_id,
+      numero,
+    });
+  } else {
+    await estadisticaEstado.increment("numero");
+    numero = estadisticaEstado.numero + 1;
+  }
+
+  const anio = new Date().getFullYear().toString().slice(-2);
+
+  payload.numero_interno = `${payload.estado_id}${anio}${String(numero).padStart(4, "0")}`;
+  return payload;
+}
 
 async function saveElemento(data) {
   try {
@@ -271,6 +288,10 @@ async function saveElemento(data) {
       }
 
       let payload = transformElementoData(data);
+
+      if (isCreate) {
+        payload = await createNumberUnique(payload);
+      }
 
       const elemento = isCreate
         ? await createRecord("volInfo", payload)

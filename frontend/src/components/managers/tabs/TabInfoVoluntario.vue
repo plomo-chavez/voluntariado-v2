@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { safeValue } from "./customFunctionsInfo";
 import SectionVoluntario from "./SectionVoluntario.vue";
 
@@ -32,14 +32,15 @@ const expedienteOptions = ref([
   { label: "Carta compromiso", value: "carta_compromiso", selected: false },
 ]);
 const validationErrors = ref<string[]>([]);
-const localData = ref(JSON.parse(JSON.stringify(props.data)));
+const cloneData = (value: any) => JSON.parse(JSON.stringify(value ?? {}));
+const localData = ref<Record<string, any>>(cloneData(props.data));
 
 // Sincroniza localData cuando props.data cambia (pero sin relación compartida)
 watch(
   () => props.data,
   (newData) => {
     if (!isEditing.value) {
-      localData.value = JSON.parse(JSON.stringify(newData));
+      localData.value = cloneData(newData);
     }
   },
   { deep: true },
@@ -48,7 +49,7 @@ watch(
 const schema = [
   {
     label: "Numero interno",
-    type: "text",
+    type: "label",
     model: "numero_interno",
     required: false,
   },
@@ -215,13 +216,13 @@ const personalItems = computed(() => [
 ]);
 
 function handleEdit() {
-  localData.value = JSON.parse(JSON.stringify(props.data));
+  localData.value = cloneData(props.data);
   validationErrors.value = [];
   isEditing.value = true;
 }
 
 function handleCancel() {
-  localData.value = JSON.parse(JSON.stringify(props.data));
+  localData.value = cloneData(props.data);
   validationErrors.value = [];
   isEditing.value = false;
 }

@@ -307,6 +307,9 @@ export function formatDateMoment(
   date: string,
   format: any = "D [de] MMMM [de] YYYY",
 ): string {
+  if (!date) {
+    return "";
+  }
   return moment(date).locale("es").format(format);
 }
 
@@ -320,36 +323,38 @@ export function formatDateMoment(
  * calcularDiferenciaFecha('2025-01-01', 'meses') // Retorna la diferencia en meses
  */
 export function calcularDiferenciaFecha(
-  fecha: string | Date,
+  fecha?: string | Date | null,
   unidad: "años" | "meses" | "dias" | "horas" = "dias",
 ): number {
-  try {
-    // Parsear la fecha
-    const fechaParsed = typeof fecha === "string" ? new Date(fecha) : fecha;
-    const ahora = new Date();
-
-    // Validar que la fecha sea válida
-    if (isNaN(fechaParsed.getTime())) {
-      console.error("Fecha inválida:", fecha);
-      return 0;
-    }
-
-    // Calcular la diferencia según la unidad
-    switch (unidad.toLowerCase()) {
-      case "años":
-        return differenceInYears(ahora, fechaParsed);
-      case "meses":
-        return differenceInMonths(ahora, fechaParsed);
-      case "dias":
-        return differenceInDays(ahora, fechaParsed);
-      case "horas":
-        return differenceInHours(ahora, fechaParsed);
-      default:
-        console.warn(`Unidad no válida: ${unidad}. Usando 'dias' por defecto.`);
-        return differenceInDays(ahora, fechaParsed);
-    }
-  } catch (error) {
-    console.error("Error al calcular diferencia de fechas:", error);
+  // Si no hay fecha, regresar 0
+  if (!fecha) {
     return 0;
+  }
+
+  const fechaParsed = fecha instanceof Date ? fecha : new Date(fecha);
+
+  // Validar que la fecha sea válida
+  if (Number.isNaN(fechaParsed.getTime())) {
+    console.error("Fecha inválida:", fecha);
+    return 0;
+  }
+
+  const ahora = new Date();
+
+  switch (unidad) {
+    case "años":
+      return differenceInYears(ahora, fechaParsed);
+
+    case "meses":
+      return differenceInMonths(ahora, fechaParsed);
+
+    case "dias":
+      return differenceInDays(ahora, fechaParsed);
+
+    case "horas":
+      return differenceInHours(ahora, fechaParsed);
+
+    default:
+      return differenceInDays(ahora, fechaParsed);
   }
 }

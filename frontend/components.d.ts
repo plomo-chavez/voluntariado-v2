@@ -38,7 +38,6 @@ declare module 'vue' {
     CardStatisticsVerticalSimple: typeof import('./src/@core/components/CardStatisticsVerticalSimple.vue')['default']
     ChipsInput: typeof import('./src/components/apps/FormFactoryElements/ChipsInput.vue')['default']
     ConfirmDialog: typeof import('./src/components/dialogs/ConfirmDialog.vue')['default']
-    copy: typeof import('./src/components/managers/tabs/TabInfoVoluntario copy.vue')['default']
     Counter: typeof import('./src/components/apps/FormFactoryElements/Counter.vue')['default']
     CreateAppDialog: typeof import('./src/components/dialogs/CreateAppDialog.vue')['default']
     CustomCheckboxes: typeof import('./src/@core/components/app-form-elements/CustomCheckboxes.vue')['default']

@@ -218,41 +218,41 @@ const contactoItems = computed<FieldItem[]>(() => [
   {
     key: "direccion",
     label: "Direccion",
-    value: safeValue(localData.value.direccion.direccion),
+    value: safeValue(localData.value?.direccion?.direccion),
     full: true,
   },
   {
     key: "colonia",
     label: "Colonia",
-    value: safeValue(localData.value.direccion.colonia),
+    value: safeValue(localData.value?.direccion?.colonia),
   },
   {
     key: "no_interno",
     label: "No. interno",
-    value: safeValue(localData.value.direccion.numero_interior),
+    value: safeValue(localData.value?.direccion?.numero_interior),
   },
   {
     key: "no_externo",
     label: "No. externo",
-    value: safeValue(localData.value.direccion.numero_exterior),
+    value: safeValue(localData.value?.direccion?.numero_exterior),
   },
   {
     key: "cp",
     label: "CP",
     value: pickValue(
-      localData.value.direccion.cp,
-      localData.value.direccion.codigo_postal,
+      localData.value?.direccion?.cp,
+      localData.value?.direccion?.codigo_postal,
     ),
   },
   {
     key: "estado",
     label: "Estado",
-    value: safeValue(localData.value.direccion.estado.label),
+    value: safeValue(localData.value?.direccion?.estado.label),
   },
   {
     key: "ciudad",
     label: "Ciudad",
-    value: safeValue(localData.value.direccion.ciudad),
+    value: safeValue(localData.value?.direccion?.ciudad),
   },
 ]);
 
@@ -260,17 +260,17 @@ const emergenciaItems = computed<FieldItem[]>(() => [
   {
     key: "emergencia_nombre",
     label: "Nombre",
-    value: safeValue(localData.value.contactoEmergencia.nombre),
+    value: safeValue(localData.value?.contactoEmergencia?.nombre),
   },
   {
     key: "emergencia_parentesco",
     label: "Parentesco",
-    value: safeValue(localData.value.contactoEmergencia.parentesco.label),
+    value: safeValue(localData.value?.contactoEmergencia?.parentesco?.label),
   },
   {
     key: "emergencia_telefono",
     label: "Telefono",
-    value: safeValue(localData.value.contactoEmergencia.telefono),
+    value: safeValue(localData.value?.contactoEmergencia?.telefono),
   },
 ]);
 
@@ -278,46 +278,46 @@ const profesionalesItems = computed<FieldItem[]>(() => [
   {
     key: "grado_estudios",
     label: "Grado de estudios",
-    value: safeValue(localData.value.profesionales.gradoEstudios.label),
+    value: safeValue(localData.value.profesionales?.gradoEstudios?.label),
   },
   {
     key: "profesion",
     label: "Profesion",
-    value: safeValue(localData.value.profesionales.profesion),
+    value: safeValue(localData.value.profesionales?.profesion),
   },
   {
     key: "ocupacion_actual",
     label: "Ocupacion actual",
-    value: safeValue(localData.value.profesionales.ocupacion_actual),
+    value: safeValue(localData.value.profesionales?.ocupacion_actual),
   },
   {
     key: "empresa_institucion",
     label: "Empresa o institucion",
-    value: safeValue(localData.value.profesionales.empresa),
+    value: safeValue(localData.value.profesionales?.empresa),
   },
   {
     key: "pasaporte",
     label: "Pasaporte",
-    value: safeValue(localData.value.profesionales.pasaporte),
+    value: safeValue(localData.value.profesionales?.pasaporte),
   },
   {
     key: "pasaporteVencimiento",
     label: "Vencimiento del pasaporte",
     value: formatDateMoment(
-      localData.value.profesionales.pasaporteVencimiento,
+      localData.value.profesionales?.pasaporteVencimiento,
       "DD/MM/YYYY",
     ),
   },
   {
     key: "licencia",
     label: "Licencia",
-    value: safeValue(localData.value.profesionales.licencia),
+    value: safeValue(localData.value.profesionales?.licencia),
   },
   {
     key: "licenciaVencimiento",
     label: "Vencimiento de la licencia",
     value: formatDateMoment(
-      localData.value.profesionales.licenciaVencimiento,
+      localData.value.profesionales?.licenciaVencimiento,
       "DD/MM/YYYY",
     ),
   },
@@ -514,7 +514,7 @@ function handleEditSection(sectionKey: string) {
       localDataActive.value = {
         id_voluntario: localData.value.id,
         section: sectionKey,
-        ...localData.value.direccion,
+        ...localData.value?.direccion,
       };
       break;
     case "emergencia":

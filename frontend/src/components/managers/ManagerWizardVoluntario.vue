@@ -112,42 +112,34 @@ onBeforeMount(async () => {
       <VDivider />
 
       <VCardText class="perfil-content">
-        <VWindow v-model="activeTab">
-          <!-- Tab: Información del voluntario -->
-          <VWindowItem value="infoVoluntario">
-            <TabInfoVoluntario
-              :data="voluntarioData"
-              :change="moodChange"
-              @update:data="handleUpdateData"
-            />
-          </VWindowItem>
+        <div class="tab-panel">
+          <TabInfoVoluntario
+            v-if="activeTab === 'infoVoluntario'"
+            :data="voluntarioData"
+            :change="moodChange"
+            @update:data="handleUpdateData"
+          />
 
-          <!-- Tab: Información personal -->
-          <VWindowItem value="infoPersonal">
-            <TabInfoPersonal
-              :data="voluntarioData"
-              @update:data="handleUpdateData"
-            />
-          </VWindowItem>
+          <TabInfoPersonal
+            v-else-if="activeTab === 'infoPersonal'"
+            :data="voluntarioData"
+            @update:data="handleUpdateData"
+          />
 
-          <!-- Tab: Expediente -->
-          <VWindowItem value="expediente">
-            <TabExpediente />
-          </VWindowItem>
+          <TabExpediente v-else-if="activeTab === 'expediente'" />
 
-          <!-- Tab: Formación -->
-          <VWindowItem value="formacion">
-            <TabFormacion
-              :data="voluntarioData"
-              @update:data="handleUpdateData"
-            />
-          </VWindowItem>
+          <TabFormacion
+            v-else-if="activeTab === 'formacion'"
+            :data="voluntarioData"
+            @update:data="handleUpdateData"
+          />
 
-          <!-- Tab: Horas -->
-          <VWindowItem value="horas">
-            <TabHoras :data="voluntarioData" @update:data="handleUpdateData" />
-          </VWindowItem>
-        </VWindow>
+          <TabHoras
+            v-else-if="activeTab === 'horas'"
+            :data="voluntarioData"
+            @update:data="handleUpdateData"
+          />
+        </div>
       </VCardText>
     </VCard>
   </div>
