@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "socorro-backend",
       script: "index.js",
-      cwd: "/home/ec2-user/socorro-reportes/backend",
+      cwd: "/home/ec2-user/voluntariado/backend",
 
       // modo fork o cluster
       exec_mode: "fork",
