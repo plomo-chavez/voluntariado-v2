@@ -9,9 +9,11 @@ const showFormNew = ref(false);
 
 // prettier-ignore
 const tableHeaders = [
-  { title: "ID", key: "id" },
-  { title: "Nombre", key: "nombre" },
-  { title: "Tipo", key: "tipo.label" },
+  { title: "No.Asociado", key: "numero_asociado" },
+  { title: "Nombre", key: "nombre", format: (value : any, row : any) => {  return nombreCompleto(row); }, },
+  { title: "Cargo", key: "cargo.label" },
+  { title: "Estado", key: "estado.label" },
+  { title: "Delegación", key: "delegacion.label" },
   { title: "Estatus", key: "estatus", format: (value : any) => (value === 1 ? "Activo" : "Inactivo"), },
   { title: "Creación", key: "created_at" },
 ];

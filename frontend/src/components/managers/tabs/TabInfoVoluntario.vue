@@ -73,6 +73,8 @@ const schema = [
   {
     label: "Cargo",
     type: "select",
+    dependenciaQuery: "area",
+    dependenciaQueryFiltro: "area_id",
     model: "cargo",
     catalogo: "cargos",
   },
@@ -160,13 +162,18 @@ const institutionalItems = computed(() => [
   },
   {
     key: "antiguedad",
-    label: "Antiguedad",
-    value: calcularDiferenciaFecha(localData.value.fecha_cr, "años"),
+    label: "Antiguedad en la institución",
+    value: `${safeValue(calcularDiferenciaFecha(localData.value.fecha_cr, "años"))} años`,
   },
   {
     key: "fecha_area",
     label: "Fecha de ingreso al area",
     value: formatDateMoment(localData.value.fecha_area, "DD/MM/YYYY"),
+  },
+  {
+    key: "fecha_area",
+    label: "Antiguedad en el area",
+    value: `${safeValue(calcularDiferenciaFecha(localData.value.fecha_area, "años"))} años`,
   },
 ]);
 
@@ -413,9 +420,12 @@ onMounted(() => {
 
         <ModuladorFormFactory
           :schema="schema"
+          :formLive="true"
           :modelValue="localData"
           :showMessageRequired="false"
-          :formLive="true"
+          :colorButtonSubmit="'#b71c1c'"
+          :textButtonSubmit="'Guardar cambios'"
+          :iconButtonSubmit="'fa-regular fa-floppy-disk'"
           @submit="handleSave"
           @cancel="handleCancel"
         />

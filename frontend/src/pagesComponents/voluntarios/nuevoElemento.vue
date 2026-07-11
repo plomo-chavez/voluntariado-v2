@@ -44,30 +44,16 @@ const emit = defineEmits<{
 const step = ref<1 | 2>(1);
 
 const form = ref<NuevoElementoPayload>({
-  curp: "CAQJ940610HGRHRS03",
-  nombre: "Jesus",
-  segundo_nombre: "Ramon",
-  primer_apellido: "Chavez",
-  segundo_apellido: "Wuiroz",
-  correo: "jesus@gmail.com",
-  telefono: "7442077733",
-  estado: {
-    label: "Guerrero",
-    id: 12,
-  },
-  delegacion: {
-    id: 1,
-    estado_id: 12,
-    label: "Delegación local en Acapulco",
-    estatus: 1,
-    created_at: "2026-03-31T05:35:13.000Z",
-    updated_at: "2026-03-31T06:26:09.000Z",
-    deleted_at: null,
-  },
-  area: {
-    label: "Juventud",
-    id: 2,
-  },
+  curp: "",
+  nombre: "",
+  segundo_nombre: "",
+  primer_apellido: "",
+  segundo_apellido: "",
+  correo: "",
+  telefono: "",
+  estado: null,
+  delegacion: null,
+  area: null,
 });
 
 const curpSchema = [

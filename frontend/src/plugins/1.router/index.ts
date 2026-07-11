@@ -119,6 +119,8 @@ router.beforeEach(async (to, from, next) => {
     } else {
       return next();
     }
+  } else if (to.meta?.public === true) {
+    return next();
   } else {
     const requiresAuth = thisHasRequiresAuth(to.name);
     if (!requiresAuth) {

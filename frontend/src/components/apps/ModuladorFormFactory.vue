@@ -13,6 +13,7 @@ interface Field {
   multiple?: boolean;
 }
 
+// prettier-ignore
 const props = withDefaults(
   defineProps<{
     title?: any;
@@ -36,11 +37,17 @@ const props = withDefaults(
     showButtonCancel?: boolean;
     iconButtonCancel?: string;
     iconButtonSubmit?: string;
+    classForm?: string | null;
     formRequired?: boolean;
+    variantButtonCancel?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain";
+    variantButtonSubmit?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain";
+    colorButtonCancel?: string;
+    colorButtonSubmit?: string;
   }>(),
   {
     title: null,
     formModal: false,
+    classForm: null,
     showMessageRequired: true,
     divCard: false,
     formLive: false,
@@ -55,6 +62,10 @@ const props = withDefaults(
     showButtonCancel: true,
     textButtonCancel: null,
     textButtonSubmit: null,
+    variantButtonCancel: "outlined",
+    variantButtonSubmit: "elevated",
+    colorButtonCancel: "secondary",
+    colorButtonSubmit: "success",
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
     titleClass: "",
@@ -108,7 +119,10 @@ function handleCancel() {
 
     <!-- Inline Form -->
     <div v-else>
-      <component :is="props.divCard ? VCard : 'div'" class="pa-6 mx-auto mb-4">
+      <component
+        :is="props.divCard ? VCard : 'div'"
+        :class="props.classForm && 'pa-6 mx-auto mb-4'"
+      >
         <!-- prettier-ignore -->
         <h1 :class="props.titleClass">
           {{ title != null ? props.customTitle ? title : ('Formulario de ' + title.toLowerCase()) : '' }}
@@ -131,6 +145,10 @@ function handleCancel() {
           :iconButtonCancel="props.iconButtonCancel"
           :iconButtonSubmit="props.iconButtonSubmit"
           :showMessageRequired="props.showMessageRequired"
+          :variantButtonCancel="props.variantButtonCancel"
+          :variantButtonSubmit="props.variantButtonSubmit"
+          :colorButtonCancel="props.colorButtonCancel"
+          :colorButtonSubmit="props.colorButtonSubmit"
           @submit="handleSubmit"
           @cancel="handleCancel"
         />

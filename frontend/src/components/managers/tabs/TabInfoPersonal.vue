@@ -78,8 +78,6 @@ const sectionSchemas: Record<string, any[]> = {
       model: "estado",
     },
     { label: "Ciudad", type: "text", model: "ciudad" },
-    { label: "Pasaporte", type: "text", model: "pasaporte" },
-    { label: "Licencia", type: "text", model: "licencia" },
   ],
   emergencia: [
     {
@@ -510,6 +508,17 @@ const horarioParts = computed(() => {
 
 function handleEditSection(sectionKey: string) {
   switch (sectionKey) {
+    case "salud":
+      localDataActive.value = {
+        id_voluntario: localData.value.id,
+        section: sectionKey,
+        seguro_personal: localData.value.seguro_personal,
+        seguro_institucional: localData.value.seguro_institucional,
+        capacidades_diferentes: localData.value.capacidades_diferentes,
+        enfermedades: localData.value.enfermedades,
+        alergias: localData.value.alergias,
+      };
+      break;
     case "contacto":
       localDataActive.value = {
         id_voluntario: localData.value.id,
@@ -542,11 +551,11 @@ function handleEditSection(sectionKey: string) {
       localDataActive.value = Array.isArray(localData.value.idiomas)
         ? [...localData.value.idiomas]
         : [];
+      openIdiomaForm(null);
       break;
   }
-  setTimeout(() => {
-    activeEditSection.value = sectionKey;
-  }, 100);
+  // prettier-ignore
+  setTimeout(() => { activeEditSection.value = sectionKey; }, 100);
 }
 
 function resetIdiomaForm() {
@@ -642,6 +651,7 @@ async function handleSave() {
   await apiRequest({
     url: "/api/elemento",
     payload,
+    loader: true,
     messageType: "toast",
     onSuccess: (response: any) => {
       emit("update:data", { ...response });
@@ -649,6 +659,10 @@ async function handleSave() {
     },
   });
 }
+
+onMounted(() => {
+  // activeEditSection.value = "idiomas";
+});
 </script>
 
 <template>
@@ -680,6 +694,9 @@ async function handleSave() {
         <ModuladorFormFactory
           :schema="sectionSchemas[section.key] || []"
           :modelValue="localDataActive"
+          :classForm="null"
+          :colorButtonSubmit="'#b71c1c'"
+          :iconButtonSubmit="'fa-regular fa-floppy-disk'"
           :formLive="true"
           @submit="handleSave"
           @cancel="handleCancel"
@@ -716,21 +733,15 @@ async function handleSave() {
           <i class="fa-solid fa-pen" aria-hidden="true" />
         </VBtn>
       </header>
-
+      <!-- prettier-ignore -->
       <div v-if="activeEditSection === 'idiomas'" class="section-form-wrap">
         <div class="idiomas-toolbar">
-          <VBtn size="small" color="primary" @click="openIdiomaForm(null)">
-            <i class="fa-solid fa-plus" aria-hidden="true" />
-            Agregar nuevo idioma
+          <VBtn size="small" color="secondary" @click="openIdiomaForm(null)">
+            <VIcon start :icon="'fa-solid fa-plus'" />
+            Agregar
           </VBtn>
-          <VBtn
-            size="small"
-            variant="tonal"
-            color="error"
-            :disabled="!localDataActive?.length"
-            @click="handleDeleteAllIdiomas"
-          >
-            <i class="fa-solid fa-trash" aria-hidden="true" />
+          <VBtn size="small"  variant="outlined"  color="secondary"  :disabled="!localDataActive?.length"   @click="handleDeleteAllIdiomas">
+            <VIcon start :icon="'fa-solid fa-trash'" />
             Eliminar todos
           </VBtn>
         </div>
@@ -753,37 +764,26 @@ async function handleSave() {
               />
             </div>
             <div class="idioma-actions">
-              <VBtn
-                size="x-small"
-                variant="flat"
-                color="error"
-                @click="handleDeleteIdioma(index)"
-              >
-                <i class="fa-solid fa-trash" aria-hidden="true" />
+              <VBtn size="small" variant="elevated" color="error" @click.prevent="handleDeleteIdioma(index)">
+                <VIcon :icon="'fa-solid fa-trash'" />
               </VBtn>
             </div>
           </div>
         </div>
 
-        <div class="section-form-actions section-form-actions--main">
-          <VBtn size="small" color="red-darken-2" @click="handleSaveSection">
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true" />
-            Guardar
+        <!-- prettier-ignore -->
+        <div class="d-flex justify-end gap-3 mt-4">
+          <VBtn :variant="'outlined'" :color="'secondary'" @click.prevent="handleCancel">
+            <VIcon start :icon="'tabler-x'" />Cancelar
           </VBtn>
-          <VBtn
-            size="small"
-            variant="tonal"
-            color="secondary"
-            @click="handleCancelEdit"
-          >
-            <i class="fa-solid fa-xmark" aria-hidden="true" />
-            Cancelar
+          <VBtn :variant="'elevated'" :color="'success'" @click="handleSave"> 
+            <VIcon start :icon="'tabler-check'" /> Guardar cambios 
           </VBtn>
         </div>
       </div>
-
+      <!-- prettier-ignore -->
       <div v-else class="availability-box">
-        <div v-if="!props.data.idiomas?.length" class="idiomas-empty">
+        <div v-if="(props.data?.idiomas ?? []).length == 0" class="idiomas-empty">
           No hay idiomas registrados
         </div>
         <div v-else class="idiomas-list">

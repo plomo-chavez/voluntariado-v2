@@ -43,7 +43,7 @@ const show = ref<boolean>(false);
 const moodChange = ref<boolean>(false);
 
 async function handleUpdateData(val: Record<string, any>) {
-  await getData();
+  // await getData();
 }
 
 async function getData() {

@@ -125,6 +125,29 @@ async function transformFormSectionsToPayload(data) {
   let existeRecord;
 
   switch (data.section) {
+    case "salud":
+      tableModel = "volInfo";
+
+      existeRecord = await validateRecord(
+        tableModel,
+        {
+          id: data.id_voluntario,
+        },
+        true,
+      );
+
+      isCreate = existeRecord.result;
+
+      payload = {
+        id: data.id_voluntario,
+        seguro_personal: data.seguro_personal || "",
+        seguro_institucional: data.seguro_institucional || "",
+        capacidades_diferentes: data.capacidades_diferentes || "",
+        enfermedades: data.enfermedades || "",
+        alergias: data.alergias || "",
+      };
+
+      break;
     case "contacto":
       tableModel = "volDireccion";
 
@@ -139,7 +162,7 @@ async function transformFormSectionsToPayload(data) {
       isCreate = existeRecord.result;
 
       payload = {
-        id_voluntario: data.id,
+        id_voluntario: data.id_voluntario,
         direccion: data.direccion || "",
         colonia: data.colonia || "",
         numero_exterior: data.numero_exterior || "",
@@ -322,16 +345,22 @@ const getAll = async (req, res) => {
     const page = parseInt(req.body.page) || 1;
     const pageSize = parseInt(req.body.pageSize) || 10;
 
+    const relaciones = await getRelaciones([
+      "area",
+      "cargo",
+      "delegacion",
+      "estado",
+    ]);
+
     const attributes = [
       "id",
       "curp",
       "nombre",
+      "numero_asociado",
       "segundo_nombre",
       "primer_apellido",
       "segundo_apellido",
       "correo",
-      "estado_id",
-      "delegacion_id",
       "estatus",
       "created_at",
       "updated_at",
@@ -342,7 +371,7 @@ const getAll = async (req, res) => {
       model: volInfo,
       filtros,
       attributes,
-      include: [],
+      include: relaciones,
       page,
       pageSize,
       paranoid: false,

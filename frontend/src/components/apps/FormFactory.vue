@@ -70,6 +70,22 @@ const props = withDefaults(
     showButtonCancel?: boolean;
     iconButtonCancel?: string;
     iconButtonSubmit?: string;
+    variantButtonCancel?:
+      | "flat"
+      | "text"
+      | "elevated"
+      | "tonal"
+      | "outlined"
+      | "plain";
+    variantButtonSubmit?:
+      | "flat"
+      | "text"
+      | "elevated"
+      | "tonal"
+      | "outlined"
+      | "plain";
+    colorButtonCancel?: string;
+    colorButtonSubmit?: string;
     formRequired?: boolean;
     validarCambios?: boolean;
     showMessageRequired?: boolean;
@@ -89,6 +105,10 @@ const props = withDefaults(
     showButtonCancel: true,
     textButtonCancel: null,
     textButtonSubmit: null,
+    variantButtonCancel: "elevated",
+    variantButtonSubmit: "outlined",
+    colorButtonCancel: "success",
+    colorButtonSubmit: "secondary",
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
     showMessageRequired: true,
@@ -718,7 +738,7 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-        <v-row>
+        <v-row style="margin-left: 0px; margin-right: 0px">
           <template v-for="field in schemaVisible" :key="field.model">
             <!-- Campo de texto -->
             <!-- prettier-ignore -->
@@ -966,12 +986,12 @@ onMounted(async () => {
       </div>
       <!-- prettier-ignore -->
       <div v-if="showButtonsAction" class="d-flex justify-end gap-3 mt-4">
-        <VBtn v-if="showButtonCancel" variant="outlined" color="secondary" @click.prevent="handleCancel"  > 
+        <VBtn v-if="showButtonCancel" :variant="props.variantButtonCancel ?? 'outlined'" :color="props.colorButtonCancel ?? 'secondary'" @click.prevent="handleCancel"  > 
           <VIcon v-if="showIconButtonCancel"  start :icon="props?.iconButtonCancel" />
           {{ props.textButtonCancel || "Cancelar" }} 
         </VBtn>
 
-        <VBtn v-if="showButtonSubmit" variant="elevated" color="success"  @click="handleSubmit" > 
+        <VBtn v-if="showButtonSubmit" :variant="props?.variantButtonSubmit ?? 'elevated' " :color="props.colorButtonSubmit ?? 'success'"  @click="handleSubmit" > 
           <VIcon v-if="showIconButtonSubmit" start :icon="props?.iconButtonSubmit"/>
           {{ props.textButtonSubmit || "Enviar" }}
         </VBtn>

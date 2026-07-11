@@ -7,6 +7,15 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      area_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        references: {
+          model: "cat_areas",
+          key: "id",
+        },
+      },
       label: {
         type: DataTypes.STRING(100),
         allowNull: true,
@@ -46,6 +55,11 @@ export default (sequelize, DataTypes) => {
     //   foreignKey: "cargo_id",
     //   as: "historiales",
     // });
+
+    catCargo.belongsTo(models.catAreas, {
+      foreignKey: "area_id",
+      as: "area",
+    });
   };
 
   return catCargo;
