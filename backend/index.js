@@ -27,8 +27,7 @@ const envPath = isProd
 // Cargar variables
 dotenv.config({ path: envPath });
 
-console.log("Backend env cargado desde:", envPath);
-console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("Backend NODE_ENV:", process.env.NODE_ENV);
 
 // ===============================
 // IMPORTS
