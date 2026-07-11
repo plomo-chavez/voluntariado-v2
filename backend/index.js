@@ -4,6 +4,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+const isProductionArg = process.argv.includes("production");
 
 // ===============================
 // RUTAS BASE
@@ -11,10 +12,14 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Determina entorno
-const isProd = process.env.NODE_ENV === "production";
+process.env.NODE_ENV =
+  process.env.NODE_ENV || (isProductionArg ? "production" : "development");
 
-// Seleccionar archivo env
+process.env.IS_PROD =
+  process.env.IS_PROD ||
+  (process.env.NODE_ENV === "production" ? "true" : "false");
+
+const isProd = process.env.NODE_ENV === "production";
 const envPath = isProd
   ? path.resolve(__dirname, "../config/.env.backend.prod")
   : path.resolve(__dirname, "../config/.env.backend");
