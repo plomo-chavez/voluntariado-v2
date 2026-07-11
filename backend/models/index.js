@@ -1,5 +1,5 @@
-import fs from "fs";
 import dotenv from "dotenv";
+import fs from "fs";
 import path from "path";
 import process from "process";
 import Sequelize from "sequelize";
@@ -17,6 +17,11 @@ const envPath = path.resolve(
 );
 dotenv.config({ path: envPath });
 
+console.log("envPath:", process.env);
+console.log(
+  "envPath:",
+  process.env.NODE_ENV === "production" ? ".env.backend.prod" : ".env.backend",
+);
 const { default: config } = await import("../config/config.js");
 
 const basename = path.basename(__filename);
