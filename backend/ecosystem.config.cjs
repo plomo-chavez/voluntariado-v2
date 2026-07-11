@@ -3,6 +3,7 @@ module.exports = {
     {
       name: "voluntariado-backend",
       script: "index.js",
+      // cwd: "/Users/plomochavez/Documents/GitHub/cruzRoja/vol/backend",
       cwd: "/home/ec2-user/voluntariado/backend",
       exec_mode: "fork",
       instances: 1,
