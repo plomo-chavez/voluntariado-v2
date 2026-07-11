@@ -1,11 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
 export default {
   development: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
+    username: "volunta3_voluntariado",
+    password: "Jesus.34J",
+    database: "volunta3_vol2",
+    host: "mx58.hostgator.mx",
     logging: true,
     dialect: "mysql",
     define: {
@@ -19,10 +17,10 @@ export default {
   },
 
   test: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
+    username: "volunta3_voluntariado",
+    password: "Jesus.34J",
+    database: "volunta3_vol2",
+    host: "mx58.hostgator.mx",
     logging: false,
     dialect: "mysql",
     define: {
@@ -36,10 +34,10 @@ export default {
   },
 
   production: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
+    username: "volunta3_voluntariado",
+    password: "Jesus.34J",
+    database: "volunta3_vol2",
+    host: "mx58.hostgator.mx",
     logging: false,
     dialect: "mysql",
     define: {
