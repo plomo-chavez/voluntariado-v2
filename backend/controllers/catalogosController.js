@@ -63,7 +63,9 @@ const tablaMap = {
 
 const getCatalogo = async (req, res, tabla) => {
   try {
-    let filtros = req.body || {};
+    const filtrosEntrada =
+      req.body && Object.keys(req.body).length > 0 ? req.body : req.query || {};
+    let filtros = filtrosEntrada || {};
     const tablaReal = tablaMap[tabla];
 
     if (!tablaReal) {
@@ -92,10 +94,17 @@ const getCatalogo = async (req, res, tabla) => {
       data: resultado,
     });
   } catch (e) {
+    let message = e.message || "Error al obtener los registros";
+    if (e.original && e.original.sqlMessage) {
+      message = e.original.sqlMessage;
+    }
+    console.log(
+      "[CatalogosController] Error al obtener los registros:",
+      message,
+    );
     return res.json({
       result: false,
-      message:
-        "[CatalogosController] Error al obtener los registros: " + e.message,
+      message: `[CatalogosController] ${message}`,
       data: [],
     });
   }

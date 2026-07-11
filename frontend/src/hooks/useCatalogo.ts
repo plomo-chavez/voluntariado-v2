@@ -29,6 +29,10 @@ export function useCatalogo() {
         case "idiomas":           url = "/api/catalogos/idiomas"; break;
       }
 
+      if (item?.public ?? false) {
+        url = url.replace("/api/", "/api/public/");
+      }
+
       let payload: any = dependenciaFiltro || item.payload || {};
 
       const response = await customRequest({

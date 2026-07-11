@@ -100,6 +100,7 @@ const formSchema = [
     required: true,
     label: "Estado",
     type: "select",
+    public: true,
     model: "estado",
     classElement: " col-4 ",
     catalogo: "estados",
@@ -107,6 +108,7 @@ const formSchema = [
   {
     required: true,
     label: "Delegación",
+    public: true,
     type: "select",
     model: "delegacion",
     dependenciaQuery: "estado",
@@ -120,6 +122,7 @@ const formSchema = [
   {
     label: "Área",
     type: "select",
+    public: true,
     model: "area",
     catalogo: "areas",
   },

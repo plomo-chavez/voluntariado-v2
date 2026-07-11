@@ -3,12 +3,13 @@ import express from "express";
 import authController from "../controllers/authController.js";
 import logRequestMiddleware from "../middleware/logRequestMiddleware.js";
 
+import catalogosController from "../controllers/catalogosController.js";
 import catalogosDinamicosRoutes from "./catalogosDinamicosRoutes.js";
 import catalogosRoutes from "./catalogosRoutes.js";
+import elementosRoutes from "./elementosRoutes.js";
 import logRoutes from "./logRoutes.js";
 import pagesRoutes from "./pagesRoutes.js";
 import usuariosRoutes from "./usuariosRoutes.js";
-import elementosRoutes from "./elementosRoutes.js";
 
 const router = express.Router();
 
@@ -17,6 +18,12 @@ router.use(logRequestMiddleware);
 
 // ===== Auth =====
 router.post("/api/login", authController.login);
+
+router.post("/api/public/catalogos/:catalogo", (req, res) => {
+  const { catalogo } = req.params;
+  catalogosController.getCatalogo(req, res, catalogo);
+});
+
 router.post("/api/verificar/:pagina", authController.verificarToken);
 
 // ===== Sub-rutas =====

@@ -388,7 +388,7 @@ const verificarToken = async (req, res) => {
   if (!token) {
     return res.json({
       result: false,
-      message: "Token no proporcionado",
+      message: "verificarToken - Token no proporcionado",
     });
   }
   try {
