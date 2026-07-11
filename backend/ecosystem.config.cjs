@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "socorro-backend",
+      name: "voluntariado-backend",
       script: "index.js",
       cwd: "/home/ec2-user/voluntariado/backend",
 

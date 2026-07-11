@@ -1,4 +1,6 @@
 config/
+!backend/config/
+!backend/config/**
 design/
 /.phpunit.cache
 /node_modules
