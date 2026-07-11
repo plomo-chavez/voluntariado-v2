@@ -1,13 +1,23 @@
 import fs from "fs";
+import dotenv from "dotenv";
 import path from "path";
 import process from "process";
 import Sequelize from "sequelize";
 import { fileURLToPath } from "url";
 
-import config from "../config/config.js";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load variables before importing the Sequelize config. Static ES module
+// imports are evaluated before index.js can execute its own dotenv.config().
+const envPath = path.resolve(
+  __dirname,
+  "../../config",
+  process.env.NODE_ENV === "production" ? ".env.backend.prod" : ".env.backend",
+);
+dotenv.config({ path: envPath });
+
+const { default: config } = await import("../config/config.js");
 
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || "development";

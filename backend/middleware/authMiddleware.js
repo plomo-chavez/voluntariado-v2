@@ -13,8 +13,27 @@ const getUserToken = async (userID) => {
   return userBD?.toJSON() ?? null;
 };
 
+const isPublicCatalogRoute = (req) => {
+  if (req.method === "OPTIONS") return true;
+  return (
+    req.originalUrl.startsWith("/api/catalogos") ||
+    req.originalUrl.startsWith("/api/public/catalogos")
+  );
+};
+
 const authMiddleware = async (req, res, next) => {
   const debug = process.env.DEBUG_REQUEST_AUTH === "true";
+
+  if (isPublicCatalogRoute(req)) {
+    if (debug) {
+      console.log("[AUTH BYPASS] Ruta pública detectada", {
+        url: req.originalUrl,
+        method: req.method,
+      });
+    }
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   let logMsg = "";
   let logData = {};
@@ -26,7 +45,9 @@ const authMiddleware = async (req, res, next) => {
       headers: req.headers,
     };
     if (debug) console.log(logMsg, logData);
-    return res.json({ message: "Token no proporcionado" });
+    return res.json({
+      message: "authMiddleware - !authHeader -  Token no proporcionado",
+    });
   }
 
   const token = authHeader.split(" ")[1]; // Extraer el token después de "Bearer"

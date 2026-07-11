@@ -4,7 +4,6 @@ import catalogosController from "../controllers/catalogosController.js";
 
 const router = express.Router();
 
-// ===== Catálogos dinámicos =====
 router.post("/catalogos/:catalogo", (req, res) => {
   const { catalogo } = req.params;
   catalogosController.getCatalogo(req, res, catalogo);
