@@ -25,6 +25,8 @@ yarn-error.log
 /.nova
 /.zed
 /backend/assets/tmp/
+/backend/assets/expedientes/
+
 
 # Logs
 logs
