@@ -235,7 +235,6 @@ export const getOriginalBaseName = (file) => {
 
 export const createNewName = (name, newName) => {
   const source = String(newName || name || "documento");
-  console.log("\n\n === createNewName", source);
   const base = path.parse(source).name || source;
   return base
     .normalize("NFKD")
@@ -297,8 +296,6 @@ export const getDataNewFileExpediente = ({
   // Mueve/renombra físicamente el archivo desde su ubicación temporal
   // hacia la carpeta definitiva del expediente
   fs.renameSync(file.path, absolutePath);
-  // Muestra en consola la ruta absoluta donde quedó almacenado el archivo
-  console.log("", "\n\n === absolutePath:", absolutePath);
   // Calcula la ruta relativa del archivo tomando como referencia la carpeta del backend
   const relativePath = path
     .relative(BACKEND_DIR, absolutePath)

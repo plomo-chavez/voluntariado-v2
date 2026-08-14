@@ -7,6 +7,10 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      orden: {
+        type: DataTypes.INTEGER,
+        defaultValue: null,
+      },
       label: {
         type: DataTypes.STRING(50),
         allowNull: true,

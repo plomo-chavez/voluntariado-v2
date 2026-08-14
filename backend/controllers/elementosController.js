@@ -19,130 +19,6 @@ const { getRelaciones } = functionsCustomHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
 
-async function cargarDocumento(req, res) {
-  try {
-    console.log("\n\n === empezando a cargar documento... ===");
-    const { id_elemento, id, id_voluntario, documentoType } = req.body || {};
-    const elementoId = id_elemento || id || id_voluntario;
-    const file = req.file;
-
-    if (!elementoId) {
-      return res.json({
-        result: false,
-        message: "El id del elemento es requerido.",
-      });
-    }
-
-    if (!documentoType) {
-      return res.json({
-        result: false,
-        message: "El tipo de documento es requerido.",
-      });
-    }
-
-    if (!file) {
-      return res.json({
-        result: false,
-        message: "El documento es requerido.",
-      });
-    }
-
-    console.log(
-      "\n\n === elementoId:",
-      elementoId,
-      "file:",
-      file?.originalname,
-      "===",
-    );
-    const elemento = await db.volInfo.findByPk(elementoId, {
-      attributes: ["id", "numero_interno"],
-    });
-
-    if (!elemento) {
-      return res.json({
-        result: false,
-        message: "No se encontró el elemento indicado.",
-      });
-    }
-
-    const documentoTypeBD = await catTipoDocumento.findOne({
-      where: { key: documentoType },
-    });
-
-    if (!documentoTypeBD) {
-      return res.json({
-        result: false,
-        message: "No se encontró el tipo de documento indicado.",
-      });
-    }
-    const numeroInterno = String(elemento.numero_interno || "").trim();
-    const estadoId = numeroInterno.slice(0, 2);
-
-    console.log(
-      "\n\n === numeroInterno:",
-      numeroInterno,
-      "estadoId:",
-      estadoId,
-      "===",
-    );
-    if (!/^\d{2}/.test(numeroInterno)) {
-      return res.json({
-        result: false,
-        message:
-          "El elemento no tiene un número interno válido para determinar su estado.",
-      });
-    }
-
-    const { relativePath } = getDataNewFileExpediente({
-      file,
-      documentType: documentoTypeBD,
-      numeroInterno,
-      estadoId,
-    });
-
-    const payloadDocument = {
-      id_voluntario: elemento.id,
-      id_tipo_documento: documentoTypeBD.id,
-      tipoDocumento: documentoTypeBD.type,
-      numero: null,
-      vigencia: null,
-      ruta_archivo: relativePath,
-      fecha_registro: new Date(),
-    };
-
-    if (documentoTypeBD.isUnique) {
-      const existingDocument = await db.volDocumento.findOne({
-        where: {
-          id_voluntario: elemento.id,
-          id_tipo_documento: documentoTypeBD.id,
-        },
-      });
-
-      if (existingDocument) {
-        await existingDocument.destroy({ force: true });
-      }
-    }
-    const savedDocument = await db.volDocumento.create(payloadDocument);
-
-    console.log("\n\n === Documento cargado y guardado en la base de datos:");
-    console.log(savedDocument);
-
-    return res.status(200).json({
-      result: true,
-      message: "Documento cargado correctamente.",
-      data: {
-        documento: savedDocument,
-        ruta: relativePath,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      result: false,
-      message: "Error al cargar el documento: " + error.message,
-    });
-  }
-}
-
 function validateElementoData(data) {
   if (!data.curp || !data.nombre || !data.primer_apellido) {
     return {
@@ -751,6 +627,196 @@ const descargarDocumentos = async (req, res) => {
   }
 };
 
+// prettier-ignore
+const transformarDocumentos = (documentos) => {
+  if (!documentos?.length) {
+    return null;
+  }
+  const primerDocumento = documentos[0];
+  const documentosOrdenados = [...documentos].sort((a, b) => {
+    // Si ambos tienen numero, ordenar por numero
+    if (a.numero !== null && a.numero !== undefined &&
+        b.numero !== null && b.numero !== undefined) {
+      return Number(a.numero) - Number(b.numero);
+    }
+
+    // Si A no tiene numero, pero B sí, B va primero
+    if (a.numero === null || a.numero === undefined) {
+      if (b.numero !== null && b.numero !== undefined) {
+        return 1;
+      }
+    }
+
+    // Si B no tiene numero, pero A sí, A va primero
+    if (b.numero === null || b.numero === undefined) {
+      if (a.numero !== null && a.numero !== undefined) {
+        return -1;
+      }
+    }
+
+    // Si ninguno tiene numero, ordenar por fecha de creación
+    return new Date(a.created_at) - new Date(b.created_at);
+
+  });
+
+  return {
+    tipo: primerDocumento.tipoDocumento?.type ?? null,
+    tipo_id: primerDocumento.tipoDocumento?.id ?? null,
+    tipo_label: primerDocumento.tipoDocumento?.label ?? null,
+    documentos: documentosOrdenados.map((documento) => ({
+      numero: documento.numero,
+      vigencia: documento.vigencia,
+      ruta_archivo: documento.ruta_archivo,
+      fecha_registro: documento.fecha_registro,
+    })),
+  };
+};
+
+const getDocumentos = async (req, res) => {
+  try {
+    const { id_voluntario } = req.body;
+
+    if (!id_voluntario) {
+      return res.json({
+        result: false,
+        message: "ID de voluntario es requerido",
+        data: null,
+      });
+    }
+
+    const documentos = await db.volDocumento.findAll({
+      where: { id_voluntario },
+      include: [
+        {
+          model: db.catTipoDocumento,
+          as: "tipoDocumento",
+        },
+      ],
+      paranoid: false,
+    });
+
+    // Transformamos los documentos antes de enviarlos como respuesta
+    const documentosOrdenados = transformarDocumentos(documentos);
+
+    return res.json({
+      result: true,
+      message: "Documentos obtenidos correctamente",
+      data: documentosOrdenados,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al obtener documentos: " + error.message,
+      data: null,
+    });
+  }
+};
+
+async function cargarDocumento(req, res) {
+  try {
+    const { id_elemento, id, id_voluntario, documentoType } = req.body || {};
+    const elementoId = id_elemento || id || id_voluntario;
+    const file = req.file;
+
+    if (!elementoId) {
+      return res.json({
+        result: false,
+        message: "El id del elemento es requerido.",
+      });
+    }
+
+    if (!documentoType) {
+      return res.json({
+        result: false,
+        message: "El tipo de documento es requerido.",
+      });
+    }
+
+    if (!file) {
+      return res.json({
+        result: false,
+        message: "El documento es requerido.",
+      });
+    }
+
+    const elemento = await db.volInfo.findByPk(elementoId, {
+      attributes: ["id", "numero_interno"],
+    });
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "No se encontró el elemento indicado.",
+      });
+    }
+
+    const documentoTypeBD = await catTipoDocumento.findOne({
+      where: { key: documentoType },
+    });
+
+    if (!documentoTypeBD) {
+      return res.json({
+        result: false,
+        message: "No se encontró el tipo de documento indicado.",
+      });
+    }
+    const numeroInterno = String(elemento.numero_interno || "").trim();
+    const estadoId = numeroInterno.slice(0, 2);
+
+    if (!/^\d{2}/.test(numeroInterno)) {
+      return res.json({
+        result: false,
+        message:
+          "El elemento no tiene un número interno válido para determinar su estado.",
+      });
+    }
+
+    const { relativePath } = getDataNewFileExpediente({
+      file,
+      documentType: documentoTypeBD,
+      numeroInterno,
+      estadoId,
+    });
+
+    const payloadDocument = {
+      id_voluntario: elemento.id,
+      id_tipo_documento: documentoTypeBD.id,
+      tipoDocumento: documentoTypeBD.type,
+      numero: documentoTypeBD?.orden ?? null,
+      vigencia: null,
+      ruta_archivo: relativePath,
+      fecha_registro: new Date(),
+    };
+
+    if (documentoTypeBD.isUnique) {
+      const existingDocument = await db.volDocumento.findOne({
+        where: {
+          id_voluntario: elemento.id,
+          id_tipo_documento: documentoTypeBD.id,
+        },
+      });
+
+      if (existingDocument) {
+        await existingDocument.destroy({ force: true });
+      }
+    }
+    const savedDocument = await db.volDocumento.create(payloadDocument);
+
+    return res.status(200).json({
+      result: true,
+      message: "Documento cargado correctamente.",
+      data: {
+        documento: savedDocument,
+        ruta: relativePath,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al cargar el documento: " + error.message,
+    });
+  }
+}
 export default {
   getAll,
   getById,
@@ -760,4 +826,5 @@ export default {
   verificar,
   descargarDocumentos,
   cargarDocumento,
+  getDocumentos,
 };

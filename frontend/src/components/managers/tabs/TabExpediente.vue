@@ -183,6 +183,17 @@ const allItems = computed<EvidenceItem[]>(() => [
   ...formacionPresencial.value,
   ...formacionVirtual.value,
 ]);
+
+onBeforeMount(async () => {
+  await apiRequest({
+    url: "/api/elemento/documentos",
+    payload: {
+      id_voluntario: 1,
+    },
+    messageType: "toast",
+    onSuccess: () => {},
+  });
+});
 </script>
 
 <template>
