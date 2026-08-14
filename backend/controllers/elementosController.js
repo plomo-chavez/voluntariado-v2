@@ -3,6 +3,7 @@ import Sequelize from "sequelize";
 import db from "../models/index.js";
 
 import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
+import { getDataNewFileExpediente } from "../utils/adminFilesHelper.js";
 import { calcularEdad } from "../utils/fechasHelper.js";
 import {
   generatePdfFromTemplateHTML,
@@ -11,12 +12,136 @@ import {
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
-const { volInfo, estadoElementos } = db;
+const { volInfo, estadoElementos, catTipoDocumento } = db;
 
 const { getAllFromModel } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
+
+async function cargarDocumento(req, res) {
+  try {
+    console.log("\n\n === empezando a cargar documento... ===");
+    const { id_elemento, id, id_voluntario, documentoType } = req.body || {};
+    const elementoId = id_elemento || id || id_voluntario;
+    const file = req.file;
+
+    if (!elementoId) {
+      return res.json({
+        result: false,
+        message: "El id del elemento es requerido.",
+      });
+    }
+
+    if (!documentoType) {
+      return res.json({
+        result: false,
+        message: "El tipo de documento es requerido.",
+      });
+    }
+
+    if (!file) {
+      return res.json({
+        result: false,
+        message: "El documento es requerido.",
+      });
+    }
+
+    console.log(
+      "\n\n === elementoId:",
+      elementoId,
+      "file:",
+      file?.originalname,
+      "===",
+    );
+    const elemento = await db.volInfo.findByPk(elementoId, {
+      attributes: ["id", "numero_interno"],
+    });
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "No se encontró el elemento indicado.",
+      });
+    }
+
+    const documentoTypeBD = await catTipoDocumento.findOne({
+      where: { key: documentoType },
+    });
+
+    if (!documentoTypeBD) {
+      return res.json({
+        result: false,
+        message: "No se encontró el tipo de documento indicado.",
+      });
+    }
+    const numeroInterno = String(elemento.numero_interno || "").trim();
+    const estadoId = numeroInterno.slice(0, 2);
+
+    console.log(
+      "\n\n === numeroInterno:",
+      numeroInterno,
+      "estadoId:",
+      estadoId,
+      "===",
+    );
+    if (!/^\d{2}/.test(numeroInterno)) {
+      return res.json({
+        result: false,
+        message:
+          "El elemento no tiene un número interno válido para determinar su estado.",
+      });
+    }
+
+    const { relativePath } = getDataNewFileExpediente({
+      file,
+      documentType: documentoTypeBD,
+      numeroInterno,
+      estadoId,
+    });
+
+    const payloadDocument = {
+      id_voluntario: elemento.id,
+      id_tipo_documento: documentoTypeBD.id,
+      tipoDocumento: documentoTypeBD.type,
+      numero: null,
+      vigencia: null,
+      ruta_archivo: relativePath,
+      fecha_registro: new Date(),
+    };
+
+    if (documentoTypeBD.isUnique) {
+      const existingDocument = await db.volDocumento.findOne({
+        where: {
+          id_voluntario: elemento.id,
+          id_tipo_documento: documentoTypeBD.id,
+        },
+      });
+
+      if (existingDocument) {
+        await existingDocument.destroy({ force: true });
+      }
+    }
+    const savedDocument = await db.volDocumento.create(payloadDocument);
+
+    console.log("\n\n === Documento cargado y guardado en la base de datos:");
+    console.log(savedDocument);
+
+    return res.status(200).json({
+      result: true,
+      message: "Documento cargado correctamente.",
+      data: {
+        documento: savedDocument,
+        ruta: relativePath,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al cargar el documento: " + error.message,
+    });
+  }
+}
 
 function validateElementoData(data) {
   if (!data.curp || !data.nombre || !data.primer_apellido) {
@@ -583,7 +708,7 @@ const descargarDocumentos = async (req, res) => {
     }
 
     if (!Array.isArray(documentos) || documentos.length === 0) {
-      return res.status(400).json({
+      return res.json({
         result: false,
         message: "Se requiere un array 'documentos' con al menos un elemento",
         data: null,
@@ -634,4 +759,5 @@ export default {
   softDelete,
   verificar,
   descargarDocumentos,
+  cargarDocumento,
 };

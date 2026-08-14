@@ -1,5 +1,8 @@
 <script lang="ts" setup>
+import { axiosInstance } from "@/utils/axiosInstance";
 import { computed, ref } from "vue";
+
+const props = defineProps<{ data?: any }>();
 
 type DocItem = {
   key: string;
@@ -12,6 +15,7 @@ type EvidenceItem = DocItem;
 type EvidenceState = {
   name: string;
   url: string;
+  file?: File | null;
 };
 
 const evidenceMap = ref<Record<string, EvidenceState>>({});
@@ -38,6 +42,7 @@ function onFileSelected(key: string, event: Event) {
   evidenceMap.value[key] = {
     name: file.name,
     url: URL.createObjectURL(file),
+    file,
   };
 
   target.value = "";
@@ -55,6 +60,37 @@ function viewEvidence(key: string) {
 
 function evidenceName(key: string): string {
   return evidenceMap.value[key]?.name || "";
+}
+
+async function uploadEvidence(key: string) {
+  const evidence = evidenceMap.value[key];
+  if (!evidence?.file) return;
+
+  const elementoId = props.data?.id ?? props.data?.id_voluntario;
+  if (!elementoId) {
+    console.error("No se encontró el id del elemento para subir el documento.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("documento", evidence.file);
+  formData.append("id_elemento", String(elementoId));
+  formData.append("documentoType", String(key));
+
+  const baseUrl = (axiosInstance.defaults.baseURL || "").replace(/\/$/, "");
+  const endpoint = baseUrl.endsWith("/api")
+    ? "/api/elemento/carga/documento"
+    : "/api/elemento/carga/documento";
+
+  try {
+    await axiosInstance.post(endpoint, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  } catch (error) {
+    console.error("Error al subir el documento", error);
+  }
 }
 
 const documentacionItems = computed<DocItem[]>(() => [
@@ -209,7 +245,8 @@ const allItems = computed<EvidenceItem[]>(() => [
                   color="success"
                   variant="flat"
                   icon
-                  title="Evidencia cargada"
+                  title="Enviar evidencia"
+                  @click="uploadEvidence(item.key)"
                 >
                   <i class="fa-solid fa-check" aria-hidden="true" />
                 </VBtn>
@@ -292,7 +329,8 @@ const allItems = computed<EvidenceItem[]>(() => [
                     color="success"
                     variant="flat"
                     icon
-                    title="Evidencia cargada"
+                    title="Enviar evidencia"
+                    @click="uploadEvidence(item.key)"
                   >
                     <i class="fa-solid fa-check" aria-hidden="true" />
                   </VBtn>
@@ -379,7 +417,8 @@ const allItems = computed<EvidenceItem[]>(() => [
                     color="success"
                     variant="flat"
                     icon
-                    title="Evidencia cargada"
+                    title="Enviar evidencia"
+                    @click="uploadEvidence(item.key)"
                   >
                     <i class="fa-solid fa-check" aria-hidden="true" />
                   </VBtn>
