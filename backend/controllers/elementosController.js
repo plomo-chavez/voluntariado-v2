@@ -3,6 +3,7 @@ import Sequelize from "sequelize";
 import db from "../models/index.js";
 
 import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
+import { getDataNewFileExpediente } from "../utils/adminFilesHelper.js";
 import { calcularEdad } from "../utils/fechasHelper.js";
 import {
   generatePdfFromTemplateHTML,
@@ -11,7 +12,7 @@ import {
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
-const { volInfo, estadoElementos } = db;
+const { volInfo, estadoElementos, catTipoDocumento } = db;
 
 const { getAllFromModel } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
@@ -583,7 +584,7 @@ const descargarDocumentos = async (req, res) => {
     }
 
     if (!Array.isArray(documentos) || documentos.length === 0) {
-      return res.status(400).json({
+      return res.json({
         result: false,
         message: "Se requiere un array 'documentos' con al menos un elemento",
         data: null,
@@ -626,6 +627,237 @@ const descargarDocumentos = async (req, res) => {
   }
 };
 
+// prettier-ignore
+const transformarDocumentos = (documentos = [], documentosExpediente = []) => {
+  // Obtener tipos únicos desde el catálogo
+  const tipos = [
+    ...new Set(
+      documentosExpediente.map((doc) => doc.type).filter(Boolean)
+    ),
+  ];
+
+  // IDs de documentos que pertenecen al catálogo
+  const idsCatalogo = new Set(documentosExpediente.map((doc) => doc.id));
+
+  const resultado = tipos.map((tipo) => {
+    const catalogo = documentosExpediente.filter((doc) => doc.type === tipo);
+
+    const documentosTipo = catalogo.map((tipoDocumento) => {
+      const documento = documentos.find((doc) => doc.tipoDocumento?.id === tipoDocumento.id);
+
+      return {
+        numero: Number(tipoDocumento.orden),
+        tipo_id: tipoDocumento.id,
+        tipo_label: tipoDocumento.label,
+        tipo_key: tipoDocumento.key,
+        ruta_archivo: documento?.ruta_archivo ?? null,
+        fecha_registro: documento?.fecha_registro ?? null,
+        vigencia: documento?.vigencia ?? null,
+      };
+    });
+
+    // Ordenar por número, dejando 0 al final
+    documentosTipo.sort((a, b) => {
+      if (a.numero === 0 && b.numero !== 0) return 1;
+      if (b.numero === 0 && a.numero !== 0) return -1;
+
+      return a.numero - b.numero;
+    });
+
+    return {
+      tipo,
+      documentos: documentosTipo,
+    };
+  });
+
+  // Documentos que NO pertenecen al catálogo
+  const otrosDocumentos = documentos
+    .filter((documento) => !idsCatalogo.has(documento.tipoDocumento?.id))
+    .map((documento) => ({
+      numero: documento.numero != null
+        ? Number(documento.numero)
+        : 0,
+      tipo_id: documento.tipoDocumento?.id ?? null,
+      tipo_label: documento.tipoDocumento?.label ?? null,
+      tipo_key: documento.tipoDocumento?.key ?? null,
+      ruta_archivo: documento.ruta_archivo ?? null,
+      fecha_registro: documento.fecha_registro ?? null,
+      vigencia: documento.vigencia ?? null,
+    }));
+
+  // Ordenar también los "otros", dejando 0 al final
+  otrosDocumentos.sort((a, b) => {
+    if (a.numero === 0 && b.numero !== 0) return 1;
+    if (b.numero === 0 && a.numero !== 0) return -1;
+
+    return a.numero - b.numero;
+  });
+
+  // Agregar "otros" al final
+  resultado.push({
+    tipo: "otros",
+    documentos: otrosDocumentos,
+  });
+
+  return resultado;
+};
+
+const getDocumentos = async (req, res) => {
+  try {
+    const { id_voluntario } = req.body;
+
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
+
+    if (!id_voluntario) {
+      return res.json({
+        result: false,
+        message: "ID de voluntario es requerido",
+        data: null,
+      });
+    }
+
+    const documentos = await db.volDocumento.findAll({
+      where: { id_voluntario },
+      include: [
+        {
+          model: db.catTipoDocumento,
+          as: "tipoDocumento",
+        },
+      ],
+      paranoid: false,
+    });
+
+    // Transformamos los documentos antes de enviarlos como respuesta
+    const documentosOrdenados = transformarDocumentos(
+      documentos,
+      documentosExpedienteJson,
+    );
+
+    return res.json({
+      result: true,
+      message: "Documentos obtenidos correctamente",
+      data: documentosOrdenados,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al obtener documentos: " + error.message,
+      data: null,
+    });
+  }
+};
+
+async function cargarDocumento(req, res) {
+  try {
+    const { id_elemento, id, id_voluntario, documentoType } = req.body || {};
+    const elementoId = id_elemento || id || id_voluntario;
+    const file = req.file;
+
+    if (!elementoId) {
+      return res.json({
+        result: false,
+        message: "El id del elemento es requerido.",
+      });
+    }
+
+    if (!documentoType) {
+      return res.json({
+        result: false,
+        message: "El tipo de documento es requerido.",
+      });
+    }
+
+    if (!file) {
+      return res.json({
+        result: false,
+        message: "El documento es requerido.",
+      });
+    }
+
+    const elemento = await db.volInfo.findByPk(elementoId, {
+      attributes: ["id", "numero_interno"],
+    });
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "No se encontró el elemento indicado.",
+      });
+    }
+
+    const documentoTypeBD = await catTipoDocumento.findOne({
+      where: { key: documentoType },
+    });
+
+    if (!documentoTypeBD) {
+      return res.json({
+        result: false,
+        message: "No se encontró el tipo de documento indicado.",
+      });
+    }
+    const numeroInterno = String(elemento.numero_interno || "").trim();
+    const estadoId = numeroInterno.slice(0, 2);
+
+    if (!/^\d{2}/.test(numeroInterno)) {
+      return res.json({
+        result: false,
+        message:
+          "El elemento no tiene un número interno válido para determinar su estado.",
+      });
+    }
+
+    const { relativePath } = getDataNewFileExpediente({
+      file,
+      documentType: documentoTypeBD,
+      numeroInterno,
+      estadoId,
+    });
+
+    const payloadDocument = {
+      id_voluntario: elemento.id,
+      id_tipo_documento: documentoTypeBD.id,
+      tipoDocumento: documentoTypeBD.type,
+      numero: documentoTypeBD?.orden ?? null,
+      vigencia: null,
+      ruta_archivo: relativePath,
+      fecha_registro: new Date(),
+    };
+
+    if (documentoTypeBD.isUnique) {
+      const existingDocument = await db.volDocumento.findOne({
+        where: {
+          id_voluntario: elemento.id,
+          id_tipo_documento: documentoTypeBD.id,
+        },
+      });
+
+      if (existingDocument) {
+        await existingDocument.destroy({ force: true });
+      }
+    }
+    const savedDocument = await db.volDocumento.create(payloadDocument);
+
+    return res.status(200).json({
+      result: true,
+      message: "Documento cargado correctamente.",
+      data: {
+        documento: savedDocument,
+        ruta: relativePath,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al cargar el documento: " + error.message,
+    });
+  }
+}
 export default {
   getAll,
   getById,
@@ -634,4 +866,6 @@ export default {
   softDelete,
   verificar,
   descargarDocumentos,
+  cargarDocumento,
+  getDocumentos,
 };

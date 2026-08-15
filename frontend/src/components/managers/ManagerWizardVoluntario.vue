@@ -126,7 +126,10 @@ onBeforeMount(async () => {
             @update:data="handleUpdateData"
           />
 
-          <TabExpediente v-else-if="activeTab === 'expediente'" />
+          <TabExpediente
+            v-else-if="activeTab === 'expediente'"
+            :data="voluntarioData"
+          />
 
           <TabFormacion
             v-else-if="activeTab === 'formacion'"

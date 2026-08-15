@@ -17,6 +17,7 @@ export default (sequelize, DataTypes) => {
         onDelete: "CASCADE",
       },
       id_tipo_documento: {
+        field: "id_tipo_documento",
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
@@ -32,10 +33,19 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
+      ruta_archivo: {
+        type: DataTypes.STRING(500),
+        allowNull: true,
+      },
+      fecha_registro: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       tableName: "vol_documento",
-      timestamps: false,
+      timestamps: true,
     },
   );
 

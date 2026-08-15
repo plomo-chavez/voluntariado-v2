@@ -153,7 +153,7 @@ const validarInBDCURP = async (curp: string): Promise<boolean> => {
   try {
     let isValid = true;
     await apiRequest({
-      url: "/api/elemento/verificar",
+      url: "/api/public/elemento/verificar",
       payload: { curp },
       showMessages: false,
       onSuccess: (response: any) => {
@@ -173,6 +173,7 @@ const validarInBDCURP = async (curp: string): Promise<boolean> => {
 };
 
 const validateCurpAndContinue = async () => {
+  console.log("Validando CURP:", form.value.curp);
   const curp = (form.value.curp || "").trim().toUpperCase();
   form.value.curp = curp;
 
@@ -215,7 +216,7 @@ const submitForm = async () => {
   };
 
   await apiRequest({
-    url: "/api/elemento",
+    url: "/api/public/elemento",
     payload,
     messageType: "toast",
     onSuccess: () => {
@@ -231,6 +232,7 @@ const handleFormUpdate = async (value: Record<string, any>) => {
     ...value,
   };
 };
+const handleValidateCurpAndContinue = async () => {};
 </script>
 
 <template>
@@ -256,7 +258,7 @@ const handleFormUpdate = async (value: Record<string, any>) => {
             :modelValue="form"
             :showButtonsAction="false"
             :formRequired="true"
-            @update:modelValue="handleFormUpdate"
+            @update:modelValue="validateCurpAndContinue"
           />
         </VWindowItem>
 

@@ -7,6 +7,10 @@ export default (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      orden: {
+        type: DataTypes.INTEGER,
+        defaultValue: null,
+      },
       label: {
         type: DataTypes.STRING(50),
         allowNull: true,
@@ -16,8 +20,22 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 1,
       },
+      isUnique: {
+        field: "isUnique",
+        type: DataTypes.TINYINT(1),
+        allowNull: false,
+        defaultValue: 0,
+      },
       label: {
         type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      type: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
+      key: {
+        type: DataTypes.STRING(100),
         allowNull: true,
       },
       created_at: {
@@ -47,7 +65,7 @@ export default (sequelize, DataTypes) => {
 
   catTipoDocumento.associate = (models) => {
     catTipoDocumento.hasMany(models.volDocumento, {
-      foreignKey: "tipo_documento_id",
+      foreignKey: "id_tipo_documento",
       as: "documentos",
     });
   };
