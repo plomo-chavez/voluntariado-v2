@@ -628,53 +628,91 @@ const descargarDocumentos = async (req, res) => {
 };
 
 // prettier-ignore
-const transformarDocumentos = (documentos) => {
-  if (!documentos?.length) {
-    return null;
-  }
-  const primerDocumento = documentos[0];
-  const documentosOrdenados = [...documentos].sort((a, b) => {
-    // Si ambos tienen numero, ordenar por numero
-    if (a.numero !== null && a.numero !== undefined &&
-        b.numero !== null && b.numero !== undefined) {
-      return Number(a.numero) - Number(b.numero);
-    }
+const transformarDocumentos = (documentos = [], documentosExpediente = []) => {
+  // Obtener tipos únicos desde el catálogo
+  const tipos = [
+    ...new Set(
+      documentosExpediente.map((doc) => doc.type).filter(Boolean)
+    ),
+  ];
 
-    // Si A no tiene numero, pero B sí, B va primero
-    if (a.numero === null || a.numero === undefined) {
-      if (b.numero !== null && b.numero !== undefined) {
-        return 1;
-      }
-    }
+  // IDs de documentos que pertenecen al catálogo
+  const idsCatalogo = new Set(documentosExpediente.map((doc) => doc.id));
 
-    // Si B no tiene numero, pero A sí, A va primero
-    if (b.numero === null || b.numero === undefined) {
-      if (a.numero !== null && a.numero !== undefined) {
-        return -1;
-      }
-    }
+  const resultado = tipos.map((tipo) => {
+    const catalogo = documentosExpediente.filter((doc) => doc.type === tipo);
 
-    // Si ninguno tiene numero, ordenar por fecha de creación
-    return new Date(a.created_at) - new Date(b.created_at);
+    const documentosTipo = catalogo.map((tipoDocumento) => {
+      const documento = documentos.find((doc) => doc.tipoDocumento?.id === tipoDocumento.id);
 
+      return {
+        numero: Number(tipoDocumento.orden),
+        tipo_id: tipoDocumento.id,
+        tipo_label: tipoDocumento.label,
+        tipo_key: tipoDocumento.key,
+        ruta_archivo: documento?.ruta_archivo ?? null,
+        fecha_registro: documento?.fecha_registro ?? null,
+        vigencia: documento?.vigencia ?? null,
+      };
+    });
+
+    // Ordenar por número, dejando 0 al final
+    documentosTipo.sort((a, b) => {
+      if (a.numero === 0 && b.numero !== 0) return 1;
+      if (b.numero === 0 && a.numero !== 0) return -1;
+
+      return a.numero - b.numero;
+    });
+
+    return {
+      tipo,
+      documentos: documentosTipo,
+    };
   });
 
-  return {
-    tipo: primerDocumento.tipoDocumento?.type ?? null,
-    tipo_id: primerDocumento.tipoDocumento?.id ?? null,
-    tipo_label: primerDocumento.tipoDocumento?.label ?? null,
-    documentos: documentosOrdenados.map((documento) => ({
-      numero: documento.numero,
-      vigencia: documento.vigencia,
-      ruta_archivo: documento.ruta_archivo,
-      fecha_registro: documento.fecha_registro,
-    })),
-  };
+  // Documentos que NO pertenecen al catálogo
+  const otrosDocumentos = documentos
+    .filter((documento) => !idsCatalogo.has(documento.tipoDocumento?.id))
+    .map((documento) => ({
+      numero: documento.numero != null
+        ? Number(documento.numero)
+        : 0,
+      tipo_id: documento.tipoDocumento?.id ?? null,
+      tipo_label: documento.tipoDocumento?.label ?? null,
+      tipo_key: documento.tipoDocumento?.key ?? null,
+      ruta_archivo: documento.ruta_archivo ?? null,
+      fecha_registro: documento.fecha_registro ?? null,
+      vigencia: documento.vigencia ?? null,
+    }));
+
+  // Ordenar también los "otros", dejando 0 al final
+  otrosDocumentos.sort((a, b) => {
+    if (a.numero === 0 && b.numero !== 0) return 1;
+    if (b.numero === 0 && a.numero !== 0) return -1;
+
+    return a.numero - b.numero;
+  });
+
+  // Agregar "otros" al final
+  resultado.push({
+    tipo: "otros",
+    documentos: otrosDocumentos,
+  });
+
+  return resultado;
 };
 
 const getDocumentos = async (req, res) => {
   try {
     const { id_voluntario } = req.body;
+
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
 
     if (!id_voluntario) {
       return res.json({
@@ -696,7 +734,10 @@ const getDocumentos = async (req, res) => {
     });
 
     // Transformamos los documentos antes de enviarlos como respuesta
-    const documentosOrdenados = transformarDocumentos(documentos);
+    const documentosOrdenados = transformarDocumentos(
+      documentos,
+      documentosExpedienteJson,
+    );
 
     return res.json({
       result: true,

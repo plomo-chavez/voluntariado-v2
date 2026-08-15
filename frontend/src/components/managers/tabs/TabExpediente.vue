@@ -1,13 +1,30 @@
 <script lang="ts" setup>
 import { axiosInstance } from "@/utils/axiosInstance";
-import { computed, ref } from "vue";
+import { openResource } from "@/utils/fileHelper";
+import { ref } from "vue";
 
 const props = defineProps<{ data?: any }>();
+
+const titulo: any = {
+  formacion: "Formación Institucional",
+  expediente: "Documento del expediente",
+  otros: "Otrós",
+};
+
+const dataExpediente = ref<any>(null);
 
 type DocItem = {
   key: string;
   text: string;
+  ruta_archivo: string;
   courseUrl?: string;
+  tipo_key?: string;
+};
+
+// Los items que vienen del backend tienen `tipo_id` y `tipo_label`.
+type DocItemServer = DocItem & {
+  tipo_id?: number | string;
+  tipo_label?: string;
 };
 
 type EvidenceItem = DocItem;
@@ -25,8 +42,52 @@ function setInputRef(key: string, el: HTMLInputElement | null) {
   inputRefs.value[key] = el;
 }
 
+function itemKey(item: DocItemServer) {
+  return String(
+    item?.tipo_id ?? item?.key ?? item?.tipo_label ?? item?.text ?? "",
+  );
+}
+
 function openFilePicker(key: string) {
   inputRefs.value[key]?.click();
+}
+
+// Limpia el input file (por si tenía un valor previo) y luego lo abre
+function clearAndOpenFilePicker(key: string) {
+  const input = inputRefs.value[key];
+  if (!input) return;
+  try {
+    input.value = ""; // limpia selección previa
+  } catch (e) {
+    // algunos navegadores restringen asignar a input.value en ciertos contextos
+    const form =
+      input.closest && (input.closest("form") as HTMLFormElement | null);
+    if (form) form.reset();
+  }
+  input.click();
+}
+
+// Limpia sólo la selección local para una key (sin abrir el file picker)
+function clearLocalEvidence(key: string) {
+  const state = evidenceMap.value[key];
+  if (state?.url && state.url.startsWith("blob:")) {
+    try {
+      URL.revokeObjectURL(state.url);
+    } catch (e) {
+      // ignore
+    }
+  }
+  delete evidenceMap.value[key];
+  const input = inputRefs.value[key];
+  if (input) {
+    try {
+      input.value = "";
+    } catch (e) {
+      const form =
+        input.closest && (input.closest("form") as HTMLFormElement | null);
+      if (form) form.reset();
+    }
+  }
 }
 
 function onFileSelected(key: string, event: Event) {
@@ -48,22 +109,44 @@ function onFileSelected(key: string, event: Event) {
   target.value = "";
 }
 
-function hasEvidence(key: string): boolean {
-  return !!evidenceMap.value[key];
+function hasLocalEvidence(key: string): boolean {
+  return !!evidenceMap.value[key]?.file;
 }
 
-function viewEvidence(key: string) {
+function hasRemoteEvidence(item: DocItem): boolean {
+  return !!item.ruta_archivo;
+}
+
+function hasEvidence(item: DocItemServer): boolean {
+  return hasLocalEvidence(itemKey(item)) || hasRemoteEvidence(item);
+}
+
+function viewEvidence(item: DocItemServer) {
+  // If a local file is selected, open that blob URL. Otherwise open remote resource.
+  const local = evidenceMap.value[itemKey(item)];
+  if (local?.url) {
+    window.open(local.url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  if (!item.ruta_archivo) return;
+  openResource(item.ruta_archivo);
+}
+
+function evidenceName(key: string, item?: DocItemServer): string {
+  const local = evidenceMap.value[key];
+  if (local?.name) return local.name;
+  if (item?.ruta_archivo) {
+    const parts = String(item.ruta_archivo || "").split("/");
+    return parts[parts.length - 1] || "";
+  }
+  return "";
+}
+
+async function uploadEvidence(item: DocItemServer) {
+  const key = itemKey(item);
   const evidence = evidenceMap.value[key];
-  if (!evidence?.url) return;
-  window.open(evidence.url, "_blank", "noopener,noreferrer");
-}
 
-function evidenceName(key: string): string {
-  return evidenceMap.value[key]?.name || "";
-}
-
-async function uploadEvidence(key: string) {
-  const evidence = evidenceMap.value[key];
   if (!evidence?.file) return;
 
   const elementoId = props.data?.id ?? props.data?.id_voluntario;
@@ -75,7 +158,7 @@ async function uploadEvidence(key: string) {
   const formData = new FormData();
   formData.append("documento", evidence.file);
   formData.append("id_elemento", String(elementoId));
-  formData.append("documentoType", String(key));
+  formData.append("documentoType", String(item.tipo_key));
 
   const baseUrl = (axiosInstance.defaults.baseURL || "").replace(/\/$/, "");
   const endpoint = baseUrl.endsWith("/api")
@@ -83,384 +166,118 @@ async function uploadEvidence(key: string) {
     : "/api/elemento/carga/documento";
 
   try {
-    await axiosInstance.post(endpoint, formData, {
+    const res = await axiosInstance.post(endpoint, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
     });
+
+    const returnedPath = res?.data?.data?.ruta || res?.data?.data?.ruta_archivo;
+    if (returnedPath) {
+      // actualizar en dataExpediente el item que coincida con la key (buscar por tipo_id)
+      for (const group of dataExpediente.value || []) {
+        for (const doc of group.documentos || []) {
+          const docKey = String(
+            doc?.tipo_id ?? doc?.key ?? doc?.tipo_label ?? "",
+          );
+          if (docKey === key) {
+            doc.ruta_archivo = returnedPath;
+          }
+        }
+      }
+
+      // limpiar objeto local
+      const prev = evidenceMap.value[key]?.url;
+      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+      delete evidenceMap.value[key];
+    }
   } catch (error) {
     console.error("Error al subir el documento", error);
   }
 }
-
-const documentacionItems = computed<DocItem[]>(() => [
-  { key: "acta", text: "Acta de nacimiento" },
-  { key: "curp", text: "CURP" },
-  {
-    key: "identificacion",
-    text: "Identificacion oficial vigente",
-  },
-  {
-    key: "comprobante",
-    text: "Comprobante de domicilio y estudios",
-  },
-  {
-    key: "seguro_personal",
-    text: "Seguro personal (IMSS, Bienestar, ISSSTE u otro)",
-  },
-  {
-    key: "seguro_institucional",
-    text: "Seguro institucional",
-  },
-  {
-    key: "credencial",
-    text: "Credencial institucional (nacional o temporal)",
-  },
-]);
-
-const formacionPresencial = computed<EvidenceItem[]>(() => [
-  {
-    key: "induccion",
-    text: "Induccion a Cruz Roja",
-  },
-  {
-    key: "primeros_auxilios",
-    text: "Primeros Auxilios",
-  },
-  {
-    key: "seguridad_voluntariado",
-    text: "Seguridad para el Voluntariado",
-  },
-  {
-    key: "voluntariado_basico",
-    text: "Voluntariado Basico",
-  },
-  {
-    key: "desastres",
-    text: "Introduccion a los Desastres",
-  },
-  {
-    key: "acceso_mas_seguro",
-    text: "Acceso Mas Seguro",
-  },
-]);
-
-const formacionVirtual = computed<EvidenceItem[]>(() => [
-  {
-    key: "stay_safe_1",
-    text: "Stay Safe: Nivel 1 - Fundamentos",
-    courseUrl: "https://example.org/cursos/stay-safe-nivel-1",
-  },
-  {
-    key: "stay_safe_2",
-    text: "Stay Safe: Nivel 2 - Seguridad personal y de los voluntarios en situaciones de emergencia",
-    courseUrl: "https://example.org/cursos/stay-safe-nivel-2",
-  },
-  {
-    key: "conducta_sexual",
-    text: "Decir NO a la conducta sexual indebida",
-    courseUrl: "https://example.org/cursos/decir-no-conducta-sexual-indebida",
-  },
-  {
-    key: "mundo_cruz_roja",
-    text: "El mundo de la Cruz Roja y la Media Luna Roja",
-    courseUrl: "https://example.org/cursos/mundo-cruz-roja-media-luna-roja",
-  },
-  {
-    key: "rcf_basico",
-    text: "RCF Basico",
-    courseUrl: "https://example.org/cursos/rcf-basico",
-  },
-]);
 
 function openCourseUrl(url?: string) {
   if (!url) return;
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-const allItems = computed<EvidenceItem[]>(() => [
-  ...documentacionItems.value,
-  ...formacionPresencial.value,
-  ...formacionVirtual.value,
-]);
-
 onBeforeMount(async () => {
   await apiRequest({
     url: "/api/elemento/documentos",
+    loader: true,
     payload: {
-      id_voluntario: 1,
+      id_voluntario: props.data?.id ?? props.data?.id_voluntario,
     },
     messageType: "toast",
-    onSuccess: () => {},
+    onSuccess: (data: any) => {
+      dataExpediente.value = data;
+    },
   });
 });
 </script>
 
 <template>
-  <div class="expediente-root">
-    <section class="exp-section">
+  <!-- prettier-ignore -->
+  <div v-if="true" class="expediente-root">
+    <section v-for="group in dataExpediente" :key="group.id" class="exp-section">
       <header class="exp-section-header">
         <div class="exp-title-wrap">
           <i class="fa-solid fa-file-lines exp-icon" aria-hidden="true" />
-          <h3 class="exp-title">Documentacion</h3>
+          <h3 class="exp-title">{{ titulo[group.tipo] }}</h3>
         </div>
       </header>
 
       <div class="exp-body">
-        <p class="exp-subtitle">Documentacion a entregar</p>
-
         <ul class="exp-list">
-          <li
-            v-for="item in documentacionItems"
-            :key="item.key"
-            class="exp-list-item"
-          >
+          <li v-for="item in group.documentos ?? []" :key="itemKey(item)" class="exp-list-item" >
             <div class="exp-item-left">
-              <i
-                :class="[
-                  'exp-bullet',
-                  hasEvidence(item.key)
-                    ? 'fa-solid fa-circle-check exp-bullet--ok'
-                    : 'fa-regular fa-file-lines',
-                ]"
-                aria-hidden="true"
-              />
-              <span>{{ item.text }}</span>
+              <i v-if="hasEvidence(item) && hasRemoteEvidence(item) && group.tipo != 'otros'" aria-hidden="true" :class="['exp-bullet','fa-solid fa-circle-check exp-bullet--ok']" />
+              <i v-else aria-hidden="true" :class="['exp-bullet','fa-regular fa-file-lines']" />
+              <span>{{ item.tipo_label }}</span>
             </div>
 
             <div class="exp-actions">
-              <input
-                :ref="
-                  (el) => setInputRef(item.key, el as HTMLInputElement | null)
-                "
-                class="exp-hidden-input"
-                type="file"
-                @change="(event) => onFileSelected(item.key, event)"
-              />
+              <input :ref=" (el) => setInputRef(itemKey(item), el as HTMLInputElement | null)" class="exp-hidden-input" type="file" @change="(event) => onFileSelected(itemKey(item), event)" />
+              <template v-if="group.tipo != 'otros'">
+                <!-- Local file selected but not uploaded -->
+                <template v-if="hasLocalEvidence(itemKey(item))">
+                  <VBtn size="x-small" color="success" variant="flat" icon title="Enviar evidencia" @click="uploadEvidence(item)">
+                    <i class="fa-solid fa-check" aria-hidden="true" />
+                  </VBtn>
+                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Limpiar selección local" @click="clearLocalEvidence(itemKey(item))">
+                    <i class="fa-regular fa-circle-xmark" />
+                  </VBtn>
+                  <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia local" @click="viewEvidence(item)">
+                    <i class="fa-solid fa-eye" aria-hidden="true" />
+                  </VBtn>
+                </template>
 
-              <VBtn
-                v-if="!hasEvidence(item.key)"
-                size="x-small"
-                icon
-                color="red-darken-2"
-                variant="tonal"
-                title="Cargar evidencia"
-                @click="openFilePicker(item.key)"
-              >
-                <i class="fa-solid fa-paperclip" aria-hidden="true" />
-              </VBtn>
+                <!-- Remote file already exists -->
+                <template v-else-if="hasRemoteEvidence(item)">
+                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Recargar evidencia" @click="openFilePicker(itemKey(item))">
+                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true" />
+                  </VBtn>
+                  <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia" @click="viewEvidence(item)">
+                    <i class="fa-solid fa-eye" aria-hidden="true" />
+                  </VBtn>
+                </template>
 
-              <template v-else>
-                <VBtn
-                  size="x-small"
-                  color="success"
-                  variant="flat"
-                  icon
-                  title="Enviar evidencia"
-                  @click="uploadEvidence(item.key)"
-                >
-                  <i class="fa-solid fa-check" aria-hidden="true" />
-                </VBtn>
-                <VBtn
-                  size="x-small"
-                  icon
-                  color="primary"
-                  variant="tonal"
-                  title="Ver evidencia"
-                  @click="viewEvidence(item.key)"
-                >
-                  <i class="fa-solid fa-eye" aria-hidden="true" />
-                </VBtn>
+                <!-- No file -->
+                <template v-else>
+                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Cargar evidencia" @click="openFilePicker(itemKey(item))">
+                    <i class="fa-solid fa-paperclip" aria-hidden="true" />
+                  </VBtn>
+                </template>
               </template>
             </div>
 
-            <p v-if="hasEvidence(item.key)" class="exp-file-name">
-              {{ evidenceName(item.key) }}
+            <p v-if="hasEvidence(item) && !hasRemoteEvidence(item)" class="exp-file-name">
+              {{ evidenceName(itemKey(item), item) }}
             </p>
           </li>
         </ul>
       </div>
     </section>
-
-    <section class="exp-section">
-      <header class="exp-section-header">
-        <div class="exp-title-wrap">
-          <i class="fa-solid fa-graduation-cap exp-icon" aria-hidden="true" />
-          <h3 class="exp-title">Formacion institucional</h3>
-        </div>
-      </header>
-
-      <div class="exp-body">
-        <div class="exp-block">
-          <p class="exp-subtitle">Presencial</p>
-          <ul class="exp-list">
-            <li
-              v-for="item in formacionPresencial"
-              :key="item.key"
-              class="exp-list-item"
-            >
-              <div class="exp-item-left">
-                <i
-                  :class="[
-                    'exp-bullet',
-                    hasEvidence(item.key)
-                      ? 'fa-solid fa-circle-check exp-bullet--ok'
-                      : 'fa-regular fa-file-lines',
-                  ]"
-                  aria-hidden="true"
-                />
-                <span>{{ item.text }}</span>
-              </div>
-
-              <div class="exp-actions exp-actions--inline">
-                <input
-                  :ref="
-                    (el) => setInputRef(item.key, el as HTMLInputElement | null)
-                  "
-                  class="exp-hidden-input"
-                  type="file"
-                  @change="(event) => onFileSelected(item.key, event)"
-                />
-
-                <VBtn
-                  v-if="!hasEvidence(item.key)"
-                  size="x-small"
-                  icon
-                  color="red-darken-2"
-                  variant="tonal"
-                  title="Cargar evidencia"
-                  @click="openFilePicker(item.key)"
-                >
-                  <i class="fa-solid fa-paperclip" aria-hidden="true" />
-                </VBtn>
-
-                <template v-else>
-                  <VBtn
-                    size="x-small"
-                    color="success"
-                    variant="flat"
-                    icon
-                    title="Enviar evidencia"
-                    @click="uploadEvidence(item.key)"
-                  >
-                    <i class="fa-solid fa-check" aria-hidden="true" />
-                  </VBtn>
-                  <VBtn
-                    size="x-small"
-                    icon
-                    color="primary"
-                    variant="tonal"
-                    title="Ver evidencia"
-                    @click="viewEvidence(item.key)"
-                  >
-                    <i class="fa-solid fa-eye" aria-hidden="true" />
-                  </VBtn>
-                </template>
-              </div>
-
-              <p v-if="hasEvidence(item.key)" class="exp-file-name">
-                {{ evidenceName(item.key) }}
-              </p>
-            </li>
-          </ul>
-        </div>
-
-        <div class="exp-block">
-          <p class="exp-subtitle">Modalidad virtual</p>
-          <ul class="exp-list">
-            <li
-              v-for="item in formacionVirtual"
-              :key="item.key"
-              class="exp-list-item"
-            >
-              <div class="exp-item-left">
-                <i
-                  :class="[
-                    'exp-bullet',
-                    hasEvidence(item.key)
-                      ? 'fa-solid fa-circle-check exp-bullet--ok'
-                      : 'fa-regular fa-file-lines',
-                  ]"
-                  aria-hidden="true"
-                />
-                <span>{{ item.text }}</span>
-              </div>
-
-              <div class="exp-actions">
-                <input
-                  :ref="
-                    (el) => setInputRef(item.key, el as HTMLInputElement | null)
-                  "
-                  class="exp-hidden-input"
-                  type="file"
-                  @change="(event) => onFileSelected(item.key, event)"
-                />
-
-                <VBtn
-                  size="x-small"
-                  icon
-                  color="secondary"
-                  variant="outlined"
-                  title="Abrir URL del curso"
-                  @click="openCourseUrl(item.courseUrl)"
-                >
-                  <i
-                    class="fa-solid fa-up-right-from-square"
-                    aria-hidden="true"
-                  />
-                </VBtn>
-
-                <VBtn
-                  v-if="!hasEvidence(item.key)"
-                  size="x-small"
-                  icon
-                  color="red-darken-2"
-                  variant="tonal"
-                  title="Cargar evidencia"
-                  @click="openFilePicker(item.key)"
-                >
-                  <i class="fa-solid fa-paperclip" aria-hidden="true" />
-                </VBtn>
-
-                <template v-else>
-                  <VBtn
-                    size="x-small"
-                    color="success"
-                    variant="flat"
-                    icon
-                    title="Enviar evidencia"
-                    @click="uploadEvidence(item.key)"
-                  >
-                    <i class="fa-solid fa-check" aria-hidden="true" />
-                  </VBtn>
-                  <VBtn
-                    size="x-small"
-                    icon
-                    color="primary"
-                    variant="tonal"
-                    title="Ver evidencia"
-                    @click="viewEvidence(item.key)"
-                  >
-                    <i class="fa-solid fa-eye" aria-hidden="true" />
-                  </VBtn>
-                </template>
-              </div>
-
-              <p v-if="hasEvidence(item.key)" class="exp-file-name">
-                {{ evidenceName(item.key) }}
-              </p>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <div class="exp-summary">
-      <span>Evidencias cargadas</span>
-      <strong>
-        {{ Object.keys(evidenceMap).length }} / {{ allItems.length }}
-      </strong>
-    </div>
   </div>
 </template>
 
