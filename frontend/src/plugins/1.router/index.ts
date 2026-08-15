@@ -111,6 +111,7 @@ const router = createRouter({
 
 // --- AQUÍ VA EL GUARD ---
 router.beforeEach(async (to, from, next) => {
+  console.log("Guard: ", to, "from:", from);
   // Si es login y ya hay sesión, redirige a home
   const isAuthenticated = getTokenUser();
   if (to.name === "login") {

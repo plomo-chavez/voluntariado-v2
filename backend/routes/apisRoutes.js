@@ -4,6 +4,7 @@ import authController from "../controllers/authController.js";
 import logRequestMiddleware from "../middleware/logRequestMiddleware.js";
 
 import catalogosController from "../controllers/catalogosController.js";
+import elementosController from "../controllers/elementosController.js";
 import catalogosDinamicosRoutes from "./catalogosDinamicosRoutes.js";
 import catalogosRoutes from "./catalogosRoutes.js";
 import elementosRoutes from "./elementosRoutes.js";
@@ -23,7 +24,8 @@ router.post("/api/public/catalogos/:catalogo", (req, res) => {
   const { catalogo } = req.params;
   catalogosController.getCatalogo(req, res, catalogo);
 });
-
+router.post("/api/public/elemento/verificar", elementosController.verificar);
+router.post("/api/public/elemento", elementosController.createOrUpdate);
 router.post("/api/verificar/:pagina", authController.verificarToken);
 
 // ===== Sub-rutas =====

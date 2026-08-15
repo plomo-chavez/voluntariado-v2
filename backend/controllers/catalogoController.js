@@ -1,8 +1,9 @@
 import Sequelize from "sequelize";
 import db from "../models/index.js";
-
+import functionsCustomHelper from "../controllers/helpers/functionsCustomHelper.js";
 import CRUDController from "../controllers/CRUDController.js";
 import functionHelper from "../controllers/db/functionHelper.js";
+const { getRelaciones } = functionsCustomHelper;
 
 const { Op } = Sequelize;
 
@@ -45,6 +46,7 @@ const CATALOGS_MAP = {
     nameField: "label",
     supportsStatus: true,
     supportsSoftDelete: true,
+    include: ["estado"],
   },
   dia: {
     modelo: models.catDia,
@@ -179,6 +181,8 @@ const getData = async (req, res, isGetAll = false) => {
       return res.json(response);
     }
 
+    console.log("Datos recibidos para crear/actualizar:", dataModels);
+
     const response = await handleCreateOrUpdate(req, dataModels);
     return res.json(response);
   } catch (error) {
@@ -192,10 +196,15 @@ const getData = async (req, res, isGetAll = false) => {
 };
 
 const handleGetAll = async (req, dataModels) => {
+  const includeRelations = dataModels.include
+    ? await getRelaciones(dataModels.include)
+    : [];
+
+  console.log("Incluyendo relaciones:", includeRelations);
   const response = await getAllFromModel({
     model: dataModels.modelo,
     attributes: dataModels.attributes || null,
-    include: dataModels.include || null,
+    include: includeRelations,
     pagination: false,
     paranoid: false,
   });
@@ -300,26 +309,30 @@ const handleDelete = async (req, res, softDelete = false) => {
 };
 
 const processsData = (dataModels, data) => {
-  switch (dataModels.modeloString) {
-    case "catMunicipios":
-      if (data.estado?.id) {
-        data.estado_id = data.estado.id;
-        delete data.estado;
-      }
-      break;
-    case "catDelegaciones":
-      if (data.estado?.id) {
-        data.estado_id = data.estado.id;
-        delete data.estado;
-      }
-      if (data.municipio?.id) {
-        data.municipio_id = data.municipio.id;
-        delete data.municipio;
-      }
-      break;
-    default:
-      break;
+  // Normalizar objetos relacionados enviados desde el frontend
+  if (data.estado && typeof data.estado === "object" && data.estado.id) {
+    data.estado_id = data.estado.id;
+    delete data.estado;
   }
+
+  if (
+    data.municipio &&
+    typeof data.municipio === "object" &&
+    data.municipio.id
+  ) {
+    data.municipio_id = data.municipio.id;
+    delete data.municipio;
+  }
+
+  if (
+    data.delegacion &&
+    typeof data.delegacion === "object" &&
+    data.delegacion.id
+  ) {
+    data.delegacion_id = data.delegacion.id;
+    delete data.delegacion;
+  }
+
   return data;
 };
 

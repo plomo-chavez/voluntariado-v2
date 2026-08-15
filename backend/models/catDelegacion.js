@@ -50,6 +50,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: "delegacion_id",
       as: "voluntarios",
     });
+    catDelegacion.belongsTo(models.catEstado, {
+      foreignKey: "estado_id",
+      as: "estado",
+    });
     // Si hay relación con estado, agregarla aquí:
     // catDelegacion.belongsTo(models.catEstado, { foreignKey: "estado_id", as: "estado" });
   };

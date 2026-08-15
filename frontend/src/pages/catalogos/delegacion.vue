@@ -3,13 +3,15 @@ import CrudManager from "@/components/apps/VistaUno.vue";
 
 // prettier-ignore
 const formSchema = [
-  { label: "Nombre", type: "text", model: "nombre", placeholder: "Ingresa el nombre" },
+  { label: "Estado",              type: "select", model: "estado",      catalogo: "estados",           },
+  { label: "Nombre", type: "text", model: "label", placeholder: "Ingresa el nombre" },
   { label: "Estatus", type: "switch", model: "estatus" },
 ];
 
 const tableHeaders = [
-  { title: "ID", key: "id_delegacion" },
-  { title: "Nombre", key: "nombre" },
+  { title: "ID", key: "id" },
+  { title: "Estado", key: "estado.label" },
+  { title: "Nombre", key: "label" },
   { title: "Estatus", key: "estatus" },
   { title: "Creación", key: "created_at" },
 ];

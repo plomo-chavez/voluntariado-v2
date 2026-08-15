@@ -50,6 +50,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: "id_estado",
       as: "direcciones",
     });
+    catEstado.hasMany(models.catDelegacion, {
+      foreignKey: "id",
+      as: "delegaciones",
+    });
   };
 
   return catEstado;
