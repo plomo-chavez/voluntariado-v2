@@ -52,21 +52,6 @@ function openFilePicker(key: string) {
   inputRefs.value[key]?.click();
 }
 
-// Limpia el input file (por si tenía un valor previo) y luego lo abre
-function clearAndOpenFilePicker(key: string) {
-  const input = inputRefs.value[key];
-  if (!input) return;
-  try {
-    input.value = ""; // limpia selección previa
-  } catch (e) {
-    // algunos navegadores restringen asignar a input.value en ciertos contextos
-    const form =
-      input.closest && (input.closest("form") as HTMLFormElement | null);
-    if (form) form.reset();
-  }
-  input.click();
-}
-
 // Limpia sólo la selección local para una key (sin abrir el file picker)
 function clearLocalEvidence(key: string) {
   const state = evidenceMap.value[key];
@@ -196,11 +181,6 @@ async function uploadEvidence(item: DocItemServer) {
   }
 }
 
-function openCourseUrl(url?: string) {
-  if (!url) return;
-  window.open(url, "_blank", "noopener,noreferrer");
-}
-
 onBeforeMount(async () => {
   await apiRequest({
     url: "/api/elemento/documentos",
@@ -268,6 +248,11 @@ onBeforeMount(async () => {
                     <i class="fa-solid fa-paperclip" aria-hidden="true" />
                   </VBtn>
                 </template>
+              </template>
+              <template v-else>
+                <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia" @click="viewEvidence(item)">
+                  <i class="fa-solid fa-eye" aria-hidden="true" />
+                </VBtn>
               </template>
             </div>
 
