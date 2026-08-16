@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import functionHelper from "./db/functionHelper.js";
 
-const { handleIsAdmin } = functionHelper;
+const { handleTypeUser } = functionHelper;
 
 const models = db;
 
@@ -9,7 +9,8 @@ const tablaMap = {
   "tipos-usuarios": {
     tabla: "catTiposUsuarios",
     filtros: { estatus: 1, id: { [db.Sequelize.Op.notIn]: [1, 2, 3] } },
-    filtrosAdmin: { estatus: 1 },
+    filtrosDev: { estatus: 1 },
+    filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
     // filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
   },
   estados: {
@@ -79,13 +80,15 @@ const getCatalogo = async (req, res, tabla) => {
 
     filtros = { ...tablaReal.filtros, ...filtros };
 
-    const isAdmin = handleIsAdmin(req);
+    const typeUser = handleTypeUser(req);
 
-    console.log("\n\n isAdmin: ", filtros);
-    if (isAdmin && tablaMap[tabla]?.filtrosAdmin) {
+    if (typeUser == "dev" && tablaMap[tabla]?.filtrosDev) {
+      filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosDev };
+    }
+    if (typeUser == "admin" && tablaMap[tabla]?.filtrosAdmin) {
       filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosAdmin };
     }
-    console.log("\n\n isAdmin: ", isAdmin, filtros);
+    console.log("\n\n isAdmin: ", filtros);
 
     const resultado = await models[tablaReal.tabla].findAll({
       where: filtros,

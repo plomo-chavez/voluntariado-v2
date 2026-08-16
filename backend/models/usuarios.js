@@ -30,11 +30,11 @@ export default (sequelize, DataTypes) => {
       },
       estado_id: {
         type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
+        allowNull: true,
       },
       delegacion_id: {
         type: DataTypes.BIGINT.UNSIGNED,
-        allowNull: false,
+        allowNull: true,
       },
       estatus: {
         type: DataTypes.TINYINT,

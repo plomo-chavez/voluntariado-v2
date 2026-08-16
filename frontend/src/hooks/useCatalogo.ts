@@ -49,11 +49,11 @@ export function useCatalogo() {
           valueKey: "id",
           fullInfo: false,
         };
+
         if (item.config) {
           config = { ...config, ...item.config };
         }
-        console.log("\n\ndata: ", data);
-        console.log("\n\nitem: ", item);
+
         data = data.map((item: any) => {
           if (config.fullInfo) {
             return {

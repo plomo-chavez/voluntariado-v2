@@ -1,8 +1,5 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
-import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
-import { customRequest } from "@/utils/axiosInstance";
-import { toast } from "vue3-toastify";
 
 const currentTab = ref("item1");
 const title = ref("Nuevo registro de usuario");
@@ -82,81 +79,43 @@ const handleCancelar = () => {
   }
 };
 
+// prettier-ignore
 const handleFormSubmit = async (data: any) => {
-  try {
-    const response = await customRequest({
-      url: "/api/usuario",
-      method: "POST",
-      data: deepToRaw(formData.value),
-    });
-    const dataResponse = response.data;
-    if (dataResponse.result) {
-      toast.success("Usuario actualizado!", { theme: "dark" });
-      return {
-        result: true,
-        cliente: dataResponse.data,
-      };
-    } else {
-      showErrorMessage({
-        title: "Error",
-        message: dataResponse.message,
-      });
-      return {
-        result: false,
-        message: dataResponse.message,
-      };
+  const payload = deepToRaw(formData.value);
+  console.log(payload);
+  if(payload.tipo_id != (payload.tipo?.id ?? 0)){
+    if(payload.tipo?.id ?? 0 > 6 ){
+      payload.estado_id = null
+      delete payload.estado 
     }
-  } catch (error: any) {
-    showErrorMessage({
-      title: "Error",
-      message: error?.message || "Error de conexión",
-    });
-    return {
-      result: false,
-      message: error?.message || "Error de conexión",
-    };
+    if(payload.tipo?.id ?? 0 > 8 ){
+      payload.delegacion_id = null
+      delete payload.delegacion
+    }
   }
+  console.log(payload);
+  await apiRequest({
+    onSuccess: () => { handleCancelar(); },
+    messageType:"toast",
+    url: "/api/usuario",
+    loader:true,
+    payload,
+  });
 };
 
+// prettier-ignore
 const handleFormSubmitChangePassword = async (data: any) => {
   let payload = {
     contrasenia: data.password,
     id: data.id,
   };
-
-  try {
-    const response = await customRequest({
-      url: "/api/usuario/cambiar",
-      method: "POST",
-      data: payload,
-    });
-    const dataResponse = response.data;
-    if (dataResponse.result) {
-      toast.success("Usuario actualizado!", { theme: "dark" });
-      return {
-        result: true,
-        cliente: dataResponse.data,
-      };
-    } else {
-      showErrorMessage({
-        title: "Error",
-        message: dataResponse.message,
-      });
-      return {
-        result: false,
-        message: dataResponse.message,
-      };
-    }
-  } catch (error: any) {
-    showErrorMessage({
-      title: "Error",
-      message: error?.message || "Error de conexión",
-    });
-    return {
-      result: false,
-      message: error?.message || "Error de conexión",
-    };
-  }
+  await apiRequest({
+    onSuccess: () => { handleCancelar(); },
+    url: "/api/usuario/cambiar",
+    messageType:"toast",
+    loader:true,
+    payload,
+  });
 };
 
 // prettier-ignore
