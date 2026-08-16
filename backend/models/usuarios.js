@@ -28,6 +28,14 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
       },
+      estado_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+      },
+      delegacion_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+      },
       estatus: {
         type: DataTypes.TINYINT,
         defaultValue: 1,
@@ -54,6 +62,14 @@ export default (sequelize, DataTypes) => {
     Usuarios.belongsTo(models.catTiposUsuarios, {
       foreignKey: "tipo_id",
       as: "tipo",
+    });
+    Usuarios.belongsTo(models.catEstado, {
+      foreignKey: "estado_id",
+      as: "estado",
+    });
+    Usuarios.belongsTo(models.catDelegacion, {
+      foreignKey: "delegacion_id",
+      as: "delegacion",
     });
   };
 

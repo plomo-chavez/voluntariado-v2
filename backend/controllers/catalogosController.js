@@ -9,7 +9,8 @@ const tablaMap = {
   "tipos-usuarios": {
     tabla: "catTiposUsuarios",
     filtros: { estatus: 1, id: { [db.Sequelize.Op.notIn]: [1, 2, 3] } },
-    filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
+    filtrosAdmin: { estatus: 1 },
+    // filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
   },
   estados: {
     tabla: "catEstado",
@@ -80,9 +81,11 @@ const getCatalogo = async (req, res, tabla) => {
 
     const isAdmin = handleIsAdmin(req);
 
+    console.log("\n\n isAdmin: ", filtros);
     if (isAdmin && tablaMap[tabla]?.filtrosAdmin) {
-      filtros = { ...filtros, ...tablaMap[tabla].filtrosAdmin };
+      filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosAdmin };
     }
+    console.log("\n\n isAdmin: ", isAdmin, filtros);
 
     const resultado = await models[tablaReal.tabla].findAll({
       where: filtros,

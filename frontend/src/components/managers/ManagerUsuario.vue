@@ -204,21 +204,17 @@ onBeforeMount(() => {
   }
 
   title.value = props?.data?.nombre ?? "Nuevo registro de usuario";
+  handleChangeForm();
 });
 </script>
 
 <template>
-  <pre>{{ formData }}</pre>
+  <!-- prettier-ignore -->
   <div class="d-flex justify-start align-center mb-5">
-    <VBtn
-      icon="tabler-arrow-left"
-      class="cursor-pointer"
-      variant="text"
-      color="secondary"
-      @click="handleBack"
-    />
+    <VBtn icon="tabler-arrow-left" class="cursor-pointer" variant="text" color="secondary" @click="handleBack"/>
     <h1 class="ml-4">{{ title }}</h1>
   </div>
+
   <VCard>
     <VCardText>
       <ModuladorFormFactory

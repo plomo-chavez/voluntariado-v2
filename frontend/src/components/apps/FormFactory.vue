@@ -137,13 +137,13 @@ const mensajeRef = ref<HTMLElement | null>(null);
 const camposFaltantes = ref<string[]>([]);
 const mostrarTodosFaltantes = ref(false);
 const spanRequired = ref('<span style="color:red">*</span>');
+// prettier-ignore
+const tieneRequeridos = computed(() => props.schema?.some((field: any) => field.required));
+// prettier-ignore
+const schemaVisible = computed(() => (schemaLocal || []).filter((field: any) => esCampoVisible(field)));
 
 // Lógica para cargar catálogos dinámicos
 const { obtenerCatalogo } = useCatalogo();
-
-function toggleFaltantes() {
-  mostrarTodosFaltantes.value = !mostrarTodosFaltantes.value;
-}
 
 // Sincroniza los cambios entre `props.modelValue` y `formLocal`
 watch(
@@ -167,9 +167,9 @@ watch(
   { immediate: true },
 );
 
-const tieneRequeridos = computed(() =>
-  props.schema?.some((field: any) => field.required),
-);
+function toggleFaltantes() {
+  mostrarTodosFaltantes.value = !mostrarTodosFaltantes.value;
+}
 
 // Maneja los cambios en los inputs
 function handleInputChange(field: string, value: any) {
@@ -271,6 +271,21 @@ async function obtenerCatalogoDependencia(field: any) {
         [fieldDependendica.dependenciaQueryFiltro]: dependenciaValor,
       });
 
+      f.options = toRaw(catalogoData);
+    }
+    if (f.dependencia === field.model) {
+      const fieldDependendica = toRaw(f);
+      console.log(fieldDependendica);
+      const dependenciaValor =
+        formLocal[fieldDependendica.dependencia]?.id ??
+        formLocal[fieldDependendica.dependencia]?.value;
+
+      const catalogoData = await obtenerCatalogo(f, {
+        [fieldDependendica.dependenciaFiltro]: dependenciaValor,
+      });
+
+      console.log(dependenciaValor);
+      console.log(fieldDependendica.dependenciaFiltro);
       f.options = toRaw(catalogoData);
     }
   });
@@ -556,16 +571,18 @@ function handleChangeChips() {
     validarCamposRequeridos();
   }, 1);
 }
-const schemaVisible = computed(() =>
-  (schemaLocal || []).filter((field: any) => esCampoVisible(field)),
-);
 
 onMounted(async () => {
   let tmp: any = [...props.schema];
 
   // Filtra los campos que necesitan cargar catálogos
   const catalogPromises = tmp.map(async (field: any) => {
-    if (field.type === "select" && field.catalogo && !field.dependenciaQuery) {
+    if (
+      field.type === "select" &&
+      field.catalogo &&
+      !field.dependenciaQuery &&
+      !field.dependencia
+    ) {
       const catalogoData = await obtenerCatalogo(field);
       field.options = toRaw(catalogoData);
     } else if (field.type === "select" && !field.options) {

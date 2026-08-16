@@ -6,7 +6,7 @@ import encryptHelper from "../utils/encryptHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 
-const { Usuarios, catTiposUsuarios } = db;
+const { Usuarios, catTiposUsuarios, catDelegacion, catEstado } = db;
 const { Op } = Sequelize;
 
 const { handleIsAdmin, getAllFromModel } = functionHelper;
@@ -132,6 +132,16 @@ const getAll = async (req, res) => {
       {
         model: catTiposUsuarios,
         as: "tipo",
+        attributes: ["id", "label"],
+      },
+      {
+        model: catEstado,
+        as: "estado",
+        attributes: ["id", "label"],
+      },
+      {
+        model: catDelegacion,
+        as: "delegacion",
         attributes: ["id", "label"],
       },
     ];
