@@ -11,6 +11,7 @@ const formDisabled = ref(true);
 const showSecciontionDelegacion: any = ref(false);
 const dataContrasenia = ref({});
 const formData: any = ref({});
+const formInicial: any = ref(true);
 
 // prettier-ignore
 const props = withDefaults(
@@ -29,7 +30,9 @@ let formSchema : any = [
   { label: "Estatus",             type: "switch", model: "estatus" },
 ];
 // prettier-ignore
-let formSchemaDelegacion : any = [
+let formSchemaDelegacion : any = [];
+// prettier-ignore
+let formSchemaEstado : any = [
   { label: "Estado",              type: "select", model: "estado",      catalogo: "estados",           },
 ];
 // prettier-ignore
@@ -51,10 +54,13 @@ const handleShowModalContrasenia = () => {
 
 const handleUpdateForm = (newValue: any) => {
   let newValueRaw = deepToRaw(newValue);
-  const isDiferente = formData?.value?.tipo?.id !== newValueRaw?.tipo?.id;
+  const isDiferente = formInicial.value
+    ? true
+    : formData?.value?.tipo?.id !== newValueRaw?.tipo?.id;
   formData.value = newValueRaw;
   if (isDiferente) {
     handleChangeForm();
+    formInicial.value = false;
   }
 };
 
@@ -156,38 +162,24 @@ const handleFormSubmitChangePassword = async (data: any) => {
 // prettier-ignore
 const handleBack = () => { emit("cancelar"); };
 
+// prettier-ignore
 const handleChangeForm = () => {
   showSecciontionDelegacion.value = false;
+
   if ((formData?.value?.tipo?.id ?? 0) > 4) {
-    formSchemaDelegacion.push({
-      label: "Municipio",
-      type: "select",
-      model: "municipio",
-      catalogo: "municipios",
-      dependencia: "estado",
-      dependenciaFiltro: "estado_id",
-    });
+    formSchemaDelegacion = [...formSchemaEstado]
+    if ((formData?.value?.tipo?.id ?? 0) > 6) {
     formSchemaDelegacion.push({
       label: "Delegación",
       type: "select",
       model: "delegacion",
       catalogo: "delegaciones",
-      dependencia: "municipio",
-      dependenciaFiltro: "municipio_id",
+      dependencia: "estado",
+      dependenciaFiltro: "estado_id",
       config: { fullInfo: true },
     });
-  } else {
-    formSchemaDelegacion = formSchemaDelegacion.filter(
-      (field: any) => field.model !== "municipio",
-    );
-    formSchemaDelegacion = formSchemaDelegacion.filter(
-      (field: any) => field.model !== "delegacion",
-    );
-  }
-  if ((formData?.value?.tipo?.id ?? 0) > 3) {
-    setTimeout(() => {
-      showSecciontionDelegacion.value = true;
-    }, 1);
+    }
+      setTimeout(() => { showSecciontionDelegacion.value = true; }, 1);
   }
 };
 
@@ -216,6 +208,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
+  <pre>{{ formData }}</pre>
   <div class="d-flex justify-start align-center mb-5">
     <VBtn
       icon="tabler-arrow-left"
