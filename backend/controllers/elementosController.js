@@ -14,7 +14,7 @@ import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
 const { volInfo, estadoElementos, catTipoDocumento } = db;
 
-const { getAllFromModel } = functionHelper;
+const { getAllFromModel, handleTypeUser } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
@@ -342,7 +342,7 @@ async function saveElemento(data) {
 
 const getAll = async (req, res) => {
   try {
-    const filtros = req.body.filtros || {};
+    let filtros = req.body.filtros || {};
     const page = parseInt(req.body.page) || 1;
     const pageSize = parseInt(req.body.pageSize) || 10;
 
@@ -367,6 +367,22 @@ const getAll = async (req, res) => {
       "updated_at",
       "deleted_at",
     ];
+
+    const userRole = req?.user ?? null;
+
+    const typeUser = handleTypeUser(req);
+
+    if (typeUser == "estatal") {
+      filtros = { ...filtros, estado_id: userRole.estado_id };
+    }
+
+    if (typeUser == "local") {
+      filtros = {
+        ...filtros,
+        estado_id: userRole.estado_id,
+        delegacion_id: userRole.delegacion_id,
+      };
+    }
 
     const response = await getAllFromModel({
       model: volInfo,

@@ -5,6 +5,7 @@ import db from "../models/index.js";
 import encryptHelper from "../utils/encryptHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
+const { handleTypeUser } = functionHelper;
 
 const { Usuarios, catTiposUsuarios, catDelegacion, catEstado } = db;
 const { Op } = Sequelize;
@@ -93,6 +94,7 @@ async function saveUser(data) {
     if (Coordis.includes(data.tipo_id)) {
       let message = "Ya existe un Coordinador Nacional";
       let filtro = {
+        id: { [Op.ne]: data.id },
         tipo_id: data.tipo_id,
       };
 
