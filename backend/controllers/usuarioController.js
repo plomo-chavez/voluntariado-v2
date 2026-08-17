@@ -14,6 +14,8 @@ const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
 const { createShortToken, verifyShortToken } = encryptHelper;
 
+const Coordis = [3, 5, 7];
+
 /**
  * ==============================
  * VALIDACIONES Y HELPERS
@@ -83,6 +85,39 @@ async function saveUser(data) {
     }
 
     data = await transformUserData(data);
+
+    console.log(data);
+
+    const Coordis = [3, 5, 7];
+
+    if (Coordis.includes(data.tipo_id)) {
+      let message = "Ya existe un Coordinador Nacional";
+      let filtro = {
+        tipo_id: data.tipo_id,
+      };
+
+      if (data.tipo_id >= 5) {
+        filtro.estado_id = data.estado_id;
+        message = "Ya existe un Coordinador Estatal en este estado";
+      }
+
+      if (data.tipo_id == 7) {
+        filtro.delegacion_id = data.delegacion_id;
+        message = "Ya existe un Coordinador Local en esta delegación";
+      }
+
+      console.log("==> Filtros: ", filtro);
+
+      const existeRegistro = await validateRecord("Usuarios", filtro);
+
+      if (!existeRegistro.result) {
+        return {
+          result: false,
+          message,
+          data: [],
+        };
+      }
+    }
 
     const usuario = isCreate
       ? await createRecord("Usuarios", data)

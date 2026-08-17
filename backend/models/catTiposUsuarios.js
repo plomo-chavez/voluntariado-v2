@@ -1,3 +1,12 @@
+// '1','Desarrollador'
+// '2','Administrador'
+// '3','Coordinador Nacional'
+// '4','Equipo Nacional'
+// '5','Coordinador Estatal'
+// '6','Equipo Estatal'
+// '7','Coordinador Local'
+// '8','Equipo Local'
+
 export default (sequelize, DataTypes) => {
   const catTiposUsuarios = sequelize.define(
     "catTiposUsuarios",

@@ -28,6 +28,7 @@ let formSchema : any = [
 ];
 // prettier-ignore
 let formSchemaDelegacion : any = [];
+
 // prettier-ignore
 let formSchemaEstado : any = [
   { label: "Estado",              type: "select", model: "estado",      catalogo: "estados",           },
@@ -59,6 +60,7 @@ const handleUpdateForm = (newValue: any) => {
     handleChangeForm();
     formInicial.value = false;
   }
+  handle();
 };
 
 const handleUpdateFormDelegacion = (newValue: any) => {
@@ -79,21 +81,29 @@ const handleCancelar = () => {
   }
 };
 
+const handle = () => {
+  console.log("handle");
+  const payload = deepToRaw(formData.value);
+
+  // Eliminar `estado` si el tipo NO requiere estado (tipos <= 4)
+  if ((payload.tipo?.id ?? 0) <= 4) {
+    payload.estado_id = null;
+    delete payload.estado;
+  }
+
+  // Eliminar `delegacion` si el tipo NO requiere delegación (tipos <= 6)
+  if ((payload.tipo?.id ?? 0) <= 6) {
+    payload.delegacion_id = null;
+    delete payload.delegacion;
+  }
+
+  formData.value = payload;
+};
+
 // prettier-ignore
 const handleFormSubmit = async (data: any) => {
   const payload = deepToRaw(formData.value);
-  console.log(payload);
-  if(payload.tipo_id != (payload.tipo?.id ?? 0)){
-    if(payload.tipo?.id ?? 0 > 6 ){
-      payload.estado_id = null
-      delete payload.estado 
-    }
-    if(payload.tipo?.id ?? 0 > 8 ){
-      payload.delegacion_id = null
-      delete payload.delegacion
-    }
-  }
-  console.log(payload);
+  
   await apiRequest({
     onSuccess: () => { handleCancelar(); },
     messageType:"toast",
@@ -168,6 +178,7 @@ onBeforeMount(() => {
 </script>
 
 <template>
+  <pre>{{ formData }}</pre>
   <!-- prettier-ignore -->
   <div class="d-flex justify-start align-center mb-5">
     <VBtn icon="tabler-arrow-left" class="cursor-pointer" variant="text" color="secondary" @click="handleBack"/>

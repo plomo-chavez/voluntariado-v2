@@ -129,7 +129,8 @@ defineExpose({
 // Crea un modelo local reactivo
 const formKey = ref(0); // Clave reactiva para forzar la renderización del formulario
 const formLocal: any = reactive(props.modelValue || {});
-let schemaLocal: any = reactive({});
+// `schemaLocal` debe ser un arreglo reactivo (se itera y se usa como lista de campos)
+let schemaLocal: any = reactive([]);
 let itemsErrors: any = reactive({});
 const showForm: any = ref(false);
 const formOkay: any = ref(false);
@@ -370,7 +371,6 @@ function validarCamposRequeridos() {
 
 function handleSubmit() {
   const faltantes = toRaw(validarCamposRequeridos());
-  console.log("faltantes", faltantes);
   if (Object.keys(faltantes).length > 0) {
     // Muestra el mensaje y hace scroll al mensaje
     setTimeout(() => {
@@ -579,10 +579,14 @@ onMounted(async () => {
   const catalogPromises = tmp.map(async (field: any) => {
     if (
       field.type === "select" &&
-      field.catalogo &&
-      !field.dependenciaQuery &&
-      !field.dependencia
+      field.dependencia &&
+      formLocal[field.model]
     ) {
+      console.log("field =! ", field);
+      const catalogoData = await obtenerCatalogoDependencia(field);
+      field.options = toRaw(catalogoData);
+    }
+    if (field.type === "select" && field.catalogo && !field.dependencia) {
       const catalogoData = await obtenerCatalogo(field);
       field.options = toRaw(catalogoData);
     } else if (field.type === "select" && !field.options) {
@@ -614,7 +618,8 @@ onMounted(async () => {
 
     // prettier-ignore
     if ( field.type === "select" && formLocal[field.model] && !field.dependenciaQuery ) {
-      if (field.options) {
+      // Solo intentar mapear el valor a una opción si ya hay opciones cargadas
+      if (Array.isArray(field.options) && field.options.length > 0) {
         let labelKey = field.config?.labelKey || "label";
         let valor = toRaw(formLocal[field.model][labelKey]);
         let options = toRaw(field.options);
@@ -623,8 +628,9 @@ onMounted(async () => {
         });
         formLocal[field.model] = option ? toRaw(option) : null;
       } else {
+        // Si no hay opciones aún (p.ej. dependencia), conserva el objeto recibido
         formLocal[field.model] = {
-          label:formLocal[field.model].label || formLocal[field.model].nombre || "",
+          label: formLocal[field.model].label || formLocal[field.model].nombre || "",
           ...formLocal[field.model], // Mantener otras propiedades si existen
         };
       }
@@ -672,6 +678,25 @@ onMounted(async () => {
       ? "wModal"
       : field.classElement || "wDefault";
   });
+
+  // Si ya hay valores para dependencias (p.ej. `estado`), cargar sus catálogos dependientes
+  const dependencyModels = new Set();
+  tmp.forEach((f: any) => {
+    const dep = f.dependencia || f.dependenciaQuery;
+    if (dep && formLocal[dep]) {
+      dependencyModels.add(dep);
+    }
+  });
+
+  if (dependencyModels.size > 0) {
+    const depPromises = Array.from(dependencyModels).map(async (model: any) => {
+      const depField = tmp.find((x: any) => x.model === model);
+      if (depField) {
+        await obtenerCatalogoDependencia(depField);
+      }
+    });
+    await Promise.all(depPromises);
+  }
 
   schemaLocal = tmp;
   setTimeout(() => {}, 500);
