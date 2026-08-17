@@ -23,6 +23,7 @@ const handleVisibilityChange = (isVisible: boolean) => {
   <VContainer class="nuevo-elemento-page py-8 py-md-12">
     <div class="nuevo-elemento-page__content">
       <NuevoElemento
+        :isPublic="true"
         :isDialogVisible="true"
         @update:isDialogVisible="handleVisibilityChange"
       />

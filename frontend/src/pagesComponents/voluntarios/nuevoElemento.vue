@@ -23,6 +23,7 @@ interface NuevoElementoPayload {
 const props = withDefaults(
   defineProps<{
     isDialogVisible: boolean;
+    isPublic?: boolean;
     existingCurps?: string[];
     estados?: CatalogItem[];
     delegaciones?: CatalogItem[];
@@ -33,8 +34,12 @@ const props = withDefaults(
     estados: () => [],
     delegaciones: () => [],
     areas: () => [],
+    isPublic: false,
   },
 );
+
+const inputDisableEstado: any = ref(false);
+const inputDisableDelegacion: any = ref(false);
 
 const emit = defineEmits<{
   (e: "update:isDialogVisible", value: boolean): void;
@@ -42,6 +47,7 @@ const emit = defineEmits<{
 }>();
 
 const step = ref<1 | 2>(1);
+const messageValidacion: any = ref(null);
 
 const form = ref<NuevoElementoPayload>({
   curp: "",
@@ -66,7 +72,7 @@ const curpSchema = [
   },
 ];
 
-const formSchema = [
+const formSchema: any = [
   { label: "Nombre", type: "text", model: "nombre", required: true },
   {
     label: "Segundo nombre",
@@ -100,7 +106,8 @@ const formSchema = [
     required: true,
     label: "Estado",
     type: "select",
-    public: true,
+    public: props.isPublic,
+    disabled: inputDisableEstado.value,
     model: "estado",
     classElement: " col-4 ",
     catalogo: "estados",
@@ -108,7 +115,8 @@ const formSchema = [
   {
     required: true,
     label: "Delegación",
-    public: true,
+    disabled: inputDisableDelegacion.value,
+    public: props.isPublic,
     type: "select",
     model: "delegacion",
     dependenciaQuery: "estado",
@@ -157,11 +165,9 @@ const validarInBDCURP = async (curp: string): Promise<boolean> => {
       payload: { curp },
       showMessages: false,
       onSuccess: (response: any) => {
-        console.log("CURP no encontrada en BDC, se puede usar.", !response);
         isValid = !response;
-      },
-      onError: () => {
-        isValid = true;
+        console.log(response);
+        messageValidacion.value = response;
       },
     });
 
@@ -173,7 +179,6 @@ const validarInBDCURP = async (curp: string): Promise<boolean> => {
 };
 
 const validateCurpAndContinue = async () => {
-  console.log("Validando CURP:", form.value.curp);
   const curp = (form.value.curp || "").trim().toUpperCase();
   form.value.curp = curp;
 
@@ -197,8 +202,6 @@ const validateCurpAndContinue = async () => {
 
   const validacionInBD = await validarInBDCURP(curp);
 
-  console.log("[validacionInBD] =>", validacionInBD);
-
   if (!validacionInBD) {
     showErrorMessage({
       title: "CURP existente",
@@ -218,9 +221,7 @@ const submitForm = async () => {
   await apiRequest({
     url: "/api/public/elemento",
     payload,
-    messageType: "toast",
     onSuccess: () => {
-      console.log("Datos enviados correctamente:", payload);
       handleClose();
     },
   });
@@ -233,8 +234,26 @@ const handleFormUpdate = async (value: Record<string, any>) => {
   };
 };
 const handleValidateCurpAndContinue = async () => {};
+
+// prettier-ignore
+onBeforeMount(() => {
+  if(!props.isPublic){
+    const getDataDelegacionInfo = getDataDelegacion();
+
+    form.value = { ...form.value, ...getDataDelegacionInfo };
+
+    if (getDataDelegacionInfo.estado !== undefined) {
+      formSchema.find((item: any) => item.model === "estado")!.disabled = true;
+    }
+
+    if (getDataDelegacionInfo.delegacion !== undefined) {
+      formSchema.find((item: any) => item.model === "delegacion")!.disabled = true;
+    }
+  }
+});
 </script>
 
+<!-- prettier-ignore -->
 <template>
   <VCard v-if="props.isDialogVisible" class="mt-4">
     <VCardTitle class="d-flex justify-space-between align-center py-4 px-6">
@@ -260,6 +279,10 @@ const handleValidateCurpAndContinue = async () => {};
             :formRequired="true"
             @update:modelValue="validateCurpAndContinue"
           />
+          <p v-if="messageValidacion" class="text-body-1 mb-4 text-center text-danger font-weight-medium">
+          <!-- <p  class="text-body-1 mb-4"> -->
+            Esta CURP ya esta registrada, comunicate con tu coordinador 
+          </p>
         </VWindowItem>
 
         <VWindowItem :value="2">
@@ -267,6 +290,7 @@ const handleValidateCurpAndContinue = async () => {};
             :schema="formSchema"
             :modelValue="form"
             :showButtonsAction="false"
+            :showMessageRequired="false"
             :formRequired="true"
             @update:modelValue="handleFormUpdate"
           />
@@ -284,20 +308,11 @@ const handleValidateCurpAndContinue = async () => {};
       </div>
 
       <div class="d-flex ga-2">
-        <VBtn
-          v-if="step === 2"
-          variant="outlined"
-          color="secondary"
-          @click="step = 1"
-        >
+        <VBtn v-if="step === 2" variant="outlined" color="secondary" @click="step = 1">
           Regresar
         </VBtn>
 
-        <VBtn
-          v-if="step === 1"
-          color="primary"
-          @click="validateCurpAndContinue"
-        >
+        <VBtn v-if="step === 1" color="primary" @click="validateCurpAndContinue">
           Validar CURP
         </VBtn>
 

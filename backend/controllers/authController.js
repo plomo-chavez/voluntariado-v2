@@ -4,7 +4,7 @@ import encryptHelper, { verifyEncryptedJWT } from "../utils/encryptHelper.js";
 import logsController from "./logsController.js";
 import permisosHelper from "../utils/permisosHelper.js";
 
-const { Usuarios, catTiposUsuarios } = db;
+const { Usuarios, catTiposUsuarios, catEstado, catDelegacion } = db;
 const { createTokenJWT } = encryptHelper;
 const { registrarLog } = logsController;
 const { getPermiso } = permisosHelper;
@@ -287,6 +287,16 @@ const login = async (req, res) => {
           as: "tipo",
           attributes: ["id", "label"],
         },
+        {
+          model: catEstado,
+          as: "estado",
+          attributes: ["id", "label"],
+        },
+        {
+          model: catDelegacion,
+          as: "delegacion",
+          attributes: ["id", "label"],
+        },
       ],
       raw: true,
       nest: true,
@@ -334,6 +344,10 @@ const login = async (req, res) => {
       correo: user.correo,
       tipo: user.tipo.label,
       tipo_id: user.tipo.id,
+      estado_id: user.estado?.id ?? null,
+      estado: user.estado?.label ?? null,
+      delegacion_id: user.delegacion?.id ?? null,
+      delegacion: user.delegacion?.label ?? null,
     };
 
     const expiresIn = process.env.JWT_EXPIRES_IN || "8h";

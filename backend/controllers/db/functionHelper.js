@@ -57,13 +57,13 @@ const handleTypeUser = (req) => {
 
     if (!userRole) {
       console.log(
-        "handleIsAdmin: El objeto 'user' no está definido en la solicitud.",
+        "handleTypeUser: El objeto 'user' no está definido en la solicitud.",
       );
     }
 
     if (typeof userRole.tipo_id === "undefined") {
       console.log(
-        "handleIsAdmin: El atributo 'tipo_id' no está definido en el usuario.",
+        "handleTypeUser: El atributo 'tipo_id' no está definido en el usuario.",
       );
     }
 

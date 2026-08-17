@@ -71,9 +71,11 @@ declare global {
   const getActivePinia: typeof import('pinia')['getActivePinia']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getDataDelegacion: typeof import('./src/utils/userUtils')['getDataDelegacion']
   const getFechaAMPM: typeof import('./src/utils/dateHelper')['getFechaAMPM']
   const getTokenRemainingSeconds: typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']
   const getTokenUser: typeof import('./src/utils/authHelper')['getTokenUser']
+  const getTypeUser: typeof import('./src/utils/userUtils')['getTypeUser']
   const getUserData: typeof import('./src/utils/userUtils')['getUserData']
   const getYearsSince: typeof import('./src/utils/dateHelper')['getYearsSince']
   const h: typeof import('vue')['h']
@@ -476,9 +478,11 @@ declare module 'vue' {
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getDataDelegacion: UnwrapRef<typeof import('./src/utils/userUtils')['getDataDelegacion']>
     readonly getFechaAMPM: UnwrapRef<typeof import('./src/utils/dateHelper')['getFechaAMPM']>
     readonly getTokenRemainingSeconds: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']>
     readonly getTokenUser: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenUser']>
+    readonly getTypeUser: UnwrapRef<typeof import('./src/utils/userUtils')['getTypeUser']>
     readonly getUserData: UnwrapRef<typeof import('./src/utils/userUtils')['getUserData']>
     readonly getYearsSince: UnwrapRef<typeof import('./src/utils/dateHelper')['getYearsSince']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
