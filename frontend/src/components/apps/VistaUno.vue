@@ -37,6 +37,7 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     title?: string; // Título del módulo
+    ordenData?: string; // Título del módulo
     formSchema?: any; // Esquema del formulario
     softDelete?: boolean; // Indica si se debe refrescar la tabla
     refreshTable?: boolean; // Indica si se debe refrescar la tabla
@@ -70,6 +71,7 @@ const props = withDefaults(
   {
     formSchema: [],
     title: "",
+    ordenData: "id",
     configTable: { actions: ["Editar", "Eliminar"] },
     filtroAgrupadorInicial: null,
     subtitulos: null,
@@ -142,6 +144,12 @@ async function fetchTableData(config: any = {}) {
             return item;
           });
         }
+
+        tmp.sort((a: any, b: any) => {
+          if (a[props.ordenData] < b[props.ordenData]) return -1;
+          if (a[props.ordenData] > b[props.ordenData]) return 1;
+          return 0;
+        });
 
         tableData.value = tmp;
         respaldoData.value = tmp;
