@@ -20,6 +20,7 @@ import { computed, getCurrentInstance, ref, watch } from "vue";
 //    'switch'
 //    'multiSelect'
 //    'chips'
+//    'checklist'
 
 // Registrar la directiva manualmente
 const instance = getCurrentInstance();
@@ -29,11 +30,17 @@ interface Field {
   label?: string;
   type?: string;
   model?: string;
-  options?: {
-    id?: string | number | boolean;
-    value?: string | number | boolean;
-    label?: string;
-  }[];
+  lblStyle?: any;
+  notaText?: string;
+  notaTextStyle?: "danger" | "warning" | "success" | "info" | string;
+  options?:
+    | {
+        id?: string | number | boolean;
+        value?: string | number | boolean;
+        label?: string;
+      }[]
+    | string[]
+    | Record<string, boolean | string[] | Record<string, boolean> | undefined>;
   placeholder?: string;
 
   dependenciaQuery?: string; // Modelo del campo del que depende
@@ -70,22 +77,6 @@ const props = withDefaults(
     showButtonCancel?: boolean;
     iconButtonCancel?: string;
     iconButtonSubmit?: string;
-    variantButtonCancel?:
-      | "flat"
-      | "text"
-      | "elevated"
-      | "tonal"
-      | "outlined"
-      | "plain";
-    variantButtonSubmit?:
-      | "flat"
-      | "text"
-      | "elevated"
-      | "tonal"
-      | "outlined"
-      | "plain";
-    colorButtonCancel?: string;
-    colorButtonSubmit?: string;
     formRequired?: boolean;
     validarCambios?: boolean;
     showMessageRequired?: boolean;
@@ -105,10 +96,6 @@ const props = withDefaults(
     showButtonCancel: true,
     textButtonCancel: null,
     textButtonSubmit: null,
-    variantButtonCancel: "elevated",
-    variantButtonSubmit: "outlined",
-    colorButtonCancel: "success",
-    colorButtonSubmit: "secondary",
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
     showMessageRequired: true,
@@ -129,22 +116,23 @@ defineExpose({
 // Crea un modelo local reactivo
 const formKey = ref(0); // Clave reactiva para forzar la renderización del formulario
 const formLocal: any = reactive(props.modelValue || {});
-// `schemaLocal` debe ser un arreglo reactivo (se itera y se usa como lista de campos)
-let schemaLocal: any = reactive([]);
+let schemaLocal: any = reactive({});
 let itemsErrors: any = reactive({});
 const showForm: any = ref(false);
 const formOkay: any = ref(false);
 const mensajeRef = ref<HTMLElement | null>(null);
+// Estado para controlar visibilidad de passwords por campo
+const passwordVisible: any = reactive({});
 const camposFaltantes = ref<string[]>([]);
 const mostrarTodosFaltantes = ref(false);
 const spanRequired = ref('<span style="color:red">*</span>');
-// prettier-ignore
-const tieneRequeridos = computed(() => props.schema?.some((field: any) => field.required));
-// prettier-ignore
-const schemaVisible = computed(() => (schemaLocal || []).filter((field: any) => esCampoVisible(field)));
 
 // Lógica para cargar catálogos dinámicos
 const { obtenerCatalogo } = useCatalogo();
+
+function toggleFaltantes() {
+  mostrarTodosFaltantes.value = !mostrarTodosFaltantes.value;
+}
 
 // Sincroniza los cambios entre `props.modelValue` y `formLocal`
 watch(
@@ -163,14 +151,24 @@ watch(
       if (field.type === "time" && formLocal[field.model] === undefined) {
         formLocal[field.model] = ""; // Valor inicial compatible con flatpickr
       }
+
+      // Inicializar multiField con defaultValue
+      if (field.type === "multiField" && field.defaultValue !== undefined) {
+        const items = getMultiFieldItems(field);
+        items.forEach((item: any) => {
+          if (item?.model && formLocal[item.model] === undefined) {
+            formLocal[item.model] = field.defaultValue;
+          }
+        });
+      }
     });
   },
   { immediate: true },
 );
 
-function toggleFaltantes() {
-  mostrarTodosFaltantes.value = !mostrarTodosFaltantes.value;
-}
+const tieneRequeridos = computed(() =>
+  props.schema?.some((field: any) => field.required),
+);
 
 // Maneja los cambios en los inputs
 function handleInputChange(field: string, value: any) {
@@ -193,6 +191,336 @@ function handleSwitchChange(field: string) {
   if (props.validarCambios) {
     validarCamposRequeridos();
   }
+}
+
+function normalizarOpcionesChecklistLista(options: any) {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options.map((option: any, index: number) => {
+    if (typeof option === "string") {
+      return {
+        label: option,
+        value: option,
+      };
+    }
+
+    if (option && typeof option === "object") {
+      const value =
+        option.value ?? option.id ?? option.label ?? `opcion_${index}`;
+
+      return {
+        label: option.label ?? String(value),
+        value: String(value),
+      };
+    }
+
+    return {
+      label: String(option),
+      value: String(option),
+    };
+  });
+}
+
+function normalizarTextoOpcionValor(value: any) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
+
+function normalizarOpcionesSelect(options: any) {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options.map((option: any, index: number) => {
+    if (typeof option === "string") {
+      return {
+        label: option,
+        value: normalizarTextoOpcionValor(option),
+      };
+    }
+
+    if (option && typeof option === "object") {
+      const label =
+        option.label ??
+        String(option.nombre ?? option.value ?? option.id ?? `opcion_${index}`);
+      const value =
+        option.value ?? option.id ?? normalizarTextoOpcionValor(label);
+
+      return {
+        ...option,
+        label,
+        value,
+      };
+    }
+
+    return {
+      label: String(option),
+      value: normalizarTextoOpcionValor(option),
+    };
+  });
+}
+
+function obtenerOpcionesSelect(field: any) {
+  return normalizarOpcionesSelect(field?.options);
+}
+
+function normalizarChecklistGrupos(field: any) {
+  const options = field?.options;
+
+  if (Array.isArray(options)) {
+    return [
+      {
+        key: "__default__",
+        label: "",
+        options: normalizarOpcionesChecklistLista(options),
+      },
+    ];
+  }
+
+  if (options && typeof options === "object") {
+    const entries = Object.entries(options);
+
+    const esPlano = entries.every(([, value]) => typeof value === "boolean");
+    if (esPlano) {
+      return [
+        {
+          key: "__default__",
+          label: "",
+          options: entries.map(([key]) => ({
+            label: key,
+            value: key,
+          })),
+        },
+      ];
+    }
+
+    return entries
+      .map(([groupKey, groupOptions]) => {
+        if (Array.isArray(groupOptions)) {
+          return {
+            key: String(groupKey),
+            label: String(groupKey),
+            options: normalizarOpcionesChecklistLista(groupOptions),
+          };
+        }
+
+        if (groupOptions && typeof groupOptions === "object") {
+          return {
+            key: String(groupKey),
+            label: String(groupKey),
+            options: Object.keys(groupOptions).map((optionKey) => ({
+              label: optionKey,
+              value: optionKey,
+            })),
+          };
+        }
+
+        return {
+          key: String(groupKey),
+          label: String(groupKey),
+          options: [],
+        };
+      })
+      .filter((group: any) => group.options.length > 0);
+  }
+
+  return [];
+}
+
+function checklistEsAgrupado(field: any) {
+  const grupos = normalizarChecklistGrupos(field);
+  return (
+    grupos.length > 1 ||
+    grupos.some((group: any) => !!group.label && group.key !== "__default__")
+  );
+}
+
+function normalizarOpcionesChecklist(field: any) {
+  const grupos = normalizarChecklistGrupos(field);
+  return grupos.flatMap((group: any) => group.options);
+}
+
+function obtenerValorChecklist(
+  field: any,
+  groupKey: string,
+  optionValue: string,
+) {
+  const valorActual = formLocal[field.model];
+
+  if (!valorActual || typeof valorActual !== "object") {
+    return false;
+  }
+
+  if (checklistEsAgrupado(field)) {
+    return !!valorActual?.[groupKey]?.[optionValue];
+  }
+
+  return !!valorActual?.[optionValue];
+}
+
+function actualizarValorChecklist(
+  field: any,
+  groupKey: string,
+  optionValue: string,
+  value: boolean,
+) {
+  if (checklistEsAgrupado(field)) {
+    if (!formLocal[field.model] || typeof formLocal[field.model] !== "object") {
+      formLocal[field.model] = {};
+    }
+
+    if (
+      !formLocal[field.model][groupKey] ||
+      typeof formLocal[field.model][groupKey] !== "object"
+    ) {
+      formLocal[field.model][groupKey] = {};
+    }
+
+    formLocal[field.model][groupKey][optionValue] = !!value;
+  } else {
+    if (!formLocal[field.model] || typeof formLocal[field.model] !== "object") {
+      formLocal[field.model] = {};
+    }
+
+    formLocal[field.model][optionValue] = !!value;
+  }
+
+  handleChecklistChange(field.model);
+}
+
+function inicializarChecklist(field: any) {
+  if (!field?.model || field?.type !== "checklist") return;
+
+  const grupos = normalizarChecklistGrupos(field);
+  const opciones = grupos.flatMap((group: any) => group.options);
+  const valorActual = toRaw(formLocal[field.model]);
+  const esAgrupado = checklistEsAgrupado(field);
+  const estadoInicial: Record<string, any> = {};
+
+  if (esAgrupado) {
+    grupos.forEach((group: any) => {
+      estadoInicial[group.key] = {};
+      group.options.forEach((option: any) => {
+        estadoInicial[group.key][option.value] = false;
+      });
+    });
+  } else {
+    opciones.forEach((option: any) => {
+      estadoInicial[option.value] = false;
+    });
+  }
+
+  if (Array.isArray(valorActual)) {
+    if (esAgrupado) {
+      grupos.forEach((group: any) => {
+        group.options.forEach((option: any) => {
+          const activo =
+            valorActual.includes(option.value) ||
+            valorActual.includes(option.label);
+          estadoInicial[group.key][option.value] = !!activo;
+        });
+      });
+    } else {
+      opciones.forEach((option: any) => {
+        const activo =
+          valorActual.includes(option.value) ||
+          valorActual.includes(option.label);
+        estadoInicial[option.value] = !!activo;
+      });
+    }
+  } else if (
+    valorActual &&
+    typeof valorActual === "object" &&
+    !Array.isArray(valorActual)
+  ) {
+    if (esAgrupado) {
+      grupos.forEach((group: any) => {
+        group.options.forEach((option: any) => {
+          estadoInicial[group.key][option.value] = !!(
+            valorActual?.[group.key]?.[option.value] ??
+            valorActual?.[group.key]?.[option.label]
+          );
+        });
+      });
+    } else {
+      opciones.forEach((option: any) => {
+        estadoInicial[option.value] = !!(
+          valorActual[option.value] ?? valorActual[option.label]
+        );
+      });
+    }
+  }
+
+  formLocal[field.model] = estadoInicial;
+}
+
+function checklistSinSeleccion(field: any, valor: any) {
+  if (field?.type !== "checklist") return false;
+
+  const grupos = normalizarChecklistGrupos(field);
+  if (!grupos.length) return true;
+
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) {
+    return true;
+  }
+
+  if (checklistEsAgrupado(field)) {
+    return grupos.every((group: any) =>
+      group.options.every(
+        (option: any) =>
+          !valor?.[group.key]?.[option.value] &&
+          !valor?.[group.key]?.[option.label],
+      ),
+    );
+  }
+
+  const opciones = grupos.flatMap((group: any) => group.options);
+
+  return opciones.every((option: any) => !valor[option.value]);
+}
+
+function obtenerEstiloChecklist(field: any) {
+  const columnas =
+    Number(field?.columnsOption) > 0 ? Number(field.columnsOption) : 1;
+  const alignMap: Record<string, string> = {
+    left: "start",
+    center: "center",
+    right: "end",
+  };
+
+  return {
+    display: "grid",
+    gridTemplateColumns: `repeat(${columnas}, minmax(0, 1fr))`,
+    justifyItems: alignMap[field?.alignOptions] ?? "start",
+  };
+}
+
+function handleChecklistChange(field: string) {
+  if (props.formLive) {
+    emit("update:modelValue", { ...formLocal });
+  }
+
+  if (props.validarCambios || tieneRequeridos.value) {
+    validarCamposRequeridos();
+  }
+}
+
+function mostrarNotaChecklist(field: any) {
+  const nota = field?.notaText;
+  return typeof nota === "string" && nota.trim() !== "";
+}
+
+function obtenerNotaChecklistStyle(field: any) {
+  const stylesPermitidos = ["danger", "warning", "success", "info"];
+  const style = String(field?.notaTextStyle || "info").toLowerCase();
+
+  return stylesPermitidos.includes(style) ? style : "info";
 }
 
 function obtenerOpcionesSwitch(field: any) {
@@ -224,7 +552,17 @@ function obtenerLabelSwitch(field: any) {
 }
 
 async function handleSelectChange(field: any, selected: any) {
-  let value = field.options.find((option: any) => option.label === selected);
+  const options = obtenerOpcionesSelect(field);
+  const value =
+    selected && typeof selected === "object"
+      ? selected
+      : options.find((option: any) => {
+          return (
+            option.value === selected ||
+            option.label === selected ||
+            option.id === selected
+          );
+        });
 
   if (!(value === undefined)) {
     // Asegúrate de que el valor sea booleano
@@ -245,51 +583,60 @@ async function handleSelectChange(field: any, selected: any) {
 }
 
 async function limpiarDependencias(field: any) {
-  const tmp: any = [...schemaLocal];
+  const tmp: any = Array.isArray(schemaLocal)
+    ? [...schemaLocal]
+    : Array.isArray(props.schema)
+      ? [...props.schema]
+      : [];
   // Filtra los campos que necesitan limpiar dependencias
-  tmp.forEach(async (f: any) => {
+  for (const f of tmp) {
+    if (!f || typeof f !== "object") continue;
     if (f.dependenciaQuery === field.model) {
       formLocal[f.model] = null;
       f.options = [];
+      // limpiar recursivamente
+      // eslint-disable-next-line no-await-in-loop
       await limpiarDependencias(f);
     }
-  });
+  }
 
   schemaLocal = tmp;
 }
-
+// prettier-ignore
 async function obtenerCatalogoDependencia(field: any) {
-  const tmp: any = [...schemaLocal];
+  const tmp: any = Array.isArray(schemaLocal) ? ([...schemaLocal]) : (Array.isArray(props.schema) ? [...props.schema] : []);
   // Filtra los campos que necesitan cargar catálogos
-  const catalogPromises = tmp.map(async (f: any) => {
+  const catalogPromises: Promise<any>[] = [];
+  
+    for (const f of tmp) {
+    if (!f || typeof f !== "object") continue;
     if (f.dependenciaQuery === field.model) {
       const fieldDependendica = toRaw(f);
       const dependenciaValor =
         formLocal[fieldDependendica.dependenciaQuery]?.id ??
         formLocal[fieldDependendica.dependenciaQuery]?.value;
 
-      const catalogoData = await obtenerCatalogo(f, {
-        [fieldDependendica.dependenciaQueryFiltro]: dependenciaValor,
-      });
-
-      f.options = toRaw(catalogoData);
+      catalogPromises.push( (async () => {
+        const catalogoData = await obtenerCatalogo(f, { [fieldDependendica.dependenciaQueryFiltro]: dependenciaValor });
+        f.options = normalizarOpcionesSelect(toRaw(catalogoData));
+      })());
     }
     if (f.dependencia === field.model) {
       const fieldDependendica = toRaw(f);
-      console.log(fieldDependendica);
       const dependenciaValor =
         formLocal[fieldDependendica.dependencia]?.id ??
         formLocal[fieldDependendica.dependencia]?.value;
 
-      const catalogoData = await obtenerCatalogo(f, {
-        [fieldDependendica.dependenciaFiltro]: dependenciaValor,
-      });
-
-      console.log(dependenciaValor);
-      console.log(fieldDependendica.dependenciaFiltro);
-      f.options = toRaw(catalogoData);
+      catalogPromises.push(
+        (async () => {
+          const catalogoData = await obtenerCatalogo(f, {
+            [fieldDependendica.dependenciaFiltro]: dependenciaValor,
+          });
+          f.options = normalizarOpcionesSelect(toRaw(catalogoData));
+        })(),
+      );
     }
-  });
+  }
 
   // Espera a que todas las promesas de carga de catálogos se resuelvan
   await Promise.all(catalogPromises);
@@ -297,6 +644,15 @@ async function obtenerCatalogoDependencia(field: any) {
 
   // Incrementa la clave para forzar la renderización del formulario
   formKey.value++;
+}
+async function obtenerCatalogoDependencia_v2(field: any) {
+  const f = field;
+  const catalogoData = await obtenerCatalogo(f, {
+    [f.dependenciaQueryFiltro]: formLocal[f.dependenciaQuery].id,
+  });
+  let options = normalizarOpcionesSelect(toRaw(catalogoData));
+  formKey.value++;
+  return options;
 }
 
 function validarFormulario(details: any = false) {
@@ -317,9 +673,23 @@ function validarFormulario(details: any = false) {
 function validarCamposRequeridos() {
   const camposVisibles = schemaVisible.value;
   const modelosVisibles = new Set(
-    camposVisibles
-      .filter((field: any) => field?.model)
-      .map((field: any) => field.model),
+    camposVisibles.flatMap((field: any) => {
+      const modelos: string[] = [];
+
+      if (field?.model) {
+        modelos.push(field.model);
+      }
+
+      if (isNumberMultiField(field)) {
+        getMultiFieldItems(field).forEach((item: any) => {
+          if (item?.model) {
+            modelos.push(item.model);
+          }
+        });
+      }
+
+      return modelos;
+    }),
   );
 
   Object.keys(itemsErrors).forEach((model) => {
@@ -334,6 +704,49 @@ function validarCamposRequeridos() {
       ? !ignorados.includes(field.type)
       : field.required;
 
+    if (isNumberMultiField(field)) {
+      const subItems = getMultiFieldItems(field);
+
+      if (!esRequerido) {
+        if (field?.model) {
+          delete itemsErrors[field.model];
+        }
+
+        subItems.forEach((item: any) => {
+          if (item?.model) {
+            delete itemsErrors[item.model];
+          }
+        });
+
+        return field;
+      }
+
+      subItems.forEach((item: any) => {
+        if (!item?.model) {
+          return;
+        }
+
+        const valor = formLocal[item.model];
+        const isEmpty =
+          valor === undefined ||
+          valor === null ||
+          (typeof valor === "string" && valor.trim() === "") ||
+          (Array.isArray(valor) && valor.length === 0);
+
+        if (isEmpty) {
+          itemsErrors[item.model] = `Este campo es requerido.`;
+        } else {
+          delete itemsErrors[item.model];
+        }
+      });
+
+      if (field?.model) {
+        delete itemsErrors[field.model];
+      }
+
+      return field;
+    }
+
     if (!field?.model || !esRequerido) {
       if (field?.model) {
         delete itemsErrors[field.model];
@@ -347,7 +760,8 @@ function validarCamposRequeridos() {
       valor === undefined ||
       valor === null ||
       (typeof valor === "string" && valor.trim() === "") ||
-      (Array.isArray(valor) && valor.length === 0);
+      (Array.isArray(valor) && valor.length === 0) ||
+      checklistSinSeleccion(field, valor);
 
     if (isEmpty) {
       itemsErrors[field.model] = `Este campo es requerido.`;
@@ -362,8 +776,31 @@ function validarCamposRequeridos() {
 
   // Actualizo los campos faltantes y otros valores reactivos
   camposFaltantes.value = Object.keys(tmpFaltantes).map((key) => {
-    const field = updatedSchema.find((f: any) => f.model === key);
-    return field ? field.label.replace(/<[^>]*>?/gm, "") : "";
+    const fieldDirecto = updatedSchema.find((f: any) => f.model === key);
+    if (fieldDirecto) {
+      return fieldDirecto?.label
+        ? fieldDirecto.label.replace(/<[^>]*>?/gm, "")
+        : "";
+    }
+
+    const fieldPadre = updatedSchema.find((f: any) =>
+      getMultiFieldItems(f).some((item: any) => item?.model === key),
+    );
+
+    if (!fieldPadre) {
+      return "";
+    }
+
+    const item = getMultiFieldItems(fieldPadre).find(
+      (it: any) => it?.model === key,
+    );
+
+    const labelPadre = fieldPadre?.label
+      ? fieldPadre.label.replace(/<[^>]*>?/gm, "")
+      : "";
+    const labelItem = item?.label ? String(item.label) : "";
+
+    return labelItem ? `${labelPadre} - ${labelItem}` : labelPadre;
   });
 
   return itemsErrors;
@@ -432,9 +869,37 @@ function obtenerIndicacionNumber(field: any) {
   return "";
 }
 
-function handleNumberInput(event: Event, field: any) {
+function getMultiFieldItems(field: any) {
+  if (!field || typeof field !== "object") {
+    return [];
+  }
+
+  if (Array.isArray(field.items) && field.items.length) {
+    return field.items;
+  }
+
+  if (Array.isArray(field.elements) && field.elements.length) {
+    return field.elements;
+  }
+
+  return [];
+}
+
+function isNumberMultiField(field: any) {
+  const items = getMultiFieldItems(field);
+  if (!items.length) {
+    return false;
+  }
+
+  if (field?.type === "multiField") {
+    return (field?.inputType || "number") === "number";
+  }
+
+  return field?.type === "number";
+}
+
+function handleNumberInputByModel(event: Event, field: any, model: string) {
   const input = event.target as HTMLInputElement;
-  const model = field.model;
 
   let config = {
     decimal: ".",
@@ -485,6 +950,10 @@ function handleNumberInput(event: Event, field: any) {
   if (props.validarCambios) {
     validarCamposRequeridos();
   }
+}
+
+function handleNumberInput(event: Event, field: any) {
+  handleNumberInputByModel(event, field, field.model);
 }
 
 function handleRangeDateChange(field: any, modelKey: "minModel" | "maxModel") {
@@ -569,8 +1038,14 @@ function esCampoVisible(field: any) {
 function handleChangeChips() {
   setTimeout(() => {
     validarCamposRequeridos();
+    emit("update:modelValue", { ...formLocal });
   }, 1);
+  if (props.formLive) {
+  }
 }
+const schemaVisible = computed(() =>
+  (schemaLocal || []).filter((field: any) => esCampoVisible(field)),
+);
 
 onMounted(async () => {
   let tmp: any = [...props.schema];
@@ -579,18 +1054,19 @@ onMounted(async () => {
   const catalogPromises = tmp.map(async (field: any) => {
     if (
       field.type === "select" &&
-      field.dependencia &&
-      formLocal[field.model]
+      field.dependenciaQuery &&
+      formLocal[field.dependenciaQuery]
     ) {
-      console.log("field =! ", field);
-      const catalogoData = await obtenerCatalogoDependencia(field);
-      field.options = toRaw(catalogoData);
+      const catalogoData = await obtenerCatalogoDependencia_v2(field);
+      field.options = normalizarOpcionesSelect(toRaw(catalogoData));
     }
-    if (field.type === "select" && field.catalogo && !field.dependencia) {
+    if (field.type === "select" && field.catalogo && !field.dependenciaQuery) {
       const catalogoData = await obtenerCatalogo(field);
-      field.options = toRaw(catalogoData);
+      field.options = normalizarOpcionesSelect(toRaw(catalogoData));
     } else if (field.type === "select" && !field.options) {
       field.options = field.options || [];
+    } else if (field.type === "select" && field.options) {
+      field.options = normalizarOpcionesSelect(toRaw(field.options));
     }
     if (field.type === "chips" && field.catalogo) {
       const catalogoData = await obtenerCatalogo(field);
@@ -602,6 +1078,10 @@ onMounted(async () => {
   await Promise.all(catalogPromises);
 
   tmp.forEach(async (field: any) => {
+    // Inicializa visibilidad para campos password
+    if (field.type === "password") {
+      passwordVisible[field.model] = false;
+    }
     if (field.type === "select" && field.options) {
       field.options = field.options;
     }
@@ -618,19 +1098,20 @@ onMounted(async () => {
 
     // prettier-ignore
     if ( field.type === "select" && formLocal[field.model] && !field.dependenciaQuery ) {
-      // Solo intentar mapear el valor a una opción si ya hay opciones cargadas
-      if (Array.isArray(field.options) && field.options.length > 0) {
+      if (field.options) {
         let labelKey = field.config?.labelKey || "label";
         let valor = toRaw(formLocal[field.model][labelKey]);
-        let options = toRaw(field.options);
+        let options = obtenerOpcionesSelect(field);
         let option = options.find((option: any) => {
-          return (String(option.label).toLowerCase() == String(valor).toLowerCase());
+          return (
+            String(option.label).toLowerCase() == String(valor).toLowerCase() ||
+            String(option.value).toLowerCase() == String(valor).toLowerCase()
+          );
         });
         formLocal[field.model] = option ? toRaw(option) : null;
       } else {
-        // Si no hay opciones aún (p.ej. dependencia), conserva el objeto recibido
         formLocal[field.model] = {
-          label: formLocal[field.model].label || formLocal[field.model].nombre || "",
+          label:formLocal[field.model].label || formLocal[field.model].nombre || "",
           ...formLocal[field.model], // Mantener otras propiedades si existen
         };
       }
@@ -648,12 +1129,17 @@ onMounted(async () => {
 
     if (field.type === "switch") {
       const opciones = obtenerOpcionesSwitch(field);
-      const primeraOpcion = opciones[0];
 
       const valorActualNormalizado = normalizarValorSwitch(
         formLocal[field.model],
       );
-      const valorDefaultNormalizado = normalizarValorSwitch(field.valorDefault);
+
+      // Soporta tanto `defaultValue` (nueva) como `valorDefault` (legado)
+      const rawDefault =
+        field.defaultValue !== undefined
+          ? field.defaultValue
+          : field.valorDefault;
+      const valorDefaultNormalizado = normalizarValorSwitch(rawDefault);
 
       const opcionActual = opciones.find(
         (option: any) =>
@@ -670,33 +1156,19 @@ onMounted(async () => {
       } else if (opcionDefault) {
         formLocal[field.model] = opcionDefault.value;
       } else {
-        formLocal[field.model] = primeraOpcion?.value ?? false;
+        // Si no hay valor actual ni default configurado, usa false
+        formLocal[field.model] = false;
       }
+    }
+
+    if (field.type === "checklist") {
+      inicializarChecklist(field);
     }
 
     field.classElement = props.isDialogVisible
       ? "wModal"
       : field.classElement || "wDefault";
   });
-
-  // Si ya hay valores para dependencias (p.ej. `estado`), cargar sus catálogos dependientes
-  const dependencyModels = new Set();
-  tmp.forEach((f: any) => {
-    const dep = f.dependencia || f.dependenciaQuery;
-    if (dep && formLocal[dep]) {
-      dependencyModels.add(dep);
-    }
-  });
-
-  if (dependencyModels.size > 0) {
-    const depPromises = Array.from(dependencyModels).map(async (model: any) => {
-      const depField = tmp.find((x: any) => x.model === model);
-      if (depField) {
-        await obtenerCatalogoDependencia(depField);
-      }
-    });
-    await Promise.all(depPromises);
-  }
 
   schemaLocal = tmp;
   setTimeout(() => {}, 500);
@@ -718,7 +1190,7 @@ onMounted(async () => {
       <div class="formWrapper">
         <!-- Render dynamic fields -->
         <!-- prettier-ignore -->
-        <h6 v-if="tieneRequeridos" class="mb16 col-12" style="color: #535353; font-size: 0.80rem;">
+        <h6 v-if="tieneRequeridos && props.showMessageRequired" class="mb16" style="color: #535353; font-size: 0.80rem;">
           Este formulario cuenta con campos obligatorios, los puedes identificar porque tienen este símbolo <span style="color:red">*</span>
         </h6>
         <div v-if="props.showMessageRequired">
@@ -780,12 +1252,12 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-        <v-row style="margin-left: 0px; margin-right: 0px">
+        <v-row>
           <template v-for="field in schemaVisible" :key="field.model">
             <!-- Campo de texto -->
             <!-- prettier-ignore -->
             <div v-if="field.type === 'label'" :class="field.classElement">
-               <label class="fontBold"> {{ field.label }} </label>
+               <label class="fontBold" :class="field.lblStyle"> {{ field.label }} </label>
                <!-- <p class="ml-3"> {{ formLocal[field.model] }} </p> -->
                <p class="ml-3 mb-0"> {{ formateadorValueLabel(field,(obtenerPropiedad(formLocal, field.model) || '')) }} </p>
             </div>
@@ -793,17 +1265,15 @@ onMounted(async () => {
             <!-- prettier-ignore -->
             <div v-if="field.type === 'separador'" :class="field.classElement">
                <h3 class="titleForm"> {{ field.label }} </h3>
-               <!-- <p class="ml-3"> {{ formLocal[field.model] }} </p> -->
             </div>
 
             <!-- prettier-ignore -->
             <div v-if="field.type === 'span'" :class="field.classElement">
-               <!-- <p class="ml-3"> {{ formLocal[field.model] }} </p> -->
             </div>
 
             <div v-if="field.type === 'text'" :class="field.classElement">
               <!-- prettier-ignore -->
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
 
               <VTextField
                 variant="outlined"
@@ -817,9 +1287,46 @@ onMounted(async () => {
               <p class="error-message">{{ itemsErrors[field.model] }}</p>
             </div>
 
+            <!-- Campo password -->
+            <div
+              v-else-if="field.type === 'password'"
+              :class="field.classElement"
+            >
+              <label
+                class="fontBold"
+                :class="field.lblStyle"
+                :for="field.model"
+                v-html="
+                  props.formRequired
+                    ? field.label + spanRequired
+                    : field.required
+                      ? field.label + spanRequired
+                      : field.label
+                "
+              />
+
+              <VTextField
+                variant="outlined"
+                :type="passwordVisible[field.model] ? 'text' : 'password'"
+                v-model="formLocal[field.model]"
+                :disabled="props.isDisabled || field.disabled"
+                :placeholder="
+                  field.placeholder || `Introduce el dato requerido`
+                "
+                :append-inner-icon="
+                  passwordVisible[field.model] ? 'tabler-eye-off' : 'tabler-eye'
+                "
+                @click:append-inner="
+                  passwordVisible[field.model] = !passwordVisible[field.model]
+                "
+                @input="handleInputChange(field.model, $event.target.value)"
+              />
+              <p class="error-message">{{ itemsErrors[field.model] }}</p>
+            </div>
+
             <div v-if="field.type === 'counter'" :class="field.classElement">
               <!-- prettier-ignore -->
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <Counter
                 :max="field.max"
                 :min="field.min"
@@ -833,7 +1340,7 @@ onMounted(async () => {
 
             <!-- prettier-ignore -->
             <div v-if="field.type === 'textarea'" :class="field.classElement">
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <VTextarea
                 variant="outlined"
                 v-model="formLocal[field.model]"
@@ -843,6 +1350,49 @@ onMounted(async () => {
                 @input="handleInputChange(field.model, $event.target.value)"
               />
               <p class="error-message">{{ itemsErrors[field.model] }}</p>
+            </div>
+
+            <!-- Campo number -->
+            <!-- prettier-ignore -->
+            <div v-else-if="isNumberMultiField(field)" :class="field.classElement">
+              <label
+                :class="['fontBold', 'multi-field-main-label', field.lblStyle]"
+                :for="field.model"
+                v-html="field.label"
+              />
+              
+              <div class="divSpan">
+                <span>
+                  {{ obtenerIndicacionNumber(field) }}
+                </span>
+              </div>
+
+              <div
+                class="multi-field-grid"
+                :style="{
+                  gridTemplateColumns: `repeat(${Math.max(getMultiFieldItems(field).length, 1)}, minmax(0, 1fr))`,
+                }"
+              >
+                <div
+                  v-for="item in getMultiFieldItems(field)"
+                  :key="item.model"
+                  class="multi-field-item"
+                  :class="item.classItem || field.classItem"
+                >
+                <label class="fontBold multi-field-sub-label" :for="item.model"
+                  v-html="props.formRequired ? (item.label + spanRequired) : (field.required ? item.label + spanRequired : item.label)"
+                />
+                  <VTextField
+                    v-model="formLocal[item.model]"
+                    class="form-control"
+                    :class="' text-center ' + (item.classInput || field.classInput || '')"
+                    :disabled="props.isDisabled || field.disabled || item.disabled"
+                    :placeholder="item.placeholder || field.placeholder || `Introduce el dato requerido`"
+                    @input="handleNumberInputByModel($event, field, item.model)"
+                  />
+                  <p class="error-message">{{ itemsErrors[item.model] }}</p>
+                </div>
+              </div>
             </div>
 
             <!-- Campo number -->
@@ -873,7 +1423,7 @@ onMounted(async () => {
             <!-- prettier-ignore -->
             <div v-else-if="field.type === 'date'" :class="field.classElement">
               <!-- prettier-ignore -->   
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <!-- prettier-ignore -->
               <AppDateTimePicker
                 :key="`${field.model}`"
@@ -892,7 +1442,7 @@ onMounted(async () => {
 
             <div v-else-if="field.type === 'time'" :class="field.classElement">
               <!-- prettier-ignore -->
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <!-- prettier-ignore -->
               <AppDateTimePicker
                 :key="`${field.model}`"
@@ -947,18 +1497,20 @@ onMounted(async () => {
             <!-- Campo select -->
             <!-- prettier-ignore -->
             <div v-else-if="field.type === 'select'" :class="field.classElement">
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <VSelect
-                :items="field.options || []"
-                :value="formLocal[field.model]?.label ?? ''"
+                :items="obtenerOpcionesSelect(field)"
+                :model-value="formLocal[field.model] ?? null"
                 item-title="label"
+                item-value="value"
+                return-object
                 clearable
                 :placeholder="field.placeholder || 'Selecciona una opción'"
                 :disabled="props.isDisabled || field.disabled"
                 @update:modelValue=" (selected) => handleSelectChange(field, selected) "
               >  
                 <template #no-data>
-                  <p v-if="field.options?.length === 0" class="text-center w-full p0 m0">No hay opciones disponibles</p>
+                  <p v-if="obtenerOpcionesSelect(field).length === 0" class="text-center w-full p0 m0">No hay opciones disponibles</p>
                 </template>
                 <template v-for="(_, label) in $slots" v-slot:[label]="slotProps">
                   <slot :name="label" v-bind="slotProps || {}" />
@@ -970,7 +1522,7 @@ onMounted(async () => {
             <!-- Campo switch -->
             <!-- prettier-ignore -->
             <div v-else-if="field.type === 'switch'" :class="field.classElement">
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
               <VSwitch
                 v-model="formLocal[field.model]"
                 :id="field.model"
@@ -985,7 +1537,7 @@ onMounted(async () => {
             <!-- Campo multi selector -->
             <!-- prettier-ignore -->
             <div v-else-if="field.type === 'multiSelect'" :class="field.classElement">
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)"></label>
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)"></label>
               <MultiSelectForm
                 :id="field.model"
                 v-model="formLocal[field.model]"
@@ -1007,7 +1559,7 @@ onMounted(async () => {
             <!-- prettier-ignore -->
             <div v-else-if="field.type === 'chips'" :class="field.classElement">
               <!-- prettier-ignore -->   
-              <label class="fontBold" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)"></label>
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)"></label>
               <MultiSelectFormChips
                 :id="field.model"
                 v-model="formLocal[field.model]"
@@ -1023,17 +1575,53 @@ onMounted(async () => {
               />
               <p class="error-message">{{ itemsErrors[field.model] }}</p>
             </div>
+
+            <!-- Campo checklist -->
+            <!-- prettier-ignore -->
+            <div v-else-if="field.type === 'checklist'" :class="field.classElement">
+              <!-- prettier-ignore -->
+              <label class="fontBold" :class="field.lblStyle" :for="field.model" v-html="props.formRequired ? (field.label + spanRequired) : (field.required ? field.label + spanRequired : field.label)" />
+              <p
+                v-if="mostrarNotaChecklist(field)"
+                class="checklist-note"
+                :class="`checklist-note-${obtenerNotaChecklistStyle(field)}`"
+              >
+                {{ field.notaText }}
+              </p>
+              <div class="checklist-wrapper">
+                <div
+                  v-for="group in normalizarChecklistGrupos(field)"
+                  :key="`${field.model}-${group.key}`"
+                  class="checklist-group"
+                >
+                  <h6 v-if="group.label" class="checklist-group-title">{{ group.label }}</h6>
+                  <div class="checklist-group-options" :style="obtenerEstiloChecklist(field)">
+                    <VCheckbox
+                      v-for="option in group.options"
+                      :key="`${field.model}-${group.key}-${option.value}`"
+                      :model-value="obtenerValorChecklist(field, group.key, option.value)"
+                      :label="option.label"
+                      :disabled="props.isDisabled || field.disabled"
+                      density="comfortable"
+                      hide-details
+                      @update:modelValue="(value) => actualizarValorChecklist(field, group.key, option.value, !!value)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p class="error-message">{{ itemsErrors[field.model] }}</p>
+            </div>
           </template>
         </v-row>
       </div>
       <!-- prettier-ignore -->
       <div v-if="showButtonsAction" class="d-flex justify-end gap-3 mt-4">
-        <VBtn v-if="showButtonCancel" :variant="props.variantButtonCancel ?? 'outlined'" :color="props.colorButtonCancel ?? 'secondary'" @click.prevent="handleCancel"  > 
+        <VBtn v-if="showButtonCancel" variant="outlined" color="secondary" @click.prevent="handleCancel"  > 
           <VIcon v-if="showIconButtonCancel"  start :icon="props?.iconButtonCancel" />
           {{ props.textButtonCancel || "Cancelar" }} 
         </VBtn>
 
-        <VBtn v-if="showButtonSubmit" :variant="props?.variantButtonSubmit ?? 'elevated' " :color="props.colorButtonSubmit ?? 'success'"  @click="handleSubmit" > 
+        <VBtn v-if="showButtonSubmit" variant="elevated" color="success"  @click="handleSubmit" > 
           <VIcon v-if="showIconButtonSubmit" start :icon="props?.iconButtonSubmit"/>
           {{ props.textButtonSubmit || "Enviar" }}
         </VBtn>
@@ -1119,6 +1707,80 @@ onMounted(async () => {
   font-size: 12px;
   line-height: 18px;
   color: #555;
+}
+
+.multi-field-grid {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.multi-field-item {
+  min-width: 0;
+}
+
+.multi-field-sub-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.multi-field-main-label {
+  display: block;
+  font-size: large;
+  width: 100%;
+}
+
+.checklist-wrapper {
+  row-gap: 2px;
+}
+
+.checklist-group {
+  margin-bottom: 12px;
+}
+
+.checklist-group-title {
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.checklist-group-options {
+  row-gap: 2px;
+}
+
+.checklist-note {
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  border: 1px solid transparent;
+}
+
+.checklist-note-danger {
+  color: #b42318;
+  background: #fef3f2;
+  border-color: #fecdca;
+}
+
+.checklist-note-warning {
+  color: #b54708;
+  background: #fffaeb;
+  border-color: #fedf89;
+}
+
+.checklist-note-success {
+  color: #027a48;
+  background: #ecfdf3;
+  border-color: #a6f4c5;
+}
+
+.checklist-note-info {
+  color: #175cd3;
+  background: #eff8ff;
+  border-color: #b2ddff;
 }
 
 @media (min-width: 1201px) {

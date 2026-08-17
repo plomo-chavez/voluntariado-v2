@@ -82,7 +82,6 @@ const handleCancelar = () => {
 };
 
 const handle = () => {
-  console.log("handle");
   const payload = deepToRaw(formData.value);
 
   // Eliminar `estado` si el tipo NO requiere estado (tipos <= 4)
@@ -143,8 +142,8 @@ const handleChangeForm = () => {
       type: "select",
       model: "delegacion",
       catalogo: "delegaciones",
-      dependencia: "estado",
-      dependenciaFiltro: "estado_id",
+      dependenciaQuery: "estado",
+      dependenciaQueryFiltro: "estado_id",
       config: { fullInfo: true },
     });
     }
@@ -178,7 +177,6 @@ onBeforeMount(() => {
 </script>
 
 <template>
-  <pre>{{ formData }}</pre>
   <!-- prettier-ignore -->
   <div class="d-flex justify-start align-center mb-5">
     <VBtn icon="tabler-arrow-left" class="cursor-pointer" variant="text" color="secondary" @click="handleBack"/>

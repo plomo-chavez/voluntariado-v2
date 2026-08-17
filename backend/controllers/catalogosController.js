@@ -88,7 +88,6 @@ const getCatalogo = async (req, res, tabla) => {
     if (typeUser == "admin" && tablaMap[tabla]?.filtrosAdmin) {
       filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosAdmin };
     }
-    console.log("\n\n isAdmin: ", filtros);
 
     const resultado = await models[tablaReal.tabla].findAll({
       where: filtros,
@@ -104,10 +103,6 @@ const getCatalogo = async (req, res, tabla) => {
     if (e.original && e.original.sqlMessage) {
       message = e.original.sqlMessage;
     }
-    console.log(
-      "[CatalogosController] Error al obtener los registros:",
-      message,
-    );
     return res.json({
       result: false,
       message: `[CatalogosController] ${message}`,
