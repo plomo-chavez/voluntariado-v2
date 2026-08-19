@@ -167,6 +167,12 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
+      estatusRegistro: {
+        field: "estatusRegistro",
+        type: DataTypes.TINYINT(1),
+        allowNull: false,
+        defaultValue: 1,
+      },
     },
     {
       paranoid: true,

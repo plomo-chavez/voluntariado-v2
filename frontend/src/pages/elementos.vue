@@ -13,7 +13,7 @@ const tableHeaders = [
   { title: "Nombre", key: "nombre", format: (value : any, row : any) => {  return nombreCompleto(row); }, },
   { title: "Cargo", key: "cargo.label" },
   { title: "Estado", key: "estado.label" },
-  { title: "Delegación", key: "delegacion.label" },
+  { title: "Delegación", key: "delegacion.label"},
   { title: "Estatus", key: "estatus", format: (value : any) => (value === 1 ? "Activo" : "Inactivo"), },
   { title: "Creación", key: "created_at" },
 ];
@@ -46,6 +46,22 @@ const handleSubmitNuevoElemento = (payload: any) => {
   showFormNew.value = false;
 };
 
+// estatusRegistro
+// 1 - Pendiente de revisión
+// 2 - Activo
+// prettier-ignore
+const fnRowClass = (row: any) => {
+  let { item } = row;
+  item = deepToRaw(item)
+  let classEstatus = "";
+
+  switch (item.estatusRegistro) {
+    case 1: classEstatus = ' bgPrimaryTonalLight '; break; // Pendiente
+  }
+
+  return { class: classEstatus };
+};
+
 const configTable = ref({ actions: ["Editar", "Eliminar"] });
 </script>
 
@@ -63,6 +79,7 @@ const configTable = ref({ actions: ["Editar", "Eliminar"] });
   <div v-else>
     <h1>Elementos</h1>
     <CrudManager
+      :fnRowClass="fnRowClass"
       title="Elementos"
       :emitEdit="true"
       :formModal="true"

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
 import { useTokenExpiringModal } from "@/composables/useTokenExpiringModal"; // o tu función de modal
-import { router } from "@/plugins/1.router";
 import { useAuthStore } from "@/stores/authStore"; // Importa el store
-import { customRequest } from "@/utils/axiosInstance";
+import { useLoadingOverlayStore } from "@/stores/loadingOverlayStore";
 import logoTransparente from "@images/logos/logo - transparente.png";
+import { useRouter } from "vue-router";
 const authStore = useAuthStore();
+const router = useRouter();
+const loadingOverlayStore = useLoadingOverlayStore();
 
 const { showTokenExpiringModal } = useTokenExpiringModal();
 
@@ -64,45 +66,42 @@ function getCurrentLocation(): Promise<{
 
 async function handleLogin() {
   const location = await getCurrentLocation();
-
-  let response: any = await customRequest({
-    url: "/api/login",
-    method: "POST",
-    data: {
-      ...form.value,
-      clientInfo: {
-        user_agent: navigator.userAgent,
-        device_type: detectDeviceType(),
-        location,
-      },
+  const payload = {
+    ...form.value,
+    clientInfo: {
+      user_agent: navigator.userAgent,
+      device_type: detectDeviceType(),
+      location,
     },
+  };
+
+  await apiRequest({
+    payload,
+    loader: true,
+    loadingOff: false,
+    method: "POST",
+    url: "/api/login",
+    messageType: "toast",
+    onSuccess: handleLoginSuccess,
   });
-  if (response.data.result) {
-    const userData = response.data.data.userData;
-    const token = response.data.data.token;
-
-    if (userData && token) {
-      authStore.login(userData, token);
-      setTimeout(() => {
-        router.push({ name: "root" });
-      }, 100);
-    } else {
-      showErrorMessage({
-        title: "Error",
-        message: "No se recibió información de usuario o token válida.",
-      });
-    }
-  } else {
-    // Maneja el error de inicio de sesión
-
-    showErrorMessage({
-      title: "Error",
-      message: response.data.message,
-    });
-  }
-  // Redirige a la página principal o dashboard
 }
 
+async function handleLoginSuccess(data: any) {
+  const { token, userData } = data;
+
+  if (userData && token) {
+    authStore.login(userData, token);
+    setTimeout(() => {
+      router.push({ name: "root" });
+      loadingOverlayStore.hideOverlay();
+    }, 100);
+  } else {
+    showErrorMessage({
+      title: "Error",
+      message: "No se recibió información de usuario o token válida.",
+    });
+  }
+}
 const isPasswordVisible = ref(false);
 </script>
 

@@ -37,6 +37,7 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     title?: string; // Título del módulo
+    fnRowClass?: any; // Título del módulo
     ordenData?: string; // Título del módulo
     formSchema?: any; // Esquema del formulario
     softDelete?: boolean; // Indica si se debe refrescar la tabla
@@ -70,6 +71,7 @@ const props = withDefaults(
   }>(),
   {
     formSchema: [],
+    fnRowClass: undefined,
     title: "",
     ordenData: "id",
     configTable: { actions: ["Editar", "Eliminar"] },
@@ -526,6 +528,10 @@ watch(
         </div>
         <DataTable
           :loading="loading"
+          :fnRowClass="
+            props.fnRowClass ??
+            ((row: any) => (row.estatus === 1 ? 'bgRed' : ''))
+          "
           :headers="headersLocal"
           :data="tableData"
           :dataResponse="dataResponse"

@@ -363,6 +363,7 @@ const getAll = async (req, res) => {
       "segundo_apellido",
       "correo",
       "estatus",
+      "estatusRegistro",
       "created_at",
       "updated_at",
       "deleted_at",
