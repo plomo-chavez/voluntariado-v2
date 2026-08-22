@@ -163,6 +163,7 @@ const validarInBDCURP = async (curp: string): Promise<boolean> => {
     await apiRequest({
       url: "/api/public/elemento/verificar",
       payload: { curp },
+      loader: true,
       showMessages: false,
       onSuccess: (response: any) => {
         isValid = !response;
@@ -268,19 +269,16 @@ onBeforeMount(() => {
     <VCardText class="pt-6">
       <VWindow v-model="step">
         <VWindowItem :value="1">
-          <p class="text-body-1 mb-4">
-            Primero valida la CURP antes de capturar datos del voluntario.
-          </p>
-
+          <p class="text-body-1 mb-4">Primero valida la CURP antes de capturar datos del voluntario.</p>
           <ModuladorFormFactory
             :schema="curpSchema"
             :modelValue="form"
+            :showMessageRequired="false"
             :showButtonsAction="false"
             :formRequired="true"
             @update:modelValue="validateCurpAndContinue"
           />
           <p v-if="messageValidacion" class="text-body-1 mb-4 text-center text-danger font-weight-medium">
-          <!-- <p  class="text-body-1 mb-4"> -->
             Esta CURP ya esta registrada, comunicate con tu coordinador 
           </p>
         </VWindowItem>
