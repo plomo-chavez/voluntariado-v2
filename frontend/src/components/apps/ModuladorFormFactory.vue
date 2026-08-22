@@ -43,6 +43,10 @@ const props = withDefaults(
     variantButtonSubmit?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain";
     colorButtonCancel?: string;
     colorButtonSubmit?: string;
+    buttonAlignmentBetween?:
+      | "start"
+      | "end"
+      | "between"
   }>(),
   {
     title: null,
@@ -69,6 +73,7 @@ const props = withDefaults(
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
     titleClass: "",
+    buttonAlignmentBetween:"start"
   },
 );
 
@@ -109,6 +114,7 @@ function handleCancel() {
           :isDisabled="props.isDisabled"
           :formRequired="props.formRequired"
           :isDialogVisible="props.isDialogVisible"
+          :buttonAlignmentBetween="props.buttonAlignmentBetween"
           :showButtonsAction="props.showButtonsAction"
           @submit="handleSubmit"
           @cancel="handleCancel"
@@ -140,6 +146,7 @@ function handleCancel() {
           :showIconButtonCancel="props.showIconButtonCancel"
           :showButtonSubmit="props.showButtonSubmit"
           :showButtonCancel="props.showButtonCancel"
+          :buttonAlignmentBetween="props.buttonAlignmentBetween"
           :textButtonCancel="props.textButtonCancel"
           :textButtonSubmit="props.textButtonSubmit"
           :iconButtonCancel="props.iconButtonCancel"

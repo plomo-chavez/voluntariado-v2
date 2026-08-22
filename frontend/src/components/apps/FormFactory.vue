@@ -2,9 +2,9 @@
 import Counter from "@/components/apps/FormFactoryElements/Counter.vue";
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
 import { useCatalogo } from "@/hooks/useCatalogo";
-import { formatValue } from "@/utils/formatterHelper";
+import { formatValue, validatedValue } from "@/utils/formatterHelper";
 import { computed, getCurrentInstance, ref, watch } from "vue";
-
+const validators = validatedValue();
 // Opciones de inputs para el form
 //    'label'
 //    'separador'
@@ -31,6 +31,7 @@ interface Field {
   type?: string;
   model?: string;
   lblStyle?: any;
+  validated?: any;
   notaText?: string;
   notaTextStyle?: "danger" | "warning" | "success" | "info" | string;
   options?:
@@ -77,9 +78,26 @@ const props = withDefaults(
     showButtonCancel?: boolean;
     iconButtonCancel?: string;
     iconButtonSubmit?: string;
+    variantButtonCancel?:
+      | "flat"
+      | "text"
+      | "elevated"
+      | "tonal"
+      | "outlined"
+      | "plain";
+    variantButtonSubmit?:
+      | "flat"
+      | "text"
+      | "elevated"
+      | "tonal"
+      | "outlined"
+      | "plain";
+    colorButtonCancel?: string;
+    colorButtonSubmit?: string;
     formRequired?: boolean;
     validarCambios?: boolean;
     showMessageRequired?: boolean;
+    buttonAlignmentBetween?: "start" | "end" | "between";
   }>(),
   {
     title: null,
@@ -98,7 +116,12 @@ const props = withDefaults(
     textButtonSubmit: null,
     iconButtonCancel: "tabler-x",
     iconButtonSubmit: "tabler-check",
+    variantButtonCancel: "outlined",
+    variantButtonSubmit: "elevated",
+    colorButtonCancel: "secondary",
+    colorButtonSubmit: "success",
     showMessageRequired: true,
+    buttonAlignmentBetween: "start",
   },
 );
 
@@ -164,6 +187,16 @@ watch(
     });
   },
   { immediate: true },
+);
+// Ajustar el valor inicial de los campos de tipo 'time' en formLocal
+watch(
+  () => formLocal,
+  (data) => {
+    if (formOkay.value) {
+      handleValidarFormatos();
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 const tieneRequeridos = computed(() =>
@@ -602,12 +635,13 @@ async function limpiarDependencias(field: any) {
 
   schemaLocal = tmp;
 }
+
 // prettier-ignore
 async function obtenerCatalogoDependencia(field: any) {
   const tmp: any = Array.isArray(schemaLocal) ? ([...schemaLocal]) : (Array.isArray(props.schema) ? [...props.schema] : []);
   // Filtra los campos que necesitan cargar catálogos
   const catalogPromises: Promise<any>[] = [];
-  
+
     for (const f of tmp) {
     if (!f || typeof f !== "object") continue;
     if (f.dependenciaQuery === field.model) {
@@ -645,6 +679,7 @@ async function obtenerCatalogoDependencia(field: any) {
   // Incrementa la clave para forzar la renderización del formulario
   formKey.value++;
 }
+
 async function obtenerCatalogoDependencia_v2(field: any) {
   const f = field;
   const catalogoData = await obtenerCatalogo(f, {
@@ -831,8 +866,53 @@ function handleSubmit() {
     ...tmp,
     ...filteredForm,
   };
-  emit("submit", tmp);
-  emit("update:isDialogVisible", false);
+
+  const nextStep = handleValidarFormatos();
+
+  if (nextStep) {
+    emit("submit", tmp);
+    emit("update:isDialogVisible", false);
+  }
+}
+
+// prettier-ignore
+// Maneja la cancelación del formulario
+function handleValidarFormatos(): any {
+  const validatedItems = props.schema.filter((item) => typeof item.validated === "function" || ( typeof item.validated === "string" && typeof validators[item.validated as keyof typeof validators] === "function"));
+  const messagesError: any= {};
+  // No hay campos que validar
+  if (validatedItems.length === 0) { return true; }
+
+  for (const item of validatedItems) {
+    const value = formLocal[item?.model ?? ""];
+    let resultado : any;
+
+    // validated es directamente una función
+    if (typeof item.validated === "function") {
+      resultado = item.validated(value);
+    } else if ( typeof item.validated === "string" && typeof validators[item.validated as keyof typeof validators] === "function" ) {
+      // validated es el nombre de un validador
+      const validator = validators[item.validated as keyof typeof validators];
+      resultado = validator(value);
+    } else {
+      resultado = true;
+    }
+
+    // Si devuelve un string, detenernos y retornar el error
+    if (resultado !== true) {
+      messagesError[item?.model ?? ''] = resultado;
+    }
+  }
+
+  const hayErrores = Object.keys(messagesError).length > 0
+
+  if(hayErrores){
+    Object.keys(itemsErrors).forEach((key) => delete itemsErrors[key]);
+    setTimeout(() => { Object.assign(itemsErrors, messagesError); }, 1);
+    return false
+  } else {
+    return true
+  }
 }
 
 // Maneja la cancelación del formulario
@@ -1046,6 +1126,20 @@ function handleChangeChips() {
 const schemaVisible = computed(() =>
   (schemaLocal || []).filter((field: any) => esCampoVisible(field)),
 );
+
+const getAlignButtonActions = (): any => {
+  switch (props.buttonAlignmentBetween) {
+    case "start":
+      return "justify-start";
+      break;
+    case "end":
+      return "justify-end";
+      break;
+    case "between":
+      return "justify-space-between";
+      break;
+  }
+};
 
 onMounted(async () => {
   let tmp: any = [...props.schema];
@@ -1613,13 +1707,13 @@ onMounted(async () => {
         </v-row>
       </div>
       <!-- prettier-ignore -->
-      <div v-if="showButtonsAction" class="d-flex justify-end gap-3 mt-4">
-        <VBtn v-if="showButtonCancel" variant="outlined" color="secondary" @click.prevent="handleCancel"  > 
+      <div v-if="showButtonsAction" class="d-flex gap-3 mt-4" :class="getAlignButtonActions()">
+        <VBtn v-if="showButtonCancel" :variant="props.variantButtonCancel" :color="props.colorButtonCancel"   @click.prevent="handleCancel"  > 
           <VIcon v-if="showIconButtonCancel"  start :icon="props?.iconButtonCancel" />
           {{ props.textButtonCancel || "Cancelar" }} 
         </VBtn>
 
-        <VBtn v-if="showButtonSubmit" variant="elevated" color="success"  @click="handleSubmit" > 
+        <VBtn v-if="showButtonSubmit" :variant="props.variantButtonSubmit" :color="props.colorButtonSubmit"  @click="handleSubmit" > 
           <VIcon v-if="showIconButtonSubmit" start :icon="props?.iconButtonSubmit"/>
           {{ props.textButtonSubmit || "Enviar" }}
         </VBtn>

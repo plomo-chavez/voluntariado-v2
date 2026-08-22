@@ -46,7 +46,7 @@ const emit = defineEmits<{
   (e: "submit", payload: NuevoElementoPayload): void;
 }>();
 
-const step = ref<1 | 2>(1);
+const step = ref<1 | 2>(2);
 const messageValidacion: any = ref(null);
 
 const form = ref<NuevoElementoPayload>({
@@ -65,47 +65,58 @@ const form = ref<NuevoElementoPayload>({
 const curpSchema = [
   {
     label: "CURP",
+    validated: "curp",
     classElement: " col-12 ",
     type: "text",
     model: "curp",
-    required: true,
   },
 ];
 
 const formSchema: any = [
-  { label: "Nombre", type: "text", model: "nombre", required: true },
   {
-    label: "Segundo nombre",
     type: "text",
+    label: "Nombre",
+    validated: "onlyLetters",
+    model: "nombre",
+    required: true,
+  },
+  {
+    type: "text",
+    label: "Segundo nombre",
+    validated: "onlyLetters",
     model: "segundo_nombre",
   },
   {
-    label: "Primer apellido",
     type: "text",
+    label: "Primer apellido",
+    validated: "onlyLetters",
     model: "primer_apellido",
     required: true,
   },
   {
-    label: "Segundo apellido",
     type: "text",
+    label: "Segundo apellido",
+    validated: "onlyLetters",
     model: "segundo_apellido",
   },
   {
-    label: "Correo",
     type: "text",
+    label: "Correo",
+    validated: "correo",
     model: "correo",
     required: true,
   },
   {
-    label: "Teléfono",
     type: "text",
+    label: "Teléfono",
+    validated: "telefono",
     model: "telefono",
     required: true,
   },
   {
+    type: "select",
     required: true,
     label: "Estado",
-    type: "select",
     public: props.isPublic,
     disabled: inputDisableEstado.value,
     model: "estado",
@@ -113,11 +124,11 @@ const formSchema: any = [
     catalogo: "estados",
   },
   {
+    type: "select",
     required: true,
     label: "Delegación",
     disabled: inputDisableDelegacion.value,
     public: props.isPublic,
-    type: "select",
     model: "delegacion",
     dependenciaQuery: "estado",
     dependenciaQueryFiltro: "estado_id",
@@ -128,8 +139,8 @@ const formSchema: any = [
     },
   },
   {
-    label: "Área",
     type: "select",
+    label: "Área",
     public: true,
     model: "area",
     catalogo: "areas",
@@ -156,62 +167,39 @@ const handleClose = () => {
   emit("update:isDialogVisible", false);
   resetModal();
 };
+const handleCancel = () => {
+  step.value = 1;
+};
 
-const validarInBDCURP = async (curp: string): Promise<boolean> => {
+// prettier-ignore
+const validarInBDCURP = async () => {
   try {
-    let isValid = true;
+    const curp = form.value?.curp?.trim() ?? "";
+
+    if (!curp) { return;}
+
     await apiRequest({
       url: "/api/public/elemento/verificar",
+      method: "POST",
       payload: { curp },
       loader: true,
       showMessages: false,
       onSuccess: (response: any) => {
-        isValid = !response;
-        console.log(response);
         messageValidacion.value = response;
+        if (response) {
+          showErrorMessage({
+            title: "CURP existente",
+            message: "Esta CURP ya está registrada.",
+          });
+
+          return;
+        }
+        step.value = 2;
       },
     });
-
-    return isValid;
   } catch (error) {
     console.error("Error al validar CURP en BDC:", error);
-    return false;
   }
-};
-
-const validateCurpAndContinue = async () => {
-  const curp = (form.value.curp || "").trim().toUpperCase();
-  form.value.curp = curp;
-
-  if (!curp) {
-    showErrorMessage({
-      title: "CURP requerida",
-      message: "Ingresa una CURP para continuar.",
-    });
-    return;
-  }
-
-  const curpIsValid = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$/i.test(curp);
-
-  if (!curpIsValid) {
-    showErrorMessage({
-      title: "CURP inválida",
-      message: "Verifica el formato de la CURP.",
-    });
-    return;
-  }
-
-  const validacionInBD = await validarInBDCURP(curp);
-
-  if (!validacionInBD) {
-    showErrorMessage({
-      title: "CURP existente",
-      message: "Esta CURP ya está registrada.",
-    });
-    return;
-  }
-
-  step.value = 2;
 };
 
 const submitForm = async () => {
@@ -234,7 +222,6 @@ const handleFormUpdate = async (value: Record<string, any>) => {
     ...value,
   };
 };
-const handleValidateCurpAndContinue = async () => {};
 
 // prettier-ignore
 onBeforeMount(() => {
@@ -274,9 +261,17 @@ onBeforeMount(() => {
             :schema="curpSchema"
             :modelValue="form"
             :showMessageRequired="false"
-            :showButtonsAction="false"
             :formRequired="true"
-            @update:modelValue="validateCurpAndContinue"
+            :showIconButtonCancel="false"
+            :showIconButtonSubmit="false"
+            :variantButtonCancel="'tonal'"
+            :variantButtonSubmit="'tonal'"
+            :colorButtonCancel="'secondary'"
+            :colorButtonSubmit="'primary'"
+            :buttonAlignmentBetween="'between'"
+            :textButtonCancel="'Cancelar'"
+            :textButtonSubmit="'Validar CURP'"
+            @submit="validarInBDCURP"
           />
           <p v-if="messageValidacion" class="text-body-1 mb-4 text-center text-danger font-weight-medium">
             Esta CURP ya esta registrada, comunicate con tu coordinador 
@@ -287,37 +282,24 @@ onBeforeMount(() => {
           <ModuladorFormFactory
             :schema="formSchema"
             :modelValue="form"
-            :showButtonsAction="false"
             :showMessageRequired="false"
             :formRequired="true"
+            :showIconButtonCancel="false"
+            :showIconButtonSubmit="false"
+            :variantButtonCancel="'tonal'"
+            :variantButtonSubmit="'tonal'"
+            :colorButtonCancel="'secondary'"
+            :colorButtonSubmit="'primary'"
+            :buttonAlignmentBetween="'between'"
+            :textButtonCancel="'Atras'"
+            :textButtonSubmit="'Registrar elemento'"
             @update:modelValue="handleFormUpdate"
-          />
+            @submit="submitForm"
+            @cancel="handleCancel"
+            />
+            <!-- :showButtonsAction="false" -->
         </VWindowItem>
       </VWindow>
     </VCardText>
-
-    <VDivider />
-
-    <VCardActions class="py-4 px-6 d-flex justify-space-between">
-      <div>
-        <VBtn variant="tonal" color="secondary" @click="handleClose">
-          Cancelar
-        </VBtn>
-      </div>
-
-      <div class="d-flex ga-2">
-        <VBtn v-if="step === 2" variant="outlined" color="secondary" @click="step = 1">
-          Regresar
-        </VBtn>
-
-        <VBtn v-if="step === 1" color="primary" @click="validateCurpAndContinue">
-          Validar CURP
-        </VBtn>
-
-        <VBtn v-else color="primary" @click="submitForm">
-          Guardar voluntario
-        </VBtn>
-      </div>
-    </VCardActions>
   </VCard>
 </template>
