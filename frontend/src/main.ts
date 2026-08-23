@@ -11,6 +11,7 @@ import "@core/scss/template/index.scss";
 import "@styles/cardStyles.css";
 import "@styles/styles.css";
 import "@styles/styles.scss";
+import "@styles/tailwind.css";
 
 // Create vue app
 const app = createApp(App);
