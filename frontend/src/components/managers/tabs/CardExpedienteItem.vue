@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useLoadingOverlayStore } from "@/stores/loadingOverlayStore";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { openResource } from "@/utils/fileHelper";
 import { computed, nextTick, ref } from "vue";
+import CardExpedienteButtons from "./CardExpedienteButtons.vue";
+const loadingOverlayStore = useLoadingOverlayStore();
 
 const props = withDefaults(
   defineProps<{
@@ -123,34 +126,6 @@ function handleClearInput() {
   fileCargado.value = false;
 }
 
-function clearLocalEvidence(key: string) {
-  const item = dataLocal.value as (DocItemServer & LocalEvidence) | undefined;
-  if (!item) return;
-
-  if (item.url && item.url.startsWith("blob:")) {
-    try {
-      URL.revokeObjectURL(item.url);
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  delete item.file;
-  delete item.url;
-  delete item.name;
-
-  const input = inputRefs.value[key];
-  if (input) {
-    try {
-      input.value = "";
-    } catch (e) {
-      const form =
-        input.closest && (input.closest("form") as HTMLFormElement | null);
-      if (form) form.reset();
-    }
-  }
-}
-
 function onFileSelected(key: string, event: Event) {
   fileCargado.value = true;
   const target = event.target as HTMLInputElement;
@@ -187,10 +162,6 @@ function hasRemoteEvidence(item: DocItem): boolean {
   return !!item.ruta_archivo;
 }
 
-function hasEvidence(item: DocItemServer): boolean {
-  return hasLocalEvidence(item) || hasRemoteEvidence(item);
-}
-
 function viewEvidence(item: DocItemServer) {
   const local = (item as DocItemServer & LocalEvidence)?.url;
   if (local) {
@@ -202,17 +173,8 @@ function viewEvidence(item: DocItemServer) {
   openResource(item.ruta_archivo);
 }
 
-function evidenceName(key: string, item?: DocItemServer): string {
-  const local = (item as (DocItemServer & LocalEvidence) | undefined)?.name;
-  if (local) return local;
-  if (item?.ruta_archivo) {
-    const parts = String(item.ruta_archivo || "").split("/");
-    return parts[parts.length - 1] || "";
-  }
-  return "";
-}
-
 async function uploadEvidence(item: DocItemServer) {
+  loadingOverlayStore.showOverlay(true, "Cargando ...!!");
   const key = itemKey(item);
   const localFile = (item as DocItemServer & LocalEvidence)?.file;
 
@@ -294,26 +256,13 @@ async function uploadEvidence(item: DocItemServer) {
     delete (item as DocItemServer & LocalEvidence).name;
 
     handleClearInput();
+
+    loadingOverlayStore.hideOverlay();
   } catch (error) {
+    loadingOverlayStore.hideOverlay();
     console.error("Error al subir el documento", error);
   }
 }
-
-function handleUploadAnother() {
-  const item = dataLocal.value as DocItemServer | undefined;
-  if (!item) return;
-  const key = itemKey(item);
-  autoUploadKey.value = key;
-  // open file picker; on select, onFileSelected will auto-upload
-  openFilePicker(key);
-}
-
-const showFileButton = computed(() => {
-  const item = dataLocal.value as DocItemServer | undefined;
-  if (!item) return false;
-  const key = itemKey(item);
-  return !!inputRefs.value[key];
-});
 
 const status = computed(() => {
   const item = dataLocal.value ?? {};
@@ -364,33 +313,6 @@ const status = computed(() => {
     borderCard: " border-[#f7e6a9] ",
   };
 });
-
-function handleDocumentButton() {
-  const item = dataLocal.value as DocItemServer | undefined;
-  if (!item) return;
-
-  const key = itemKey(item);
-  const text = status.value.btnFileText;
-
-  if (text === "Adjuntar archivo") {
-    openFilePicker(key);
-    return;
-  }
-
-  if (text === "Cargar archivo") {
-    if ((item as DocItemServer & LocalEvidence)?.file) {
-      uploadEvidence(item);
-      return;
-    }
-
-    openFilePicker(key);
-    return;
-  }
-
-  if (text === "Ver evidencia") {
-    viewEvidence(item);
-  }
-}
 
 function handleUploadDocument() {
   const item = dataLocal.value as DocItemServer | undefined;
@@ -443,35 +365,15 @@ function handleOpenFilePicker() {
       </div>
     </div>
     <div >
-      <div v-if="!(dataLocal?.fecha_registro ?? false) && !fileCargado" :class="classCol">
-            <VBtn variant="tonal" color="primary" @click="handleOpenFilePicker">
-                <VIcon icon="tabler-paperclip" class="font-weight-medium"/>
-                <!-- <span>Adjuntar archivo</span> -->
-            </VBtn>
-        </div>
-        <div v-else>
-            <div v-if="fileCargado" :class="classCol">
-                <VBtn variant="tonal" color="primary" @click="handleUploadDocument">
-                    <VIcon icon="tabler-upload" class="font-weight-medium"/>
-                    <!-- <span>Cargar archivo</span> -->
-                </VBtn>
-                <VBtn variant="tonal" color="secondary" @click="handleClearInput">
-                    <VIcon icon="tabler-cancel" class="font-weight-medium"/>
-                    <!-- <span>Cancelar</span> -->
-                </VBtn>
-            </div> 
-            <div v-else :class="classCol">
-
-                <VBtn variant="tonal" color="primary" @click="handleViewEvidence">
-                    <VIcon icon="tabler-eye" class="font-weight-medium"/>
-                    <!-- <span>Ver evidencia</span> -->
-                </VBtn>
-                <VBtn variant="tonal" color="secondary" @click="handleOpenFilePicker">
-                    <VIcon icon="tabler-refresh" class="font-weight-medium"/>
-                    <!-- <span>Cambiar archivo</span> -->
-                </VBtn>
-            </div> 
-        </div>
+        <CardExpedienteButtons
+        :data-local="dataLocal"
+        :file-cargado="fileCargado"
+        :status="status"
+        @open-file="handleOpenFilePicker"
+        @upload-document="handleUploadDocument"
+        @clear-input="handleClearInput"
+        @view-evidence="handleViewEvidence"
+        />
     </div>
 
   </div>
