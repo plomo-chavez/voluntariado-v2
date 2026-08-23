@@ -70,7 +70,7 @@ const configTable = ref({ actions: ["Editar", "Eliminar"] });
   <!-- prettier-ignore -->
   <template v-if="showFormEdit" >
     <ElementoPendiente       v-if="data.estatusRegistro == 0" :data="data" @cancelar="handleCancelar" />
-    <ManagerWizardVoluntario v-if="data.estatusRegistro == 1" :data="data" @cancelar="handleCancelar" />
+    <ManagerWizardVoluntario v-if="data.estatusRegistro == 1" :data="data" @back="handleCancelar" />
    </template>
 
   <nuevoElemento

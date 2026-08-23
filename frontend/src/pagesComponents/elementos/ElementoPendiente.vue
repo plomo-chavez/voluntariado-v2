@@ -22,9 +22,9 @@ const formSchema: any = [
   { type: "label", label: "CURP",               model: "curp",},
   { type: "label", label: "Correo",             model: "correo",},
   { type: "label", label: "Teléfono",           model: "telefono",},
-  { type: "label", label: "Estado",             model: "estado"},
-  { type: "label", label: "Delegación",         model: "delegacion"},
-  { type: "label", label: "Área",               model: "area"},
+  { type: "label", label: "Estado",             model: "estado.label"},
+  { type: "label", label: "Delegación",         model: "delegacion.label"},
+  { type: "label", label: "Área",               model: "area.label"},
 ];
 
 // prettier-ignore
@@ -42,6 +42,10 @@ const handleSubmit = async () => {
     onSuccess: (response: any) => { emit("cancelar");     },
   });
 };
+
+// prettier-ignore
+const handleCancel = async () => { emit("cancelar"); };
+
 // prettier-ignore
 onBeforeMount(() => {});
 </script>
@@ -69,6 +73,7 @@ onBeforeMount(() => {});
             :textButtonCancel="'Cancelar'"
             :textButtonSubmit="'Validar CURP'"
             @submit="handleSubmit"
+            @cancel="handleCancel"
         />
     </VCardText>
   </VCard>

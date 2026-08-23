@@ -71,17 +71,21 @@ onBeforeMount(async () => {
 </script>
 
 <template v-if="show">
+  <div class="perfil-shell">
+    <button
+      type="button"
+      class="perfil-back"
+      @click="emit('back')"
+      aria-label="Volver al inicio"
+    >
+      <VIcon icon="tabler-arrow-left" start size="18" />
+      <span class="perfil-subtitle">Volver al inicio</span>
+    </button>
+  </div>
   <div v-if="voluntarioData != null" class="perfil-shell">
     <!-- Cabecera -->
     <div class="perfil-header mb-4">
       <div class="d-flex align-center gap-2">
-        <VBtn
-          icon="mdi-arrow-left"
-          variant="text"
-          color="secondary"
-          size="small"
-          @click="emit('back')"
-        />
         <div>
           <h1 class="perfil-title">{{ props.title }}</h1>
           <p class="perfil-subtitle">Gestión del expediente del voluntario</p>
@@ -158,6 +162,22 @@ onBeforeMount(async () => {
 .perfil-shell {
   max-width: 1120px;
   margin: 0 auto;
+}
+
+.perfil-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border: none;
+  background: transparent;
+  color: #2f3b46;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.perfil-back:hover {
+  opacity: 0.8;
 }
 
 .perfil-header {
