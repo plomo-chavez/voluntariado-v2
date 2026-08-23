@@ -119,7 +119,6 @@ async function saveVolIdiomas(id_voluntario, idiomas = []) {
 }
 
 async function transformFormSectionsToPayload(data) {
-  const sections = ["contacto", "salud"];
   let isCreate = false;
   let tableModel = "";
   let payload = {};
@@ -244,6 +243,8 @@ async function transformFormSectionsToPayload(data) {
       break;
     case "idiomas":
       return saveVolIdiomas(data.id_voluntario, data.idiomas);
+    case "estatus":
+      return await updateRecord("volInfo", data);
   }
 
   if (!isCreate) {
@@ -262,6 +263,7 @@ async function transformFormSectionsToPayload(data) {
     data: elemento,
   };
 }
+
 async function createNumberUnique(payload) {
   let estadisticaEstado = await estadoElementos.findOne({
     where: { estado_id: payload.estado_id },
@@ -367,6 +369,7 @@ const getAll = async (req, res) => {
       "created_at",
       "updated_at",
       "deleted_at",
+      "estatusRegistro",
     ];
 
     const userRole = req?.user ?? null;

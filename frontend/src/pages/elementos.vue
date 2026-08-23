@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import CrudManager from "@/components/apps/VistaUno.vue";
 import ManagerWizardVoluntario from "@/components/managers/ManagerWizardVoluntario.vue";
+import ElementoPendiente from "@/pagesComponents/elementos/ElementoPendiente.vue";
 import nuevoElemento from "@/pagesComponents/voluntarios/nuevoElemento.vue";
 
 const showFormEdit = ref(false); // Referencia al componente FormFactory
@@ -47,8 +48,8 @@ const handleSubmitNuevoElemento = (payload: any) => {
 };
 
 // estatusRegistro
-// 1 - Pendiente de revisión
-// 2 - Activo
+// 0 - Pendiente de revisión
+// 1 - Activo
 // prettier-ignore
 const fnRowClass = (row: any) => {
   let { item } = row;
@@ -56,7 +57,7 @@ const fnRowClass = (row: any) => {
   let classEstatus = "";
 
   switch (item.estatusRegistro) {
-    case 1: classEstatus = ' bgPrimaryTonalLight '; break; // Pendiente
+    case 0: classEstatus = ' bgPrimaryTonalLight '; break; // Pendiente
   }
 
   return { class: classEstatus };
@@ -67,7 +68,10 @@ const configTable = ref({ actions: ["Editar", "Eliminar"] });
 
 <template>
   <!-- prettier-ignore -->
-  <ManagerWizardVoluntario v-if="showFormEdit" :data="data" @cancelar="handleCancelar" />
+  <template v-if="showFormEdit" >
+    <ElementoPendiente       v-if="data.estatusRegistro == 0" :data="data" @cancelar="handleCancelar" />
+    <ManagerWizardVoluntario v-if="data.estatusRegistro == 1" :data="data" @cancelar="handleCancelar" />
+   </template>
 
   <nuevoElemento
     v-else-if="showFormNew"
