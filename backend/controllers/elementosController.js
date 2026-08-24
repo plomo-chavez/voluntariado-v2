@@ -888,6 +888,86 @@ async function cargarDocumento(req, res) {
     });
   }
 }
+
+async function cargarHistorico(req, res) {
+  try {
+    const { id_elemento, form } = req.body || {};
+    const file = req.file;
+
+    if (!file) {
+      return res.json({
+        result: false,
+        message: "El documento es requerido.",
+      });
+    }
+    const elementoId = id_elemento || null;
+    if (!elementoId) {
+      return res.json({
+        result: false,
+        message: "El id del elemento es requerido.",
+      });
+    }
+
+    const elemento = await db.volInfo.findByPk(elementoId, {
+      attributes: ["id", "numero_interno"],
+    });
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "No se encontró el elemento indicado.",
+      });
+    }
+
+    const dataForm = form ? JSON.parse(form) : {};
+
+    const numeroInterno = String(elemento.numero_interno || "").trim();
+    const estadoId = numeroInterno.slice(0, 2);
+
+    if (!/^\d{2}/.test(numeroInterno)) {
+      return res.json({
+        result: false,
+        message:
+          "El elemento no tiene un número interno válido para determinar su estado.",
+      });
+    }
+
+    const { relativePath } = getDataNewFileExpediente({
+      file,
+      documentType: dataForm.tipo_documento.id,
+      numeroInterno,
+      estadoId,
+      isHistorico: true,
+    });
+
+    const payloadDocument = {
+      id_voluntario: elemento.id,
+      id_tipo_documento: dataForm.tipo_documento.id,
+      tipoDocumento: dataForm.tipo_documento.label,
+      numero: null,
+      fechaFinal: dataForm.fechaFin || null,
+      fechaInicio: dataForm.fechaInicio || null,
+      ruta_archivo: relativePath,
+      fecha_registro: new Date(),
+    };
+
+    const savedDocument = await db.volDocumento.create(payloadDocument);
+
+    return res.status(200).json({
+      result: true,
+      message: "Documento cargado correctamente.",
+      data: {
+        documento: savedDocument,
+        ruta: relativePath,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al cargar el documento: " + error.message,
+    });
+  }
+}
 export default {
   getAll,
   getById,
@@ -898,4 +978,5 @@ export default {
   descargarDocumentos,
   cargarDocumento,
   getDocumentos,
+  cargarHistorico,
 };

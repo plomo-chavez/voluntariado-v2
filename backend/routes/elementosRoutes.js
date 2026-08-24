@@ -22,5 +22,10 @@ router.post(
   upload.single("documento"),
   elementosController.cargarDocumento,
 );
+router.post(
+  "/elemento/carga/historico",
+  upload.single("documento"),
+  elementosController.cargarHistorico,
+);
 
 export default router;

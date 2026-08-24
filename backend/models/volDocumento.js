@@ -29,7 +29,13 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
-      vigencia: {
+      fechaFinal: {
+        field: "fechaFinal",
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      fechaInicio: {
+        field: "fechaInicio",
         type: DataTypes.DATEONLY,
         allowNull: true,
       },

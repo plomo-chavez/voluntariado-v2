@@ -252,7 +252,7 @@ function handleAddIncidente() {
         </div>
       </section>
     </div>
-    <NuevoRegistroHistorico v-else :data="{}"/>
+    <NuevoRegistroHistorico v-else :data="props.data"/>
   </div>
 </template>
 

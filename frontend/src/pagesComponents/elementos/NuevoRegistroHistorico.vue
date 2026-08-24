@@ -138,11 +138,58 @@ const handleChangeForm = (newValue: any) => {
 
 const handleSubmit = () => {
   console.log("Formulario enviado:", form.value);
+  uploadEvidence();
 };
 
 const handleCancel = () => {
   console.log("Formulario cancelado");
 };
+const handleSelectFile = (value: File | File[] | null) => {
+  form.value.evidencia = value;
+  console.log("Archivo seleccionado:", value);
+};
+
+async function uploadEvidence() {
+  const evidenceValue = form.value?.evidencia;
+  const selectedFile = Array.isArray(evidenceValue)
+    ? (evidenceValue[0] ?? null)
+    : (evidenceValue ?? null);
+
+  if (!(selectedFile instanceof File)) return;
+
+  const elementoId = props.data?.id ?? props.data?.id_voluntario;
+  if (!elementoId) {
+    console.error("No se encontró el id del elemento para subir el documento.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("documento", selectedFile);
+  formData.append("id_elemento", String(elementoId));
+  formData.append("form", String(JSON.stringify(form.value)));
+
+  const baseUrl = (axiosInstance.defaults.baseURL || "").replace(/\/$/, "");
+  const endpoint = baseUrl.endsWith("/api")
+    ? "/api/elemento/carga/historico"
+    : "/api/elemento/carga/historico";
+
+  try {
+    const res = await axiosInstance.post(endpoint, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const returnedPath = res?.data?.data?.ruta || res?.data?.data?.ruta_archivo;
+    if (returnedPath) {
+      console.log("Documento subido con éxito. Ruta:", returnedPath);
+    }
+
+    form.value.evidencia = null;
+  } catch (error) {
+    console.error("Error al subir el documento", error);
+  }
+}
 
 onBeforeMount(() => {});
 </script>
@@ -166,7 +213,11 @@ onBeforeMount(() => {});
           @update:modelValue="handleChangeForm"
         />
       </div>
-      <SelectFile label="Documento" />
+      <SelectFile
+        label="Documento"
+        :modelValue="form"
+        @handleEmit="handleSelectFile"
+      />
 
       <div class="mt-4 d-flex justify-space-between gap-3">
         <VBtn variant="tonal" color="secondary" @click.prevent="handleCancel">

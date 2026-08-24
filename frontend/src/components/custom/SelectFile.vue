@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: File | File[] | null;
+    modelValue?: any;
     label?: string;
     accept?: string;
     multiple?: boolean;
@@ -29,6 +29,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (event: "update:modelValue", value: File | File[] | null): void;
   (event: "change", value: File | File[] | null): void;
+  (event: "handleEmit", value: File | File[] | null): void;
 }>();
 
 const inputRef = ref<HTMLInputElement | null>(null);
@@ -90,6 +91,16 @@ function normalizeFiles(list: FileList | null): File[] {
 function emitValue(value: File | File[] | null) {
   emit("update:modelValue", value);
   emit("change", value);
+  emit("handleEmit", value);
+
+  const hasSelectedDocument =
+    value instanceof File || (Array.isArray(value) && value.length > 0);
+
+  if (hasSelectedDocument) {
+    console.log("Documento seleccionado:", value);
+  } else {
+    console.log("Documento removido:", value);
+  }
 }
 
 function clearSelection() {
