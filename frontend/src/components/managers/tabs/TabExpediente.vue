@@ -205,35 +205,53 @@ onBeforeMount(async () => {
 
 <template>
   <!-- prettier-ignore -->
-  <div v-if="dataExpediente?.length" class="space-y-5">
+  <div v-if="dataExpediente?.length" class="grid gap-5 md:grid-cols-2">
 
-    <section v-for="group in dataExpediente" :key="group.id" class="overflow-hidden rounded-[28px] border border-success-200 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
-      <header class="flex items-center justify-between gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-4 py-3.5 text-white">
+    <section :key="dataExpediente[0].id" class="h-full overflow-hidden rounded-[15px] border border-success-200 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+      <header class="flex items-center justify-between gap-3 border-b border-slate-200 bgPrimaryTonalDarkDarker from-slate-900 via-slate-800 to-slate-700 px-4 py-3.5 text-white">
         <div class="flex items-center gap-3">
-          <div :class="[ 'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm',
-              group.tipo === 'otros' ? 'bg-white/10 text-slate-100' : 'bg-white/10 text-red-100',
-            ]"
-          >
-            <i :class="[ 'fa-solid', group.tipo === 'otros' ? 'fa-clock-rotate-left' : 'fa-folder-open',]" aria-hidden="true"/>
+          <div :class="[ 'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm', dataExpediente[0].tipo === 'otros' ? 'bg-white/10 text-slate-100' : 'bg-white/10 text-red-100',]">
+            <i :class="[ 'fa-solid', dataExpediente[0].tipo === 'otros' ? 'fa-clock-rotate-left' : 'fa-folder-open',]" aria-hidden="true"/>
           </div>
 
           <div>
             <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
-              {{ sectionMeta[group.tipo]?.label ?? "Documentos" }}
+              {{ sectionMeta[dataExpediente[0].tipo]?.label ?? "Documentos" }}
             </p>
             <h3 class="m-0 text-base font-bold text-white">
-              {{ titulo[group.tipo] }}
+              {{ titulo[dataExpediente[0].tipo] }}
             </h3>
           </div>
         </div>
       </header>
 
       <div class="grid gap-3 bg-slate-50 p-3 sm:p-4">
-        <template v-for="item in group.documentos ?? []" :key="itemKey(item)">
-          <CardExpedienteItem
-            :data="item"
-            :elemento-id="props.data?.id ?? props.data?.id_voluntario"
-          />
+        <template v-for="item in dataExpediente[0].documentos ?? []" :key="itemKey(item)">
+          <CardExpedienteItem :data="item" :elemento-id="props.data?.id ?? props.data?.id_voluntario" />
+        </template>
+      </div>
+    </section>
+    <section :key="dataExpediente[1].id" class="h-full overflow-hidden rounded-[15px] border border-success-200 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+      <header class="flex items-center justify-between gap-3 border-b border-slate-200 bgPrimaryTonalDarkDarker from-slate-900 via-slate-800 to-slate-700 px-4 py-3.5 text-white">
+        <div class="flex items-center gap-3">
+          <div :class="[ 'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm', dataExpediente[1].tipo === 'otros' ? 'bg-white/10 text-slate-100' : 'bg-white/10 text-red-100',]">
+            <i :class="[ 'fa-solid', dataExpediente[1].tipo === 'otros' ? 'fa-clock-rotate-left' : 'fa-folder-open',]" aria-hidden="true"/>
+          </div>
+
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+              {{ sectionMeta[dataExpediente[1].tipo]?.label ?? "Documentos" }}
+            </p>
+            <h3 class="m-0 text-base font-bold text-white">
+              {{ titulo[dataExpediente[1].tipo] }}
+            </h3>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid gap-3 bg-slate-50 p-3 sm:p-4">
+        <template v-for="item in dataExpediente[1].documentos ?? []" :key="itemKey(item)">
+          <CardExpedienteItem :data="item" :elemento-id="props.data?.id ?? props.data?.id_voluntario" />
         </template>
       </div>
     </section>
