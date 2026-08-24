@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TabExpediente from "@/components/managers/tabs/TabExpediente.vue";
-import TabFormacion from "@/components/managers/tabs/TabFormacion.vue";
+import TabHistorico from "@/components/managers/tabs/TabHistorico.vue";
 import TabHoras from "@/components/managers/tabs/TabHoras.vue";
 import TabInfoPersonal from "@/components/managers/tabs/TabInfoPersonal.vue";
 import TabInfoVoluntario from "@/components/managers/tabs/TabInfoVoluntario.vue";
@@ -31,7 +31,7 @@ const TABS = [
   },
   { key: "infoPersonal", label: "Información personal", icon: "mdi-account" },
   { key: "expediente", label: "Expediente", icon: "mdi-folder-account" },
-  { key: "formacion", label: "Formación", icon: "mdi-school" },
+  { key: "historico", label: "Historico", icon: "mdi-history" },
   { key: "horas", label: "Horas", icon: "mdi-clock-outline" },
 ] as const;
 
@@ -135,8 +135,8 @@ onBeforeMount(async () => {
             :data="voluntarioData"
           />
 
-          <TabFormacion
-            v-else-if="activeTab === 'formacion'"
+          <TabHistorico
+            v-else-if="activeTab === 'historico'"
             :data="voluntarioData"
             @update:data="handleUpdateData"
           />

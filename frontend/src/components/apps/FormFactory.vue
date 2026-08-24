@@ -597,15 +597,14 @@ async function handleSelectChange(field: any, selected: any) {
           );
         });
 
-  if (!(value === undefined)) {
-    // Asegúrate de que el valor sea booleano
-    formLocal[field.model] = value;
-    // Si `formLive` es true, emite los cambios en tiempo real
-    if (props.formLive) {
-      emit("update:modelValue", { ...formLocal });
-    }
-  } else {
-    formLocal[field.model] = null;
+  const hasSelectedValue =
+    selected !== null && selected !== undefined && selected !== "";
+  const finalValue = hasSelectedValue ? (value ?? selected) : null;
+
+  formLocal[field.model] = finalValue;
+
+  if (props.formLive) {
+    emit("update:modelValue", { ...formLocal });
   }
 
   if (props.validarCambios || tieneRequeridos.value) {

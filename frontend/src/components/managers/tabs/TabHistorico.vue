@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import DataTable from "@/components/apps/DataTable.vue";
+import NuevoRegistroHistorico from "@/pagesComponents/elementos/NuevoRegistroHistorico.vue";
 import { computed, ref, watch } from "vue";
 
 type FormacionRecord = {
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const showModal = ref(false);
+const moodAdd = ref(false);
 const rows = ref<FormacionRecord[]>([]);
 
 const tableHeaders = [
@@ -212,137 +214,45 @@ function rowDetalle(item: FormacionRecord): string {
     ? item.area || "-"
     : item.institucion || "-";
 }
+function handleAddIncidente() {
+  moodAdd.value = true;
+}
 </script>
-
+<!-- prettier-ignore -->
 <template>
   <div class="formacion-root">
-    <section class="formacion-section">
-      <header class="formacion-header">
-        <div class="formacion-title-wrap">
-          <i
-            class="fa-solid fa-graduation-cap formacion-icon"
-            aria-hidden="true"
-          />
-          <h3 class="formacion-title">Formacion</h3>
-        </div>
-
-        <VBtn
-          size="small"
-          color="white"
-          variant="flat"
-          title="Agregar formacion"
-          @click="openAddModal"
-        >
-          <i class="fa-solid fa-plus" aria-hidden="true" />
-        </VBtn>
-      </header>
-
-      <div class="formacion-body">
-        <DataTable
-          :headers="tableHeaders"
-          :data="tableRows"
-          :dataResponse="tableDataResponse"
-          :config="tableConfig"
-          @action="handleTableAction"
-        />
-      </div>
-    </section>
-
-    <VDialog v-model="showModal" max-width="640">
-      <VCard>
-        <VCardTitle class="modal-title">Agregar formacion</VCardTitle>
-
-        <VCardText>
-          <VRadioGroup v-model="form.tipo" inline class="mb-2">
-            <VRadio label="Institucional" value="institucional" />
-            <VRadio label="Externo" value="externo" />
-          </VRadioGroup>
-
-          <div class="modal-grid">
-            <VSelect
-              v-if="form.tipo === 'institucional'"
-              v-model="form.area"
-              :items="areaOptions"
-              label="Area"
-              variant="outlined"
-              density="compact"
-              class="styled-input"
-            />
-
-            <VTextField
-              v-if="form.tipo === 'institucional'"
-              v-model="form.capacitacion"
-              label="Capacitacion"
-              variant="outlined"
-              density="compact"
-              class="styled-input"
-            />
-
-            <VTextField
-              v-if="form.tipo === 'externo'"
-              v-model="form.nombre_taller"
-              label="Nombre del taller"
-              variant="outlined"
-              density="compact"
-              class="styled-input"
-            />
-
-            <VTextField
-              v-if="form.tipo === 'externo'"
-              v-model="form.institucion"
-              label="Institucion"
-              variant="outlined"
-              density="compact"
-              class="styled-input"
-            />
-
-            <VTextField
-              v-model="form.fecha"
-              label="Fecha"
-              type="date"
-              variant="outlined"
-              density="compact"
-              class="styled-input"
-            />
-
-            <div class="evidencia-field">
-              <input
-                ref="inputEvidencia"
-                type="file"
-                class="hidden-input"
-                @change="onFileSelected"
-              />
-
-              <VBtn
-                size="small"
-                variant="tonal"
-                color="red-darken-2"
-                @click="openFilePicker"
-              >
-                <i class="fa-solid fa-paperclip" aria-hidden="true" />
-                Evidencia
-              </VBtn>
-              <span class="evidencia-name">{{
-                form.evidencia_nombre || "Sin archivo"
-              }}</span>
-            </div>
+    <!-- Vista Uno -->
+    <div v-if="!moodAdd">
+      <section class="formacion-section">
+        <header class="formacion-header">
+          <div class="formacion-title-wrap">
+            <i class="fa-solid fa-graduation-cap formacion-icon" aria-hidden="true" />
+            <h3 class="formacion-title">Formacion</h3>
           </div>
-        </VCardText>
 
-        <VCardActions class="justify-end">
-          <VBtn variant="text" color="secondary" @click="closeModal"
-            >Cancelar</VBtn
-          >
           <VBtn
-            color="red-darken-2"
-            :disabled="!formValid"
-            @click="submitFormacion"
+            size="small"
+            color="white"
+            variant="flat"
+            title="Agregar formacion"
+            @click="handleAddIncidente"
           >
-            Guardar
+            <i class="fa-solid fa-plus" aria-hidden="true" />
           </VBtn>
-        </VCardActions>
-      </VCard>
-    </VDialog>
+        </header>
+
+        <div class="formacion-body">
+          <DataTable
+            :headers="tableHeaders"
+            :data="tableRows"
+            :dataResponse="tableDataResponse"
+            :config="tableConfig"
+            @action="handleTableAction"
+          />
+        </div>
+      </section>
+    </div>
+    <NuevoRegistroHistorico v-else :data="{}"/>
   </div>
 </template>
 

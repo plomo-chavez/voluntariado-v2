@@ -15,18 +15,19 @@ export function useCatalogo() {
 
       // prettier-ignore
       switch (item.catalogo) {
-        case "tipos-usuarios":    url = "/api/catalogos/tipos-usuarios"; break;
-        case "estados":           url = "/api/catalogos/estados"; break;
-        case "delegaciones":      url = "/api/catalogos/delegaciones"; break;
-        case "areas":             url = "/api/catalogos/areas"; break;
-        case "cargos":            url = "/api/catalogos/cargos"; break;
-        case "nacionalidad":      url = "/api/catalogos/nacionalidad"; break;
-        case "estado-civil":      url = "/api/catalogos/estado-civil"; break;
-        case "grupos-sanguineos": url = "/api/catalogos/grupos-sanguineos"; break;
-        case "parentesco":        url = "/api/catalogos/parentesco"; break;
-        case "grados-estudios":   url = "/api/catalogos/grados-estudios"; break;
-        case "medio-difusion":    url = "/api/catalogos/medio-difusion"; break;
-        case "idiomas":           url = "/api/catalogos/idiomas"; break;
+        case "tipos-usuarios":        url = "/api/catalogos/tipos-usuarios"; break;
+        case "estados":               url = "/api/catalogos/estados"; break;
+        case "delegaciones":          url = "/api/catalogos/delegaciones"; break;
+        case "areas":                 url = "/api/catalogos/areas"; break;
+        case "cargos":                url = "/api/catalogos/cargos"; break;
+        case "nacionalidad":          url = "/api/catalogos/nacionalidad"; break;
+        case "estado-civil":          url = "/api/catalogos/estado-civil"; break;
+        case "grupos-sanguineos":     url = "/api/catalogos/grupos-sanguineos"; break;
+        case "parentesco":            url = "/api/catalogos/parentesco"; break;
+        case "grados-estudios":       url = "/api/catalogos/grados-estudios"; break;
+        case "medio-difusion":        url = "/api/catalogos/medio-difusion"; break;
+        case "idiomas":               url = "/api/catalogos/idiomas"; break;
+        case "tipo-documentos-otros": url = "/api/catalogos/tipo-documentos-otros"; break;
       }
 
       if (item?.public ?? false) {

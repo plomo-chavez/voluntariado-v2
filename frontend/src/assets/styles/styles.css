@@ -43,6 +43,7 @@
     black
   ) !important;
 }
+.mxAuto { margin-left: auto!important; margin-right: auto!important; }
 .textDanger, .text-danger { color: rgb(var(--v-theme-error))!important; }
 .textSuccess { color: var(--v-theme-success)!important; }
 .textSecondary { color: var(--v-theme-secondary)!important; }

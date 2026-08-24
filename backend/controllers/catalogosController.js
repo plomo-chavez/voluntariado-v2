@@ -61,6 +61,10 @@ const tablaMap = {
     tabla: "catIdioma",
     filtros: { estatus: 1 },
   },
+  "tipo-documentos-otros": {
+    tabla: "catTipoDocumento",
+    filtros: { estatus: 1, type: "otros" },
+  },
 };
 
 const getCatalogo = async (req, res, tabla) => {
