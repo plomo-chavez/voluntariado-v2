@@ -726,14 +726,6 @@ const getDocumentos = async (req, res) => {
   try {
     const { id_voluntario } = req.body;
 
-    const documentosExpediente = await db.catTipoDocumento.findAll({
-      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
-    });
-
-    const documentosExpedienteJson = documentosExpediente.map((doc) =>
-      doc.toJSON(),
-    );
-
     if (!id_voluntario) {
       return res.json({
         result: false,
@@ -742,8 +734,26 @@ const getDocumentos = async (req, res) => {
       });
     }
 
+    console.log("");
+    console.log("");
+    console.log("");
+    console.log("");
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
+
+    const arraysIds = documentosExpedienteJson.map((doc) => doc.id);
     const documentos = await db.volDocumento.findAll({
-      where: { id_voluntario },
+      where: {
+        id_voluntario,
+        id_tipo_documento: {
+          [Op.in]: arraysIds,
+        },
+      },
       include: [
         {
           model: db.catTipoDocumento,
