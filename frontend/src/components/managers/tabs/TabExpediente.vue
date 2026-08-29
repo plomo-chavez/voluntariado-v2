@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import CardExpedienteItem from "@/components/managers/tabs/CardExpedienteItem.vue";
 import { axiosInstance } from "@/utils/axiosInstance";
 import { openResource } from "@/utils/fileHelper";
 import { ref } from "vue";
@@ -6,9 +7,15 @@ import { ref } from "vue";
 const props = defineProps<{ data?: any }>();
 
 const titulo: any = {
-  formacion: "Formación Institucional",
-  expediente: "Documento del expediente",
-  otros: "Otrós",
+  formacion: "Formación institucional",
+  expediente: "Documentos del expediente",
+  otros: "Histórico",
+};
+
+const sectionMeta: Record<string, { label: string; tone: string }> = {
+  expediente: { label: "Requeridos", tone: "red" },
+  formacion: { label: "Formación", tone: "amber" },
+  otros: { label: "Histórico", tone: "slate" },
 };
 
 const dataExpediente = ref<any>(null);
@@ -194,227 +201,72 @@ onBeforeMount(async () => {
     },
   });
 });
-</script>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+</script>
 
 <template>
   <!-- prettier-ignore -->
-  <div v-if="true" class="expediente-root">
-    <section v-for="group in dataExpediente" :key="group.id" class="exp-section">
-      <header class="exp-section-header">
-        <div class="exp-title-wrap">
-          <i class="fa-solid fa-file-lines exp-icon" aria-hidden="true" />
-          <h3 class="exp-title">{{ titulo[group.tipo] }}</h3>
+  <div v-if="dataExpediente?.length" class="grid gap-5 md:grid-cols-2">
+
+    <section :key="dataExpediente[0].id" class="h-full overflow-hidden rounded-[15px] border border-success-200 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+      <header class="flex items-center justify-between gap-3 border-b border-slate-200 bgPrimaryTonalDarkDarker from-slate-900 via-slate-800 to-slate-700 px-4 py-3.5 text-white">
+        <div class="flex items-center gap-3">
+          <div :class="[ 'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm', dataExpediente[0].tipo === 'otros' ? 'bg-white/10 text-slate-100' : 'bg-white/10 text-red-100',]">
+            <i :class="[ 'fa-solid', dataExpediente[0].tipo === 'otros' ? 'fa-clock-rotate-left' : 'fa-folder-open',]" aria-hidden="true"/>
+          </div>
+
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+              {{ sectionMeta[dataExpediente[0].tipo]?.label ?? "Documentos" }}
+            </p>
+            <h3 class="m-0 text-base font-bold text-white">
+              {{ titulo[dataExpediente[0].tipo] }}
+            </h3>
+          </div>
         </div>
       </header>
 
-      <div class="exp-body">
-        <ul class="exp-list">
-          <li v-for="item in group.documentos ?? []" :key="itemKey(item)" class="exp-list-item" >
-            <div class="exp-item-left">
-              <i v-if="hasEvidence(item) && hasRemoteEvidence(item) && group.tipo != 'otros'" aria-hidden="true" :class="['exp-bullet','fa-solid fa-circle-check exp-bullet--ok']" />
-              <i v-else aria-hidden="true" :class="['exp-bullet','fa-regular fa-file-lines']" />
-              <span>{{ item.tipo_label }}</span>
-            </div>
-
-            <div class="exp-actions">
-              <input :ref=" (el) => setInputRef(itemKey(item), el as HTMLInputElement | null)" class="exp-hidden-input" type="file" @change="(event) => onFileSelected(itemKey(item), event)" />
-              <template v-if="group.tipo != 'otros'">
-                <!-- Local file selected but not uploaded -->
-                <template v-if="hasLocalEvidence(itemKey(item))">
-                  <VBtn size="x-small" color="success" variant="flat" icon title="Enviar evidencia" @click="uploadEvidence(item)">
-                    <i class="fa-solid fa-check" aria-hidden="true" />
-                  </VBtn>
-                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Limpiar selección local" @click="clearLocalEvidence(itemKey(item))">
-                    <i class="fa-regular fa-circle-xmark" />
-                  </VBtn>
-                  <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia local" @click="viewEvidence(item)">
-                    <i class="fa-solid fa-eye" aria-hidden="true" />
-                  </VBtn>
-                </template>
-
-                <!-- Remote file already exists -->
-                <template v-else-if="hasRemoteEvidence(item)">
-                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Recargar evidencia" @click="openFilePicker(itemKey(item))">
-                    <i class="fa-solid fa-arrows-rotate" aria-hidden="true" />
-                  </VBtn>
-                  <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia" @click="viewEvidence(item)">
-                    <i class="fa-solid fa-eye" aria-hidden="true" />
-                  </VBtn>
-                </template>
-
-                <!-- No file -->
-                <template v-else>
-                  <VBtn size="x-small" icon color="red-darken-2" variant="tonal" title="Cargar evidencia" @click="openFilePicker(itemKey(item))">
-                    <i class="fa-solid fa-paperclip" aria-hidden="true" />
-                  </VBtn>
-                </template>
-              </template>
-              <template v-else>
-                <VBtn size="x-small" icon color="primary" variant="tonal" title="Ver evidencia" @click="viewEvidence(item)">
-                  <i class="fa-solid fa-eye" aria-hidden="true" />
-                </VBtn>
-              </template>
-            </div>
-
-            <p v-if="hasEvidence(item) && !hasRemoteEvidence(item)" class="exp-file-name">
-              {{ evidenceName(itemKey(item), item) }}
-            </p>
-          </li>
-        </ul>
+      <div class="grid gap-3 bg-slate-50 p-3 sm:p-4">
+        <template v-for="item in dataExpediente[0].documentos ?? []" :key="itemKey(item)">
+          <CardExpedienteItem :data="item" :elemento-id="props.data?.id ?? props.data?.id_voluntario" />
+        </template>
       </div>
     </section>
+    <section :key="dataExpediente[1].id" class="h-full overflow-hidden rounded-[15px] border border-success-200 bg-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
+      <header class="flex items-center justify-between gap-3 border-b border-slate-200 bgPrimaryTonalDarkDarker from-slate-900 via-slate-800 to-slate-700 px-4 py-3.5 text-white">
+        <div class="flex items-center gap-3">
+          <div :class="[ 'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold shadow-sm', dataExpediente[1].tipo === 'otros' ? 'bg-white/10 text-slate-100' : 'bg-white/10 text-red-100',]">
+            <i :class="[ 'fa-solid', dataExpediente[1].tipo === 'otros' ? 'fa-clock-rotate-left' : 'fa-folder-open',]" aria-hidden="true"/>
+          </div>
+
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+              {{ sectionMeta[dataExpediente[1].tipo]?.label ?? "Documentos" }}
+            </p>
+            <h3 class="m-0 text-base font-bold text-white">
+              {{ titulo[dataExpediente[1].tipo] }}
+            </h3>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid gap-3 bg-slate-50 p-3 sm:p-4">
+        <template v-for="item in dataExpediente[1].documentos ?? []" :key="itemKey(item)">
+          <CardExpedienteItem :data="item" :elemento-id="props.data?.id ?? props.data?.id_voluntario" />
+        </template>
+      </div>
+    </section>
+  </div>
+
+  <div
+    v-else
+    class="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500"
+  >
+    No hay documentos registrados en este expediente.
   </div>
 </template>
 
 <style scoped>
-.expediente-root {
-  display: grid;
-  gap: 0.85rem;
-}
-
-.exp-section {
-  border: 1px solid #e4e8ef;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.exp-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  padding: 0.45rem 0.7rem;
-  background: linear-gradient(90deg, #b71c1c 0%, #d32f2f 100%);
-}
-
-.exp-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.exp-icon {
-  color: #fff;
-  font-size: 0.95rem;
-}
-
-.exp-title {
-  margin: 0;
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.exp-body {
-  padding: 0.5rem 0.7rem 0.65rem;
-}
-
-.exp-block + .exp-block {
-  margin-top: 0.55rem;
-}
-
-.exp-subtitle {
-  margin: 0 0 0.3rem;
-  color: #64748b;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 700;
-}
-
-.exp-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.exp-list-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #edf1f6;
-  color: #1f2937;
-  font-size: 0.9rem;
-}
-
-.exp-list-item:last-child {
-  border-bottom: 0;
-}
-
-.exp-list-item--with-area {
-  gap: 0.7rem;
-}
-
-.exp-item-left {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
+:deep(.v-btn) {
   min-width: 0;
-}
-
-.exp-item-left span,
-.exp-list-item span {
-  overflow-wrap: anywhere;
-}
-
-.exp-bullet {
-  color: #9a1f1f;
-  flex-shrink: 0;
-  font-size: 0.95rem;
-}
-
-.exp-bullet--ok {
-  color: #2e7d32;
-}
-
-.exp-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.exp-actions--inline {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.exp-hidden-input {
-  display: none;
-}
-
-.exp-file-name {
-  margin: 0;
-  width: 100%;
-  color: #64748b;
-  font-size: 0.75rem;
-}
-
-.exp-summary {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.45rem;
-  color: #64748b;
-  font-size: 0.84rem;
-}
-
-.exp-summary strong {
-  color: #9a1f1f;
-}
-
-@media (max-width: 700px) {
-  .exp-list-item--with-area {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .exp-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
 }
 </style>

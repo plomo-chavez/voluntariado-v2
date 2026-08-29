@@ -12,9 +12,9 @@ import {
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
-const { volInfo, estadoElementos, catTipoDocumento } = db;
+const { volInfo, volDocumento, estadoElementos, catTipoDocumento } = db;
 
-const { getAllFromModel } = functionHelper;
+const { getAllFromModel, handleTypeUser } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
@@ -119,7 +119,6 @@ async function saveVolIdiomas(id_voluntario, idiomas = []) {
 }
 
 async function transformFormSectionsToPayload(data) {
-  const sections = ["contacto", "salud"];
   let isCreate = false;
   let tableModel = "";
   let payload = {};
@@ -244,6 +243,8 @@ async function transformFormSectionsToPayload(data) {
       break;
     case "idiomas":
       return saveVolIdiomas(data.id_voluntario, data.idiomas);
+    case "estatus":
+      return await updateRecord("volInfo", data);
   }
 
   if (!isCreate) {
@@ -262,6 +263,7 @@ async function transformFormSectionsToPayload(data) {
     data: elemento,
   };
 }
+
 async function createNumberUnique(payload) {
   let estadisticaEstado = await estadoElementos.findOne({
     where: { estado_id: payload.estado_id },
@@ -342,7 +344,7 @@ async function saveElemento(data) {
 
 const getAll = async (req, res) => {
   try {
-    const filtros = req.body.filtros || {};
+    let filtros = req.body.filtros || {};
     const page = parseInt(req.body.page) || 1;
     const pageSize = parseInt(req.body.pageSize) || 10;
 
@@ -363,10 +365,28 @@ const getAll = async (req, res) => {
       "segundo_apellido",
       "correo",
       "estatus",
+      "estatusRegistro",
       "created_at",
       "updated_at",
       "deleted_at",
+      "estatusRegistro",
     ];
+
+    const userRole = req?.user ?? null;
+
+    const typeUser = handleTypeUser(req);
+
+    if (typeUser == "estatal") {
+      filtros = { ...filtros, estado_id: userRole.estado_id };
+    }
+
+    if (typeUser == "local") {
+      filtros = {
+        ...filtros,
+        estado_id: userRole.estado_id,
+        delegacion_id: userRole.delegacion_id,
+      };
+    }
 
     const response = await getAllFromModel({
       model: volInfo,
@@ -706,14 +726,6 @@ const getDocumentos = async (req, res) => {
   try {
     const { id_voluntario } = req.body;
 
-    const documentosExpediente = await db.catTipoDocumento.findAll({
-      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
-    });
-
-    const documentosExpedienteJson = documentosExpediente.map((doc) =>
-      doc.toJSON(),
-    );
-
     if (!id_voluntario) {
       return res.json({
         result: false,
@@ -722,8 +734,22 @@ const getDocumentos = async (req, res) => {
       });
     }
 
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
+
+    const arraysIds = documentosExpedienteJson.map((doc) => doc.id);
     const documentos = await db.volDocumento.findAll({
-      where: { id_voluntario },
+      where: {
+        id_voluntario,
+        id_tipo_documento: {
+          [Op.in]: arraysIds,
+        },
+      },
       include: [
         {
           model: db.catTipoDocumento,
@@ -744,6 +770,75 @@ const getDocumentos = async (req, res) => {
       message: "Documentos obtenidos correctamente",
       data: documentosOrdenados,
     });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al obtener documentos: " + error.message,
+      data: null,
+    });
+  }
+};
+const getHistorico = async (req, res) => {
+  try {
+    const { id_voluntario } = req.body;
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = 10;
+
+    if (!id_voluntario) {
+      return res.json({
+        result: false,
+        message: "ID de voluntario es requerido",
+        data: null,
+      });
+    }
+
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
+
+    const arraysIds = documentosExpedienteJson.map((doc) => doc.id);
+    let filtros = {
+      id_voluntario,
+      id_tipo_documento: {
+        [Op.notIn]: arraysIds,
+      },
+    };
+
+    const relaciones = await getRelaciones([
+      "area",
+      "catTipoDocumento-Documentos",
+    ]);
+    const order = [["id_documento", "DESC"]];
+    const attributes = [
+      "id_documento",
+      "id_tipo_documento",
+      "vigencia",
+      "ruta_archivo",
+      "fecha_registro",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "fechaInicio",
+      "fechaFinal",
+      "referencia_documento",
+    ];
+
+    const response = await getAllFromModel({
+      model: volDocumento,
+      include: relaciones,
+      paranoid: false,
+      attributes,
+      pageSize,
+      filtros,
+      order,
+      page,
+    });
+
+    return res.json(response);
   } catch (error) {
     return res.status(500).json({
       result: false,
@@ -858,6 +953,89 @@ async function cargarDocumento(req, res) {
     });
   }
 }
+
+async function cargarHistorico(req, res) {
+  try {
+    const { id_elemento, form } = req.body || {};
+    const file = req.file;
+
+    if (!file) {
+      return res.json({
+        result: false,
+        message: "El documento es requerido.",
+      });
+    }
+    const elementoId = id_elemento || null;
+    if (!elementoId) {
+      return res.json({
+        result: false,
+        message: "El id del elemento es requerido.",
+      });
+    }
+
+    const elemento = await db.volInfo.findByPk(elementoId, {
+      attributes: ["id", "numero_interno"],
+    });
+
+    if (!elemento) {
+      return res.json({
+        result: false,
+        message: "No se encontró el elemento indicado.",
+      });
+    }
+
+    const dataForm = form ? JSON.parse(form) : {};
+
+    const numeroInterno = String(elemento.numero_interno || "").trim();
+    const estadoId = numeroInterno.slice(0, 2);
+
+    if (!/^\d{2}/.test(numeroInterno)) {
+      return res.json({
+        result: false,
+        message:
+          "El elemento no tiene un número interno válido para determinar su estado.",
+      });
+    }
+
+    const { relativePath } = getDataNewFileExpediente({
+      file,
+      documentType: dataForm.tipo_documento.id,
+      numeroInterno,
+      estadoId,
+      isHistorico: true,
+    });
+
+    const payloadDocument = {
+      id_voluntario: elemento.id,
+      id_tipo_documento: dataForm.tipo_documento.id,
+      area_id: dataForm.referencia_documento_catalogo?.id || null,
+      tipoDocumento: dataForm.tipo_documento.label,
+      referencia_documento: dataForm.referencia_documento || null,
+      numero: null,
+      fechaFinal: dataForm.fechaFin || null,
+      fechaInicio: dataForm.fechaInicio || null,
+      ruta_archivo: relativePath,
+      fecha_registro: new Date(),
+    };
+
+    const savedDocument = await db.volDocumento.create(payloadDocument);
+
+    return res.status(200).json({
+      result: true,
+      message: "Documento cargado correctamente.",
+      data: {
+        documento: savedDocument,
+        ruta: relativePath,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al cargar el documento: " + error.message,
+    });
+  }
+}
+
 export default {
   getAll,
   getById,
@@ -868,4 +1046,6 @@ export default {
   descargarDocumentos,
   cargarDocumento,
   getDocumentos,
+  cargarHistorico,
+  getHistorico,
 };

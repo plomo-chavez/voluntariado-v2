@@ -20,6 +20,7 @@ const props = withDefaults(
     softDelete?: boolean;
     loading?: boolean;
     headers: Header[];
+    fnRowClass?: any;
     data: any[];
     dataResponse: any;
     config: {
@@ -34,6 +35,7 @@ const props = withDefaults(
     };
   }>(),
   {
+    fnRowClass: undefined, // Valor predeterminado
     softDelete: false, // Valor predeterminado
     loading: false, // Valor predeterminado
   },
@@ -118,6 +120,23 @@ const getHeaders = () => {
   ];
 };
 
+// Clase de fila según valores del item
+const rowClass = (item: any) => {
+  try {
+    return item?.estatus === 1 ? "bgRed" : "";
+  } catch (e) {
+    return "";
+  }
+};
+
+const getRowProps = ({ item }: any) => {
+  return {
+    style: {
+      backgroundColor: item.color,
+    },
+  };
+};
+1;
 watch(selected, () => {
   const selectedById = props.data.filter((item) =>
     selected.value.includes(item.id),
@@ -154,8 +173,8 @@ watch(selected, () => {
         :isActivo="props.loading"
         :texto="'Cargando información ...!!'"
       />
-
       <VDataTableServer
+        :row-props="fnRowClass"
         :headers="getHeaders()"
         :items="filteredData"
         :items-per-page="props.dataResponse?.pageSize == props.dataResponse.total  ? -1  : props.dataResponse?.pageSize"
@@ -297,5 +316,9 @@ watch(selected, () => {
 .centerHeader {
   width: 100% !important;
   text-align: center !important;
+}
+
+.bgRed {
+  background-color: #ffecec !important;
 }
 </style>

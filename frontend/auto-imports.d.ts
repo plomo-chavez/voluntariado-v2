@@ -71,9 +71,11 @@ declare global {
   const getActivePinia: typeof import('pinia')['getActivePinia']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getDataDelegacion: typeof import('./src/utils/userUtils')['getDataDelegacion']
   const getFechaAMPM: typeof import('./src/utils/dateHelper')['getFechaAMPM']
   const getTokenRemainingSeconds: typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']
   const getTokenUser: typeof import('./src/utils/authHelper')['getTokenUser']
+  const getTypeUser: typeof import('./src/utils/userUtils')['getTypeUser']
   const getUserData: typeof import('./src/utils/userUtils')['getUserData']
   const getYearsSince: typeof import('./src/utils/dateHelper')['getYearsSince']
   const h: typeof import('vue')['h']
@@ -387,6 +389,7 @@ declare global {
   const useWindowSize: typeof import('@vueuse/core')['useWindowSize']
   const usecreateUrl: typeof import('./src/@core/composable/usecreateUrl')['usecreateUrl']
   const validateChip: typeof import('./src/utils/formatterHelper')['validateChip']
+  const validatedValue: typeof import('./src/utils/formatterHelper')['validatedValue']
   const watch: typeof import('vue')['watch']
   const watchArray: typeof import('@vueuse/core')['watchArray']
   const watchAtMost: typeof import('@vueuse/core')['watchAtMost']
@@ -476,9 +479,11 @@ declare module 'vue' {
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getDataDelegacion: UnwrapRef<typeof import('./src/utils/userUtils')['getDataDelegacion']>
     readonly getFechaAMPM: UnwrapRef<typeof import('./src/utils/dateHelper')['getFechaAMPM']>
     readonly getTokenRemainingSeconds: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenRemainingSeconds']>
     readonly getTokenUser: UnwrapRef<typeof import('./src/utils/authHelper')['getTokenUser']>
+    readonly getTypeUser: UnwrapRef<typeof import('./src/utils/userUtils')['getTypeUser']>
     readonly getUserData: UnwrapRef<typeof import('./src/utils/userUtils')['getUserData']>
     readonly getYearsSince: UnwrapRef<typeof import('./src/utils/dateHelper')['getYearsSince']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
@@ -780,6 +785,7 @@ declare module 'vue' {
     readonly useWindowScroll: UnwrapRef<typeof import('@vueuse/core')['useWindowScroll']>
     readonly useWindowSize: UnwrapRef<typeof import('@vueuse/core')['useWindowSize']>
     readonly validateChip: UnwrapRef<typeof import('./src/utils/formatterHelper')['validateChip']>
+    readonly validatedValue: UnwrapRef<typeof import('./src/utils/formatterHelper')['validatedValue']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchArray: UnwrapRef<typeof import('@vueuse/core')['watchArray']>
     readonly watchAtMost: UnwrapRef<typeof import('@vueuse/core')['watchAtMost']>

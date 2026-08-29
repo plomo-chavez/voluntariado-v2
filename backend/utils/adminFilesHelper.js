@@ -273,6 +273,7 @@ export const getDataNewFileExpediente = ({
   documentType,
   numeroInterno,
   estadoId,
+  isHistorico = false,
 }) => {
   // Obtiene la ruta de la carpeta donde debe almacenarse el expediente
   const EXPEDIENTE_DIR = getFolderExpediente({
@@ -286,8 +287,10 @@ export const getDataNewFileExpediente = ({
   const extension = getExtensionFile(file);
   // Obtiene el nombre original del archivo sin su extensión
   const originalBaseName = getOriginalBaseName(file);
+  // prettier-ignore
+  const alternativeName = isHistorico ? `historico_${Date.now()}`: documentType.label;
   // Genera un nuevo nombre utilizando el nombre original y el tipo de documento
-  const newName = createNewName(originalBaseName, documentType.label);
+  const newName = createNewName(originalBaseName, alternativeName);
   // Construye el nombre final del archivo agregando el número interno y la extensión
   // Si newName está vacío, utiliza "documento" como nombre predeterminado
   const fileName = `${numeroInterno}_${newName || "documento"}.${extension}`;

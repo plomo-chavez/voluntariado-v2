@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import functionHelper from "./db/functionHelper.js";
 
-const { handleIsAdmin } = functionHelper;
+const { handleTypeUser } = functionHelper;
 
 const models = db;
 
@@ -9,7 +9,9 @@ const tablaMap = {
   "tipos-usuarios": {
     tabla: "catTiposUsuarios",
     filtros: { estatus: 1, id: { [db.Sequelize.Op.notIn]: [1, 2, 3] } },
+    filtrosDev: { estatus: 1 },
     filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
+    // filtrosAdmin: { id: { [db.Sequelize.Op.notIn]: [1] } },
   },
   estados: {
     tabla: "catEstado",
@@ -59,6 +61,10 @@ const tablaMap = {
     tabla: "catIdioma",
     filtros: { estatus: 1 },
   },
+  "tipo-documentos-otros": {
+    tabla: "catTipoDocumento",
+    filtros: { estatus: 1, type: "otros" },
+  },
 };
 
 const getCatalogo = async (req, res, tabla) => {
@@ -78,10 +84,13 @@ const getCatalogo = async (req, res, tabla) => {
 
     filtros = { ...tablaReal.filtros, ...filtros };
 
-    const isAdmin = handleIsAdmin(req);
+    const typeUser = handleTypeUser(req);
 
-    if (isAdmin && tablaMap[tabla]?.filtrosAdmin) {
-      filtros = { ...filtros, ...tablaMap[tabla].filtrosAdmin };
+    if (typeUser == "dev" && tablaMap[tabla]?.filtrosDev) {
+      filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosDev };
+    }
+    if (typeUser == "admin" && tablaMap[tabla]?.filtrosAdmin) {
+      filtros = { ...filtrosEntrada, ...tablaMap[tabla].filtrosAdmin };
     }
 
     const resultado = await models[tablaReal.tabla].findAll({
@@ -98,10 +107,6 @@ const getCatalogo = async (req, res, tabla) => {
     if (e.original && e.original.sqlMessage) {
       message = e.original.sqlMessage;
     }
-    console.log(
-      "[CatalogosController] Error al obtener los registros:",
-      message,
-    );
     return res.json({
       result: false,
       message: `[CatalogosController] ${message}`,

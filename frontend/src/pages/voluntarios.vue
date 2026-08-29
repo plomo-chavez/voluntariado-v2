@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import CrudManager from "@/components/apps/VistaUno.vue";
-import ManagerElementos from "@/components/managers/ManagerElementos.vue";
-import nuevoElemento from "@/pagesComponents/voluntarios/nuevoElemento.vue";
 
 const showFormEdit = ref(false); // Referencia al componente FormFactory
 const data: any = ref(null); // Referencia al componente FormFactory
@@ -47,19 +45,19 @@ const configTable = ref({ actions: ["Editar", "Eliminar"] });
 
 <template>
   <!-- prettier-ignore -->
-  <ManagerElementos v-if="showFormEdit" :data="data" @cancelar="handleCancelar" />
-  <div v-else>
+  <pre>{{data  }}</pre>
+  <!-- <ManagerElementos v-if="showFormEdit" :data="data" @cancelar="handleCancelar" /> -->
+  <div v-if="!showFormEdit">
     <h1>Voluntarios</h1>
-
-    <nuevoElemento
+    <!-- <nuevoElemento
       v-if="showNuevoElementoModal"
       :isDialogVisible="showNuevoElementoModal"
       @update:isDialogVisible="showNuevoElementoModal = $event"
       @submit="handleSubmitNuevoElemento"
-    />
+    /> -->
 
+    <!-- v-else -->
     <CrudManager
-      v-else
       title="Voluntarios"
       :emitEdit="true"
       :formModal="true"

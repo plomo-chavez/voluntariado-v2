@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TabExpediente from "@/components/managers/tabs/TabExpediente.vue";
-import TabFormacion from "@/components/managers/tabs/TabFormacion.vue";
+import TabHistorico from "@/components/managers/tabs/TabHistorico.vue";
 import TabHoras from "@/components/managers/tabs/TabHoras.vue";
 import TabInfoPersonal from "@/components/managers/tabs/TabInfoPersonal.vue";
 import TabInfoVoluntario from "@/components/managers/tabs/TabInfoVoluntario.vue";
@@ -31,7 +31,7 @@ const TABS = [
   },
   { key: "infoPersonal", label: "Información personal", icon: "mdi-account" },
   { key: "expediente", label: "Expediente", icon: "mdi-folder-account" },
-  { key: "formacion", label: "Formación", icon: "mdi-school" },
+  { key: "historico", label: "Historico", icon: "mdi-history" },
   { key: "horas", label: "Horas", icon: "mdi-clock-outline" },
 ] as const;
 
@@ -71,17 +71,21 @@ onBeforeMount(async () => {
 </script>
 
 <template v-if="show">
+  <div class="perfil-shell">
+    <button
+      type="button"
+      class="perfil-back"
+      @click="emit('back')"
+      aria-label="Volver al inicio"
+    >
+      <VIcon icon="tabler-arrow-left" start size="18" />
+      <span class="perfil-subtitle">Volver al inicio</span>
+    </button>
+  </div>
   <div v-if="voluntarioData != null" class="perfil-shell">
     <!-- Cabecera -->
     <div class="perfil-header mb-4">
       <div class="d-flex align-center gap-2">
-        <VBtn
-          icon="mdi-arrow-left"
-          variant="text"
-          color="secondary"
-          size="small"
-          @click="emit('back')"
-        />
         <div>
           <h1 class="perfil-title">{{ props.title }}</h1>
           <p class="perfil-subtitle">Gestión del expediente del voluntario</p>
@@ -131,8 +135,8 @@ onBeforeMount(async () => {
             :data="voluntarioData"
           />
 
-          <TabFormacion
-            v-else-if="activeTab === 'formacion'"
+          <TabHistorico
+            v-else-if="activeTab === 'historico'"
             :data="voluntarioData"
             @update:data="handleUpdateData"
           />
@@ -158,6 +162,22 @@ onBeforeMount(async () => {
 .perfil-shell {
   max-width: 1120px;
   margin: 0 auto;
+}
+
+.perfil-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border: none;
+  background: transparent;
+  color: #2f3b46;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.perfil-back:hover {
+  opacity: 0.8;
 }
 
 .perfil-header {

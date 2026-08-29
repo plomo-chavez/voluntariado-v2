@@ -51,6 +51,39 @@ const handleIsAdmin = (req) => {
   }
 };
 
+const handleTypeUser = (req) => {
+  try {
+    const userRole = req?.user ?? null;
+
+    if (!userRole) {
+      console.log(
+        "handleTypeUser: El objeto 'user' no está definido en la solicitud.",
+      );
+    }
+
+    if (typeof userRole.tipo_id === "undefined") {
+      console.log(
+        "handleTypeUser: El atributo 'tipo_id' no está definido en el usuario.",
+      );
+    }
+
+    // prettier-ignore
+    switch(userRole.tipo_id){
+      case 1:  return 'dev'; break;
+      case 2:  return 'admin'; break;
+      case 3:  return 'nacional'; break;
+      case 4:  return 'nacional'; break;
+      case 5:  return 'estatal'; break;
+      case 6:  return 'estatal'; break;
+      case 7:  return 'local'; break;
+      case 8:  return 'local'; break;
+    }
+  } catch (error) {
+    console.log("Error en handleIsAdmin:", error.message);
+    return false;
+  }
+};
+
 async function getAllFromModel({
   model,
   filtros = {},
@@ -60,13 +93,14 @@ async function getAllFromModel({
   pageSize = 10,
   pagination = true,
   paranoid = false,
+  order = [],
 }) {
   try {
     const isAll = pageSize === -1 || !pagination;
     const offset = isAll ? null : (page - 1) * pageSize;
     const limit = isAll ? null : pageSize;
 
-    let { count, rows } = await model.findAndCountAll({
+    const payload = {
       where: filtros,
       attributes,
       include,
@@ -75,7 +109,10 @@ async function getAllFromModel({
       raw: true,
       nest: true,
       paranoid,
-    });
+      order,
+    };
+
+    let { count, rows } = await model.findAndCountAll(payload);
 
     rows = normalizeNullRelations(rows);
 
@@ -109,5 +146,6 @@ async function getAllFromModel({
 
 export default {
   handleIsAdmin,
+  handleTypeUser,
   getAllFromModel,
 };

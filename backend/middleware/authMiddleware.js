@@ -1,25 +1,8 @@
 import dotenv from "dotenv";
-import db from "../models/index.js";
-
-const { Usuarios } = db;
 dotenv.config();
 
 import { verifyEncryptedJWT } from "../utils/encryptHelper.js"; // Importa tu helper
-
-const getUserToken = async (userID) => {
-  const userBD = await Usuarios.findByPk(userID, {
-    attributes: ["id", "nombre", "correo", "tipo_id", "estatus"],
-  });
-  return userBD?.toJSON() ?? null;
-};
-
-const isPublicCatalogRoute = (req) => {
-  if (req.method === "OPTIONS") return true;
-  return (
-    req.originalUrl.startsWith("/api/catalogos") ||
-    req.originalUrl.startsWith("/api/public/catalogos")
-  );
-};
+import { getUserToken, isPublicCatalogRoute } from "./authHelper.js"; // Importa tu helper
 
 const authMiddleware = async (req, res, next) => {
   const debug = process.env.DEBUG_REQUEST_AUTH === "true";

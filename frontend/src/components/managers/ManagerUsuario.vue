@@ -1,8 +1,5 @@
 <script lang="ts" setup>
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
-import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
-import { customRequest } from "@/utils/axiosInstance";
-import { toast } from "vue3-toastify";
 
 const currentTab = ref("item1");
 const title = ref("Nuevo registro de usuario");
@@ -11,6 +8,7 @@ const formDisabled = ref(true);
 const showSecciontionDelegacion: any = ref(false);
 const dataContrasenia = ref({});
 const formData: any = ref({});
+const formInicial: any = ref(true);
 
 // prettier-ignore
 const props = withDefaults(
@@ -29,7 +27,10 @@ let formSchema : any = [
   { label: "Estatus",             type: "switch", model: "estatus" },
 ];
 // prettier-ignore
-let formSchemaDelegacion : any = [
+let formSchemaDelegacion : any = [];
+
+// prettier-ignore
+let formSchemaEstado : any = [
   { label: "Estado",              type: "select", model: "estado",      catalogo: "estados",           },
 ];
 // prettier-ignore
@@ -51,11 +52,15 @@ const handleShowModalContrasenia = () => {
 
 const handleUpdateForm = (newValue: any) => {
   let newValueRaw = deepToRaw(newValue);
-  const isDiferente = formData?.value?.tipo?.id !== newValueRaw?.tipo?.id;
+  const isDiferente = formInicial.value
+    ? true
+    : formData?.value?.tipo?.id !== newValueRaw?.tipo?.id;
   formData.value = newValueRaw;
   if (isDiferente) {
     handleChangeForm();
+    formInicial.value = false;
   }
+  handle();
 };
 
 const handleUpdateFormDelegacion = (newValue: any) => {
@@ -76,118 +81,73 @@ const handleCancelar = () => {
   }
 };
 
-const handleFormSubmit = async (data: any) => {
-  try {
-    const response = await customRequest({
-      url: "/api/usuario",
-      method: "POST",
-      data: deepToRaw(formData.value),
-    });
-    const dataResponse = response.data;
-    if (dataResponse.result) {
-      toast.success("Usuario actualizado!", { theme: "dark" });
-      return {
-        result: true,
-        cliente: dataResponse.data,
-      };
-    } else {
-      showErrorMessage({
-        title: "Error",
-        message: dataResponse.message,
-      });
-      return {
-        result: false,
-        message: dataResponse.message,
-      };
-    }
-  } catch (error: any) {
-    showErrorMessage({
-      title: "Error",
-      message: error?.message || "Error de conexión",
-    });
-    return {
-      result: false,
-      message: error?.message || "Error de conexión",
-    };
+const handle = () => {
+  const payload = deepToRaw(formData.value);
+
+  // Eliminar `estado` si el tipo NO requiere estado (tipos <= 4)
+  if ((payload.tipo?.id ?? 0) <= 4) {
+    payload.estado_id = null;
+    delete payload.estado;
   }
+
+  // Eliminar `delegacion` si el tipo NO requiere delegación (tipos <= 6)
+  if ((payload.tipo?.id ?? 0) <= 6) {
+    payload.delegacion_id = null;
+    delete payload.delegacion;
+  }
+
+  formData.value = payload;
 };
 
+// prettier-ignore
+const handleFormSubmit = async (data: any) => {
+  const payload = deepToRaw(formData.value);
+  
+  await apiRequest({
+    onSuccess: () => { handleCancelar(); },
+    messageType:"toast",
+    url: "/api/usuario",
+    loader:true,
+    payload,
+  });
+};
+
+// prettier-ignore
 const handleFormSubmitChangePassword = async (data: any) => {
   let payload = {
     contrasenia: data.password,
     id: data.id,
   };
-
-  try {
-    const response = await customRequest({
-      url: "/api/usuario/cambiar",
-      method: "POST",
-      data: payload,
-    });
-    const dataResponse = response.data;
-    if (dataResponse.result) {
-      toast.success("Usuario actualizado!", { theme: "dark" });
-      return {
-        result: true,
-        cliente: dataResponse.data,
-      };
-    } else {
-      showErrorMessage({
-        title: "Error",
-        message: dataResponse.message,
-      });
-      return {
-        result: false,
-        message: dataResponse.message,
-      };
-    }
-  } catch (error: any) {
-    showErrorMessage({
-      title: "Error",
-      message: error?.message || "Error de conexión",
-    });
-    return {
-      result: false,
-      message: error?.message || "Error de conexión",
-    };
-  }
+  await apiRequest({
+    onSuccess: () => { handleCancelar(); },
+    url: "/api/usuario/cambiar",
+    messageType:"toast",
+    loader:true,
+    payload,
+  });
 };
 
 // prettier-ignore
 const handleBack = () => { emit("cancelar"); };
 
+// prettier-ignore
 const handleChangeForm = () => {
   showSecciontionDelegacion.value = false;
+
   if ((formData?.value?.tipo?.id ?? 0) > 4) {
-    formSchemaDelegacion.push({
-      label: "Municipio",
-      type: "select",
-      model: "municipio",
-      catalogo: "municipios",
-      dependencia: "estado",
-      dependenciaFiltro: "estado_id",
-    });
+    formSchemaDelegacion = [...formSchemaEstado]
+    if ((formData?.value?.tipo?.id ?? 0) > 6) {
     formSchemaDelegacion.push({
       label: "Delegación",
       type: "select",
       model: "delegacion",
       catalogo: "delegaciones",
-      dependencia: "municipio",
-      dependenciaFiltro: "municipio_id",
+      dependenciaQuery: "estado",
+      dependenciaQueryFiltro: "estado_id",
       config: { fullInfo: true },
     });
-  } else {
-    formSchemaDelegacion = formSchemaDelegacion.filter(
-      (field: any) => field.model !== "municipio",
-    );
-    formSchemaDelegacion = formSchemaDelegacion.filter(
-      (field: any) => field.model !== "delegacion",
-    );
-  }
-  if ((formData?.value?.tipo?.id ?? 0) > 3) {
-    setTimeout(() => {
-      showSecciontionDelegacion.value = true;
-    }, 1);
+    }
+      setTimeout(() => { showSecciontionDelegacion.value = true; }, 1);
   }
 };
 
@@ -212,20 +172,17 @@ onBeforeMount(() => {
   }
 
   title.value = props?.data?.nombre ?? "Nuevo registro de usuario";
+  handleChangeForm();
 });
 </script>
 
 <template>
+  <!-- prettier-ignore -->
   <div class="d-flex justify-start align-center mb-5">
-    <VBtn
-      icon="tabler-arrow-left"
-      class="cursor-pointer"
-      variant="text"
-      color="secondary"
-      @click="handleBack"
-    />
+    <VBtn icon="tabler-arrow-left" class="cursor-pointer" variant="text" color="secondary" @click="handleBack"/>
     <h1 class="ml-4">{{ title }}</h1>
   </div>
+
   <VCard>
     <VCardText>
       <ModuladorFormFactory

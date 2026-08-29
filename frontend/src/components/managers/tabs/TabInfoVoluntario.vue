@@ -341,15 +341,6 @@ onMounted(() => {
           <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
           Editar perfil
         </VBtn>
-        <VBtn
-          v-if="!isEditing"
-          class="edit-btn-desktop"
-          color="red-darken-2"
-          @click="handleOpenModalExpediente"
-        >
-          <i class="mr-1 fa-solid fa-pen" aria-hidden="true" />
-          Descargar expediente
-        </VBtn>
       </div>
     </div>
 

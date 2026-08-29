@@ -17,22 +17,21 @@ const router = express.Router();
 // Middleware para loguear todas las peticiones
 router.use(logRequestMiddleware);
 
-// ===== Auth =====
-router.post("/api/login", authController.login);
-
 router.post("/api/public/catalogos/:catalogo", (req, res) => {
   const { catalogo } = req.params;
   catalogosController.getCatalogo(req, res, catalogo);
 });
+// ===== Auth =====
+router.post("/api/login", authController.login);
 router.post("/api/public/elemento/verificar", elementosController.verificar);
 router.post("/api/public/elemento", elementosController.createOrUpdate);
 router.post("/api/verificar/:pagina", authController.verificarToken);
+router.use("/api", catalogosDinamicosRoutes);
 
 // ===== Sub-rutas =====
 router.use("/api", elementosRoutes);
 router.use("/api", usuariosRoutes);
 router.use("/api", catalogosRoutes);
-router.use("/api", catalogosDinamicosRoutes);
 router.use("/api", logRoutes);
 router.use("/api", pagesRoutes);
 export default router;

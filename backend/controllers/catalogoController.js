@@ -47,6 +47,7 @@ const CATALOGS_MAP = {
     supportsStatus: true,
     supportsSoftDelete: true,
     include: ["estado"],
+    camposVerificacion: ["estado_id"],
   },
   dia: {
     modelo: models.catDia,
@@ -219,7 +220,7 @@ const handleGetAll = async (req, dataModels) => {
 
 const handleCreateOrUpdate = async (req, dataModels) => {
   let data = req.body || {};
-  const { primaryKey, nameField } = dataModels;
+  const { primaryKey, nameField, camposVerificacion } = dataModels;
 
   if (data?.[primaryKey] && !data.id) {
     data.id = data[primaryKey];
@@ -228,13 +229,26 @@ const handleCreateOrUpdate = async (req, dataModels) => {
   const modoCreacion = !data?.id;
   const valueToValidate = data?.[nameField];
 
+  data = processsData(dataModels, data);
+
   if (valueToValidate) {
-    const existeRecord = await validateRecord(dataModels.modeloString, {
+    let filtrosCamposVerificacion = {};
+
+    camposVerificacion?.forEach((item) => {
+      if (data[item]) {
+        filtrosCamposVerificacion[item] = data[item];
+      }
+    });
+
+    const filtros = {
       [nameField]: valueToValidate,
       ...(!modoCreacion && {
         [primaryKey]: { [Op.ne]: data.id },
       }),
-    });
+      ...filtrosCamposVerificacion,
+    };
+
+    const existeRecord = await validateRecord(dataModels.modeloString, filtros);
 
     if (!existeRecord.result) {
       return {
@@ -243,8 +257,6 @@ const handleCreateOrUpdate = async (req, dataModels) => {
       };
     }
   }
-
-  data = processsData(dataModels, data);
 
   if (modoCreacion) {
     await createRecord(dataModels.modeloString, data);

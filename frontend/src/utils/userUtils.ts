@@ -35,3 +35,35 @@ export const getUserData = (): any => {
     return null;
   }
 };
+
+export const getTypeUser = (): any => {
+  const userRole = getUserData();
+  // prettier-ignore
+  switch(userRole.tipo_id){
+      case 1:  return 'dev'; break;
+      case 2:  return 'admin'; break;
+      case 3:  return 'nacional'; break;
+      case 4:  return 'nacional'; break;
+      case 5:  return 'estatal'; break;
+      case 6:  return 'estatal'; break;
+      case 7:  return 'local'; break;
+      case 8:  return 'local'; break;
+    }
+};
+
+export const getDataDelegacion = (): any => {
+  const userRole = getUserData();
+  let data: any = {};
+
+  if (userRole.estado && userRole.estado_id) {
+    data.estado = { id: userRole.estado_id, label: userRole.estado };
+  }
+
+  if (userRole.delegacion && userRole.delegacion_id) {
+    data.delegacion = {
+      id: userRole.delegacion_id,
+      label: userRole.delegacion,
+    };
+  }
+  return data;
+};

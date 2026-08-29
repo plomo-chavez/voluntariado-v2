@@ -29,7 +29,13 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING(50),
         allowNull: true,
       },
-      vigencia: {
+      fechaFinal: {
+        field: "fechaFinal",
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      fechaInicio: {
+        field: "fechaInicio",
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
@@ -41,6 +47,19 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
+      },
+      referencia_documento: {
+        type: DataTypes.STRING(250),
+        allowNull: true,
+      },
+      area_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        references: {
+          model: "cat_areas",
+          key: "id",
+        },
       },
     },
     {
@@ -58,6 +77,10 @@ export default (sequelize, DataTypes) => {
     volDocumento.belongsTo(models.catTipoDocumento, {
       foreignKey: "id_tipo_documento",
       as: "tipoDocumento",
+    });
+    volDocumento.belongsTo(models.catAreas, {
+      foreignKey: "area_id",
+      as: "area",
     });
   };
 

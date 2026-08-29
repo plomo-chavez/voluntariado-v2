@@ -37,12 +37,16 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     title?: string; // Título del módulo
+    fnRowClass?: any; // Título del módulo
+    ordenData?: string; // Título del módulo
     formSchema?: any; // Esquema del formulario
     softDelete?: boolean; // Indica si se debe refrescar la tabla
     refreshTable?: boolean; // Indica si se debe refrescar la tabla
     tableHeaders: TableHeader[]; // Esquema de la tabla
     showStyleCard?: boolean; // Indica si el formulario será un modal
     showBtnNuevo?: boolean; // Indica si el formulario será un modal
+    showMessageApi?: boolean; // Indica el estatus por defecto
+    showTitle?: boolean; // Indica si se debe mostrar el título
     formModal?: boolean; // Indica si el formulario será un modal
     customAction?: boolean; // Indica si el formulario será un modal
     emitNew?: boolean; // Indica si el formulario será un modal
@@ -52,11 +56,9 @@ const props = withDefaults(
     emitSeleccionar?: boolean; // Indica si el formulario será un modal
     exportSubmit?: boolean; // Indica si el formulario será un modal
     payloadDefault?: any; // Indica si se debe mostrar el título
-    showTitle?: boolean; // Indica si se debe mostrar el título
     filtroAgrupador?: string | null; // Indica si se debe mostrar el título
     filtroAgrupadorInicial?: string | null; // Indica si se debe mostrar el título
     estatusDefault?: boolean; // Indica el estatus por defecto
-    showMessageApi?: boolean; // Indica el estatus por defecto
     subtitulos?: any; // Configuración de la tabla
     configTable?: any; // Configuración de la tabla
     apiEndpoints?: {
@@ -69,7 +71,9 @@ const props = withDefaults(
   }>(),
   {
     formSchema: [],
+    fnRowClass: undefined,
     title: "",
+    ordenData: "id",
     configTable: { actions: ["Editar", "Eliminar"] },
     filtroAgrupadorInicial: null,
     subtitulos: null,
@@ -142,6 +146,12 @@ async function fetchTableData(config: any = {}) {
             return item;
           });
         }
+
+        tmp.sort((a: any, b: any) => {
+          if (a[props.ordenData] < b[props.ordenData]) return -1;
+          if (a[props.ordenData] > b[props.ordenData]) return 1;
+          return 0;
+        });
 
         tableData.value = tmp;
         respaldoData.value = tmp;
@@ -518,6 +528,10 @@ watch(
         </div>
         <DataTable
           :loading="loading"
+          :fnRowClass="
+            props.fnRowClass ??
+            ((row: any) => (row.estatus === 1 ? 'bgRed' : ''))
+          "
           :headers="headersLocal"
           :data="tableData"
           :dataResponse="dataResponse"

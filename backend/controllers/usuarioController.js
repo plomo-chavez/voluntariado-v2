@@ -5,14 +5,17 @@ import db from "../models/index.js";
 import encryptHelper from "../utils/encryptHelper.js";
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
+const { handleTypeUser } = functionHelper;
 
-const { Usuarios, catTiposUsuarios } = db;
+const { Usuarios, catTiposUsuarios, catDelegacion, catEstado } = db;
 const { Op } = Sequelize;
 
 const { handleIsAdmin, getAllFromModel } = functionHelper;
 const { validateRecord, createRecord, updateRecord, processSoftDelete } =
   CRUDController;
 const { createShortToken, verifyShortToken } = encryptHelper;
+
+const Coordis = [3, 5, 7];
 
 /**
  * ==============================
@@ -84,6 +87,40 @@ async function saveUser(data) {
 
     data = await transformUserData(data);
 
+    console.log(data);
+
+    const Coordis = [3, 5, 7];
+
+    if (Coordis.includes(data.tipo_id)) {
+      let message = "Ya existe un Coordinador Nacional";
+      let filtro = {
+        id: { [Op.ne]: data.id },
+        tipo_id: data.tipo_id,
+      };
+
+      if (data.tipo_id >= 5) {
+        filtro.estado_id = data.estado_id;
+        message = "Ya existe un Coordinador Estatal en este estado";
+      }
+
+      if (data.tipo_id == 7) {
+        filtro.delegacion_id = data.delegacion_id;
+        message = "Ya existe un Coordinador Local en esta delegación";
+      }
+
+      console.log("==> Filtros: ", filtro);
+
+      const existeRegistro = await validateRecord("Usuarios", filtro);
+
+      if (!existeRegistro.result) {
+        return {
+          result: false,
+          message,
+          data: [],
+        };
+      }
+    }
+
     const usuario = isCreate
       ? await createRecord("Usuarios", data)
       : await updateRecord("Usuarios", data);
@@ -132,6 +169,16 @@ const getAll = async (req, res) => {
       {
         model: catTiposUsuarios,
         as: "tipo",
+        attributes: ["id", "label"],
+      },
+      {
+        model: catEstado,
+        as: "estado",
+        attributes: ["id", "label"],
+      },
+      {
+        model: catDelegacion,
+        as: "delegacion",
         attributes: ["id", "label"],
       },
     ];
