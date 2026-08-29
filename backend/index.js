@@ -68,6 +68,9 @@ app.use("/files", (req, res) => {
 });
 // Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
 app.use("/assets", express.static(path.join(__dirname, "assets")));
+app.use("/assets", (req, res) => {
+  res.redirect("/not-found/resources");
+});
 // ===============================
 // START SERVER (HTTP)
 // ===============================

@@ -44,6 +44,7 @@ declare module 'vue-router/auto-routes' {
     'elementos': RouteRecordInfo<'elementos', '/elementos', Record<never, never>, Record<never, never>>,
     'login': RouteRecordInfo<'login', '/login', Record<never, never>, Record<never, never>>,
     'logs': RouteRecordInfo<'logs', '/logs', Record<never, never>, Record<never, never>>,
+    'not-found-resources': RouteRecordInfo<'not-found-resources', '/NotFoundResources', Record<never, never>, Record<never, never>>,
     'public-registrar-elemento': RouteRecordInfo<'public-registrar-elemento', '/public/RegistrarElemento', Record<never, never>, Record<never, never>>,
     'usuarios': RouteRecordInfo<'usuarios', '/usuarios', Record<never, never>, Record<never, never>>,
     'voluntarios': RouteRecordInfo<'voluntarios', '/voluntarios', Record<never, never>, Record<never, never>>,
