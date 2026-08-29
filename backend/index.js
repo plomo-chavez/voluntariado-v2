@@ -69,6 +69,7 @@ app.use("/files", (req, res) => {
 // Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/assets", (req, res) => {
+  console.log("❌ ASSET NO ENCONTRADO:", req.originalUrl);
   res.redirect("/not-found/resources");
 });
 // ===============================
