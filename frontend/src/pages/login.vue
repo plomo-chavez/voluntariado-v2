@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { showErrorMessage } from "@/components/apps/sweetAlerts/SweetAlets";
 import { useTokenExpiringModal } from "@/composables/useTokenExpiringModal"; // o tu función de modal
+import { router } from "@/plugins/1.router";
 import { useAuthStore } from "@/stores/authStore"; // Importa el store
-import { useLoadingOverlayStore } from "@/stores/loadingOverlayStore";
+import { customRequest } from "@/utils/axiosInstance";
 import logoTransparente from "@images/logos/logo - transparente.png";
-import { useRouter } from "vue-router";
 const authStore = useAuthStore();
-const router = useRouter();
-const loadingOverlayStore = useLoadingOverlayStore();
 
 const { showTokenExpiringModal } = useTokenExpiringModal();
 
@@ -21,8 +19,7 @@ definePage({
 const form = ref({
   email: "",
   password: "",
-
-  // email: "admin@gmail.com",
+  // email: "admin@gmail.com",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°|||||°||||||||||||||||||||||||||||||||||°°°°|||||||||||||||||||||||||||||||||||||°|||||||||||||||°°|||||||||||||||||°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°|||||||||||||||||
   // password: "admin123",
   remember: false,
 });
@@ -67,42 +64,45 @@ function getCurrentLocation(): Promise<{
 
 async function handleLogin() {
   const location = await getCurrentLocation();
-  const payload = {
-    ...form.value,
-    clientInfo: {
-      user_agent: navigator.userAgent,
-      device_type: detectDeviceType(),
-      location,
-    },
-  };
 
-  await apiRequest({
-    payload,
-    loader: true,
-    loadingOff: false,
-    method: "POST",
+  let response: any = await customRequest({
     url: "/api/login",
-    messageType: "toast",
-    onSuccess: handleLoginSuccess,
+    method: "POST",
+    data: {
+      ...form.value,
+      clientInfo: {
+        user_agent: navigator.userAgent,
+        device_type: detectDeviceType(),
+        location,
+      },
+    },
   });
-}
+  if (response.data.result) {
+    const userData = response.data.data.userData;
+    const token = response.data.data.token;
 
-async function handleLoginSuccess(data: any) {
-  const { token, userData } = data;
-
-  if (userData && token) {
-    authStore.login(userData, token);
-    setTimeout(() => {
-      router.push({ name: "root" });
-      loadingOverlayStore.hideOverlay();
-    }, 100);
+    if (userData && token) {
+      authStore.login(userData, token);
+      setTimeout(() => {
+        router.push({ name: "root" });
+      }, 100);
+    } else {
+      showErrorMessage({
+        title: "Error",
+        message: "No se recibió información de usuario o token válida.",
+      });
+    }
   } else {
+    // Maneja el error de inicio de sesión
+
     showErrorMessage({
       title: "Error",
-      message: "No se recibió información de usuario o token válida.",
+      message: response.data.message,
     });
   }
+  // Redirige a la página principal o dashboard
 }
+
 const isPasswordVisible = ref(false);
 </script>
 
