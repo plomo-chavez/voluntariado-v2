@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import ModuladorFormFactory from "@/components/apps/ModuladorFormFactory.vue";
 import SelectFile from "@/components/custom/SelectFile.vue";
+import { useLoadingOverlayStore } from "@/stores/loadingOverlayStore";
+const loadingOverlayStore = useLoadingOverlayStore();
+
+const emit = defineEmits<{
+  (event: "cancelar"): void;
+}>();
 
 const props = withDefaults(
   defineProps<{
@@ -142,11 +148,10 @@ const handleSubmit = () => {
 };
 
 const handleCancel = () => {
-  console.log("Formulario cancelado");
+  emit("cancelar");
 };
 const handleSelectFile = (value: File | File[] | null) => {
   form.value.evidencia = value;
-  console.log("Archivo seleccionado:", value);
 };
 
 async function uploadEvidence() {
@@ -163,6 +168,7 @@ async function uploadEvidence() {
     return;
   }
 
+  loadingOverlayStore.showOverlay(true, "Subiendo documento...");
   const formData = new FormData();
   formData.append("documento", selectedFile);
   formData.append("id_elemento", String(elementoId));
@@ -186,7 +192,10 @@ async function uploadEvidence() {
     }
 
     form.value.evidencia = null;
+    loadingOverlayStore.hideOverlay();
+    handleCancel();
   } catch (error) {
+    loadingOverlayStore.hideOverlay();
     console.error("Error al subir el documento", error);
   }
 }
@@ -214,6 +223,7 @@ onBeforeMount(() => {});
         />
       </div>
       <SelectFile
+        v-if="nextStep"
         label="Documento"
         :modelValue="form"
         @handleEmit="handleSelectFile"

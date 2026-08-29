@@ -28,6 +28,12 @@ const getRelaciones = async (relaciones) => {
             as: "delegacion",
             attributes: ["id", "label"],
           };
+        case "catTipoDocumento-Documentos":
+          return {
+            model: models.catTipoDocumento,
+            as: "tipoDocumento",
+            attributes: ["id", "label", "key", "type", "orden"],
+          };
         case "estado":
           return {
             model: models.catEstado,

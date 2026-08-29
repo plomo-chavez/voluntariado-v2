@@ -93,13 +93,14 @@ async function getAllFromModel({
   pageSize = 10,
   pagination = true,
   paranoid = false,
+  order = [],
 }) {
   try {
     const isAll = pageSize === -1 || !pagination;
     const offset = isAll ? null : (page - 1) * pageSize;
     const limit = isAll ? null : pageSize;
 
-    let { count, rows } = await model.findAndCountAll({
+    const payload = {
       where: filtros,
       attributes,
       include,
@@ -108,7 +109,10 @@ async function getAllFromModel({
       raw: true,
       nest: true,
       paranoid,
-    });
+      order,
+    };
+
+    let { count, rows } = await model.findAndCountAll(payload);
 
     rows = normalizeNullRelations(rows);
 

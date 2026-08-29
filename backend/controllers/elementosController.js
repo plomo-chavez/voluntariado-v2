@@ -12,7 +12,7 @@ import {
 import CRUDController from "./CRUDController.js";
 import functionHelper from "./db/functionHelper.js";
 const { Op } = Sequelize;
-const { volInfo, estadoElementos, catTipoDocumento } = db;
+const { volInfo, volDocumento, estadoElementos, catTipoDocumento } = db;
 
 const { getAllFromModel, handleTypeUser } = functionHelper;
 const { getRelaciones } = functionsCustomHelper;
@@ -734,10 +734,6 @@ const getDocumentos = async (req, res) => {
       });
     }
 
-    console.log("");
-    console.log("");
-    console.log("");
-    console.log("");
     const documentosExpediente = await db.catTipoDocumento.findAll({
       where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
     });
@@ -774,6 +770,75 @@ const getDocumentos = async (req, res) => {
       message: "Documentos obtenidos correctamente",
       data: documentosOrdenados,
     });
+  } catch (error) {
+    return res.status(500).json({
+      result: false,
+      message: "Error al obtener documentos: " + error.message,
+      data: null,
+    });
+  }
+};
+const getHistorico = async (req, res) => {
+  try {
+    const { id_voluntario } = req.body;
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = 10;
+
+    if (!id_voluntario) {
+      return res.json({
+        result: false,
+        message: "ID de voluntario es requerido",
+        data: null,
+      });
+    }
+
+    const documentosExpediente = await db.catTipoDocumento.findAll({
+      where: { type: { [Op.or]: ["expediente", "formacion"], estatus: true } },
+    });
+
+    const documentosExpedienteJson = documentosExpediente.map((doc) =>
+      doc.toJSON(),
+    );
+
+    const arraysIds = documentosExpedienteJson.map((doc) => doc.id);
+    let filtros = {
+      id_voluntario,
+      id_tipo_documento: {
+        [Op.notIn]: arraysIds,
+      },
+    };
+
+    const relaciones = await getRelaciones([
+      "area",
+      "catTipoDocumento-Documentos",
+    ]);
+    const order = [["id_documento", "DESC"]];
+    const attributes = [
+      "id_documento",
+      "id_tipo_documento",
+      "vigencia",
+      "ruta_archivo",
+      "fecha_registro",
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "fechaInicio",
+      "fechaFinal",
+      "referencia_documento",
+    ];
+
+    const response = await getAllFromModel({
+      model: volDocumento,
+      include: relaciones,
+      paranoid: false,
+      attributes,
+      pageSize,
+      filtros,
+      order,
+      page,
+    });
+
+    return res.json(response);
   } catch (error) {
     return res.status(500).json({
       result: false,
@@ -943,7 +1008,9 @@ async function cargarHistorico(req, res) {
     const payloadDocument = {
       id_voluntario: elemento.id,
       id_tipo_documento: dataForm.tipo_documento.id,
+      area_id: dataForm.referencia_documento_catalogo?.id || null,
       tipoDocumento: dataForm.tipo_documento.label,
+      referencia_documento: dataForm.referencia_documento || null,
       numero: null,
       fechaFinal: dataForm.fechaFin || null,
       fechaInicio: dataForm.fechaInicio || null,
@@ -968,6 +1035,7 @@ async function cargarHistorico(req, res) {
     });
   }
 }
+
 export default {
   getAll,
   getById,
@@ -979,4 +1047,5 @@ export default {
   cargarDocumento,
   getDocumentos,
   cargarHistorico,
+  getHistorico,
 };

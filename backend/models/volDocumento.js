@@ -48,6 +48,19 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
+      referencia_documento: {
+        type: DataTypes.STRING(250),
+        allowNull: true,
+      },
+      area_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        references: {
+          model: "cat_areas",
+          key: "id",
+        },
+      },
     },
     {
       tableName: "vol_documento",
@@ -64,6 +77,10 @@ export default (sequelize, DataTypes) => {
     volDocumento.belongsTo(models.catTipoDocumento, {
       foreignKey: "id_tipo_documento",
       as: "tipoDocumento",
+    });
+    volDocumento.belongsTo(models.catAreas, {
+      foreignKey: "area_id",
+      as: "area",
     });
   };
 

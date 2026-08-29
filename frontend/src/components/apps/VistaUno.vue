@@ -45,6 +45,8 @@ const props = withDefaults(
     tableHeaders: TableHeader[]; // Esquema de la tabla
     showStyleCard?: boolean; // Indica si el formulario será un modal
     showBtnNuevo?: boolean; // Indica si el formulario será un modal
+    showMessageApi?: boolean; // Indica el estatus por defecto
+    showTitle?: boolean; // Indica si se debe mostrar el título
     formModal?: boolean; // Indica si el formulario será un modal
     customAction?: boolean; // Indica si el formulario será un modal
     emitNew?: boolean; // Indica si el formulario será un modal
@@ -54,11 +56,9 @@ const props = withDefaults(
     emitSeleccionar?: boolean; // Indica si el formulario será un modal
     exportSubmit?: boolean; // Indica si el formulario será un modal
     payloadDefault?: any; // Indica si se debe mostrar el título
-    showTitle?: boolean; // Indica si se debe mostrar el título
     filtroAgrupador?: string | null; // Indica si se debe mostrar el título
     filtroAgrupadorInicial?: string | null; // Indica si se debe mostrar el título
     estatusDefault?: boolean; // Indica el estatus por defecto
-    showMessageApi?: boolean; // Indica el estatus por defecto
     subtitulos?: any; // Configuración de la tabla
     configTable?: any; // Configuración de la tabla
     apiEndpoints?: {

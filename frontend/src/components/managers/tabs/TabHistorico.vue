@@ -1,19 +1,8 @@
 <script lang="ts" setup>
-import DataTable from "@/components/apps/DataTable.vue";
+import CrudManager from "@/components/apps/VistaUno.vue";
 import NuevoRegistroHistorico from "@/pagesComponents/elementos/NuevoRegistroHistorico.vue";
-import { computed, ref, watch } from "vue";
-
-type FormacionRecord = {
-  id: string;
-  tipo: "institucional" | "externo";
-  area?: string;
-  capacitacion?: string;
-  nombre_taller?: string;
-  institucion?: string;
-  fecha: string;
-  evidencia_nombre?: string;
-  evidencia_url?: string;
-};
+import { openResource } from "@/utils/fileHelper";
+import { ref } from "vue";
 
 const props = defineProps<{
   data?: Record<string, any>;
@@ -23,199 +12,44 @@ const emit = defineEmits<{
   (event: "update:data", value: Record<string, any>): void;
 }>();
 
-const showModal = ref(false);
 const moodAdd = ref(false);
-const rows = ref<FormacionRecord[]>([]);
+const payloadHistorico: any = ref({
+  id_voluntario: props.data?.id ?? null,
+});
 
-const tableHeaders = [
-  { title: "Tipo", key: "tipoLabel" },
-  { title: "Capacitacion / Taller", key: "nombre" },
-  { title: "Area / Institucion", key: "detalle" },
-  { title: "Fecha", key: "fecha" },
-  { title: "Evidencia", key: "evidencia" },
-];
-
-const tableConfig = {
-  actions: ["Seleccionar", "Eliminar"],
-  busqueda: true,
-  paginador: false,
-  numerador: false,
-  exportar: false,
-  seleccionar: false,
-  noWrap: false,
-  columnsBySearch: ["tipoLabel", "nombre", "detalle", "fecha", "evidencia"],
+const apiEndpoints = {
+  // fetch: "/api/test", // Endpoint para obtener datos
+  fetch: "/api/elemento/historico", // Endpoint para obtener datos
+  create: "/api/elemento", // Endpoint para crear un elemento
+  update: "/api/elemento", // Endpoint para actualizar un elemento
+  delete: "/api/elemento/eliminar", // Endpoint para eliminar un elemento
 };
 
-const tableDataResponse = computed(() => ({
-  total: rows.value.length,
-  pageSize: rows.value.length || 10,
-  page: 1,
-}));
+const configTable = ref({ actions: ["Seleccionar"] });
 
-const tableRows = computed(() =>
-  rows.value.map((item) => ({
-    ...item,
-    tipoLabel: item.tipo === "institucional" ? "Institucional" : "Externo",
-    nombre: rowNombre(item),
-    detalle: rowDetalle(item),
-    fecha: item.fecha || "-",
-    evidencia: item.evidencia_nombre || "Sin evidencia",
-  })),
-);
-
-const form = ref({
-  tipo: "institucional" as "institucional" | "externo",
-  area: "",
-  capacitacion: "",
-  nombre_taller: "",
-  institucion: "",
-  fecha: "",
-  evidencia_nombre: "",
-  evidencia_url: "",
-});
-
-const inputEvidencia = ref<HTMLInputElement | null>(null);
-
-const areaOptions = [
-  "Voluntariado",
-  "Socorros",
-  "Capacitacion",
-  "Juventud",
-  "Administracion",
+const tableHeaders = [
+  { title: "#", key: "id_documento" },
+  { title: "Documento", key: "tipoDocumento.label" },
+  { title: "Área", key: "area.label" },
+  { title: "Referencia", key: "referencia_documento" },
+  { title: "Registro", key: "created_at" },
 ];
-
-watch(
-  () => props.data,
-  (val) => {
-    const source = val?.formaciones;
-    if (Array.isArray(source)) {
-      rows.value = source.map((item: any, index: number) => ({
-        id: String(item.id || `${Date.now()}-${index}`),
-        tipo: item.tipo === "externo" ? "externo" : "institucional",
-        area: item.area || "",
-        capacitacion: item.capacitacion || "",
-        nombre_taller: item.nombre_taller || "",
-        institucion: item.institucion || "",
-        fecha: item.fecha || "",
-        evidencia_nombre: item.evidencia_nombre || "",
-        evidencia_url: item.evidencia_url || "",
-      }));
-    }
-  },
-  { immediate: true, deep: true },
-);
-
-const formValid = computed(() => {
-  if (!form.value.fecha || !form.value.evidencia_url) return false;
-
-  if (form.value.tipo === "institucional") {
-    return !!form.value.area && !!form.value.capacitacion;
-  }
-
-  return !!form.value.nombre_taller && !!form.value.institucion;
-});
-
-function openAddModal() {
-  resetForm();
-  showModal.value = true;
-}
-
-function closeModal() {
-  showModal.value = false;
-}
-
-function resetForm() {
-  form.value = {
-    tipo: "institucional",
-    area: "",
-    capacitacion: "",
-    nombre_taller: "",
-    institucion: "",
-    fecha: "",
-    evidencia_nombre: "",
-    evidencia_url: "",
-  };
-}
-
-function openFilePicker() {
-  inputEvidencia.value?.click();
-}
-
-function onFileSelected(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  if (form.value.evidencia_url?.startsWith("blob:")) {
-    URL.revokeObjectURL(form.value.evidencia_url);
-  }
-
-  form.value.evidencia_nombre = file.name;
-  form.value.evidencia_url = URL.createObjectURL(file);
-  target.value = "";
-}
-
-function viewEvidence(url?: string) {
-  if (!url) return;
-  window.open(url, "_blank", "noopener,noreferrer");
-}
-
-function handleTableAction({ action, item }: { action: string; item: any }) {
-  if (action === "Eliminar") {
-    removeRow(item.id);
-    return;
-  }
-
-  if (action === "Seleccionar") {
-    viewEvidence(item.evidencia_url);
-  }
-}
-
-function submitFormacion() {
-  if (!formValid.value) return;
-
-  const item: FormacionRecord = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    tipo: form.value.tipo,
-    area: form.value.tipo === "institucional" ? form.value.area : "",
-    capacitacion:
-      form.value.tipo === "institucional" ? form.value.capacitacion : "",
-    nombre_taller:
-      form.value.tipo === "externo" ? form.value.nombre_taller : "",
-    institucion: form.value.tipo === "externo" ? form.value.institucion : "",
-    fecha: form.value.fecha,
-    evidencia_nombre: form.value.evidencia_nombre,
-    evidencia_url: form.value.evidencia_url,
-  };
-
-  rows.value = [item, ...rows.value];
-  emit("update:data", { ...(props.data || {}), formaciones: rows.value });
-  closeModal();
-}
-
-function removeRow(id: string) {
-  const row = rows.value.find((item) => item.id === id);
-  if (row?.evidencia_url?.startsWith("blob:")) {
-    URL.revokeObjectURL(row.evidencia_url);
-  }
-
-  rows.value = rows.value.filter((item) => item.id !== id);
-  emit("update:data", { ...(props.data || {}), formaciones: rows.value });
-}
-
-function rowNombre(item: FormacionRecord): string {
-  return item.tipo === "institucional"
-    ? item.capacitacion || "-"
-    : item.nombre_taller || "-";
-}
-
-function rowDetalle(item: FormacionRecord): string {
-  return item.tipo === "institucional"
-    ? item.area || "-"
-    : item.institucion || "-";
-}
 function handleAddIncidente() {
   moodAdd.value = true;
+}
+
+function handleCancelar() {
+  moodAdd.value = false;
+}
+
+function handleActionsSelecionar(dataRow: any) {
+  dataRow = deepToRaw(dataRow);
+  viewEvidence(dataRow);
+}
+
+function viewEvidence(item: any) {
+  if (!item.ruta_archivo) return;
+  openResource(item.ruta_archivo);
 }
 </script>
 <!-- prettier-ignore -->
@@ -242,17 +76,32 @@ function handleAddIncidente() {
         </header>
 
         <div class="formacion-body">
-          <DataTable
+          <!-- <DataTable
             :headers="tableHeaders"
             :data="tableRows"
             :dataResponse="tableDataResponse"
             :config="tableConfig"
             @action="handleTableAction"
+          /> -->
+
+          <CrudManager
+          :emitNew="true"
+          title="Elementos"
+          :payloadDefault="payloadHistorico"
+          :softDelete="false"
+          :show-title="false"
+          :showBtnNuevo="false"
+          :showStyleCard="false"
+          :emitSeleccionar="true"
+          :tableHeaders="tableHeaders"
+          :apiEndpoints="apiEndpoints"
+          :configTable="configTable"
+          @customSeleccionar="handleActionsSelecionar"
           />
         </div>
       </section>
     </div>
-    <NuevoRegistroHistorico v-else :data="props.data"/>
+    <NuevoRegistroHistorico v-else :data="props.data" @cancelar="handleCancelar"/>
   </div>
 </template>
 

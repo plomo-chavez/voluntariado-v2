@@ -17,6 +17,7 @@ router.post("/elemento/eliminar", elementosController.delete);
 router.post("/elemento/eliminar/soft", elementosController.softDelete);
 router.post("/elemento/verificar", elementosController.verificar);
 router.post("/elemento/documentos", elementosController.getDocumentos);
+router.post("/elemento/historico", elementosController.getHistorico);
 router.post(
   "/elemento/carga/documento",
   upload.single("documento"),
