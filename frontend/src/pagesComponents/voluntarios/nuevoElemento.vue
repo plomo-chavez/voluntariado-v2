@@ -46,7 +46,7 @@ const emit = defineEmits<{
   (e: "submit", payload: NuevoElementoPayload): void;
 }>();
 
-const step = ref<1 | 2>(2);
+const step = ref<1 | 2>(1);
 const messageValidacion: any = ref(null);
 
 const form = ref<NuevoElementoPayload>({
