@@ -3,8 +3,14 @@ import { useGenerateImageVariant } from "@core/composable/useGenerateImageVarian
 import imageDenegado from "@images/cr/denegadoImage.png";
 import miscMaskDark from "@images/pages/misc-mask-dark.png";
 import miscMaskLight from "@images/pages/misc-mask-light.png";
+import { useRouter } from "vue-router";
 
 const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark);
+const router = useRouter();
+
+function goHome() {
+  router.push("/");
+}
 
 definePage({
   alias: "/not-found/resources", // Cambia el alias aquí
