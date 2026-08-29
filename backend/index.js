@@ -60,14 +60,12 @@ app.use(apisRoutes);
 
 // ===============================
 // STATIC FILES
-// ===============================
-app.use("/files", (req, res, next) => {
-  console.log("📁 PETICIÓN FILE:", req.originalUrl);
-
-  next();
-});
-
+// ==============================
 app.use("/files", express.static(path.join(__dirname, "files")));
+
+app.use("/files", (req, res) => {
+  res.redirect("/pages/misc/denegado");
+});
 // Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 // ===============================
