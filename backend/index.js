@@ -55,17 +55,15 @@ app.use(
 );
 
 // ===============================
-// ROUTES
-// ===============================
-app.use(apisRoutes);
-
-// ===============================
 // STATIC FILES
 // ===============================
 app.use("/files", express.static(path.join(__dirname, "files")));
 // Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
 app.use("/assets", express.static(path.join(__dirname, "assets")));
-
+// ===============================
+// ROUTES
+// ===============================
+app.use(apisRoutes);
 // ===============================
 // START SERVER (HTTP)
 // ===============================
