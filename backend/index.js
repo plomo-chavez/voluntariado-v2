@@ -53,17 +53,23 @@ app.use(
     extended: true,
   }),
 );
-
-// ===============================
-// STATIC FILES
-// ===============================
-app.use("/files", express.static(path.join(__dirname, "files")));
-// Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
-app.use("/assets", express.static(path.join(__dirname, "assets")));
 // ===============================
 // ROUTES
 // ===============================
 app.use(apisRoutes);
+
+// ===============================
+// STATIC FILES
+// ===============================
+app.use("/files", (req, res, next) => {
+  console.log("📁 PETICIÓN FILE:", req.originalUrl);
+
+  next();
+});
+
+app.use("/files", express.static(path.join(__dirname, "files")));
+// Servir archivos subidos y assets (expedientes, plantillas, tmp, etc.)
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 // ===============================
 // START SERVER (HTTP)
 // ===============================
