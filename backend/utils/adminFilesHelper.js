@@ -304,6 +304,7 @@ export const getDataNewFileExpediente = ({
     .relative(BACKEND_DIR, absolutePath)
     .split(path.sep)
     .join("/");
+  console.log("");
   return {
     absolutePath,
     relativePath,
