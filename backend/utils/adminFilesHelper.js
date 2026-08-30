@@ -253,7 +253,7 @@ export const getFolderBackend = () => {
 export const getFolderExpedientes = () => {
   const isLocal = true;
   const BACKEND_DIR = getFolderBackend();
-  const uploadDir = path.join(BACKEND_DIR, "assets", "expedientes");
+  const uploadDir = path.join(BACKEND_DIR, "files", "expedientes");
   return uploadDir;
 };
 
