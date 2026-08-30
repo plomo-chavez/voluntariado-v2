@@ -305,10 +305,13 @@ export const getDataNewFileExpediente = ({
     .split(path.sep)
     .join("/");
 
+<<<<<<< HEAD
   console.log({
     absolutePath,
     relativePath,
   });
+=======
+>>>>>>> dev
   return {
     absolutePath,
     relativePath,
