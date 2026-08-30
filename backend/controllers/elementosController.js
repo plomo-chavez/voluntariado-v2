@@ -618,7 +618,7 @@ const descargarDocumentos = async (req, res) => {
       for (let i = 0; i < documentos.length; i++) {
         const doc = documentos[i];
         const result = await generatePdfFromTemplateHTML({
-          outDir: "backend/assets/tmp",
+          outDir: "backend/files/tmp",
           template: doc,
           data,
         });
